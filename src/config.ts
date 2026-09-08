@@ -88,6 +88,10 @@ export const config = {
   proxyAllowPrivate: optional("PROXY_ALLOW_PRIVATE", "false") === "true",
   maxRequestBytes: parseInt(optional("MAX_REQUEST_BYTES", "1048576"), 10), // 1 MiB
   maxResponseBytes: parseInt(optional("MAX_RESPONSE_BYTES", "5242880"), 10), // 5 MiB
+
+  // PostHog analytics (optional)
+  posthogApiKey: process.env.POSTHOG_API_KEY ?? null,
+  posthogHost: optional("POSTHOG_HOST", "https://us.posthog.com"),
 } as const;
 
 export type Config = typeof config;

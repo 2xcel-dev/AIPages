@@ -27,6 +27,7 @@
     "dotenv": "^16.5.0",
     "hono": "^4.7.10",
     "mongodb": "^6.15.0",
+    "posthog-node": "^5.51.7",
     "viem": "^2.56.3"
   },
   "devDependencies": {

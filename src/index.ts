@@ -26,6 +26,7 @@ import { ingestManifests, scrapeGitHub, scrapeNpm, type GitHubSearchItem, type N
 import { openapi } from "./openapi.js";
 import { setStore, default as ingestionRouter } from "./invocation.js";
 import { setRateLimitStore, MongoRateStore, startRateLimitCleanup } from "./rate-limit.js";
+import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
 import type { Tool, ToolSchema, ConnectionType, HealthStatus } from "./types.js";
 const app = new Hono();
 
@@ -136,6 +137,8 @@ app.get("/search", async (c) => {
   const queryEmbedding = await embed(query);
   const results = await store.search(queryEmbedding, limit);
 
+  trackSearch({ query, resultCount: results.length });
+
   return c.json({
     query,
     count: results.length,
@@ -244,6 +247,13 @@ app.post("/api/tools/submit", async (c) => {
 
     // Persist to Atlas (or in-memory dev store)
     await store.upsert(tool);
+
+    // PostHog analytics
+    trackSubmission({
+      namespace: tool.namespace,
+      pricingModel: pricingModel,
+      connectionType: connectionType as string,
+    });
 
     // Listing is free — no fee to verify. Monetization happens only on
     // successful invocation via the proxy's platform take-rate.
@@ -471,5 +481,6 @@ async function seedDevTools(store: ToolStore): Promise<void> {
 
 main().catch((err) => {
   console.error("Fatal:", err);
+  shutdownAnalytics();
   process.exit(1);
 });

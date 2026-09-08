@@ -35,6 +35,7 @@ import { validatePayload } from "./schema-validate.js";
 import { sanitizePayload } from "./sanitizer.js";
 import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest, type PinnedTarget } from "./egress-guard.js";
+import { trackInvocation } from "./analytics.js";
 
 // ── x402 payment verification ─────────────────────────────────────────
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
@@ -185,6 +186,17 @@ async function logInvocation(
     list.push(record);
     if (list.length > 10_000) list.shift();
   }
+
+  // PostHog analytics (no-op if POSTHOG_API_KEY is not set)
+  trackInvocation({
+    agentId,
+    namespace: tool.namespace,
+    statusCode,
+    success: status === "success",
+    latencyMs,
+    feeAmountUsdc: feeStatus === "collected" ? feeUsdc : 0,
+    feeStatus,
+  });
 }
 
 let MEMORY_LOG: InvocationRecord[] | undefined;
