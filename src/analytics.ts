@@ -77,6 +77,22 @@ export function trackSearch(params: {
   });
 }
 
+/**
+ * Identify an agent as a PostHog user with a display name and properties.
+ * Enables person-level tracking and labeled filtering in dashboards.
+ */
+export function identifyAgent(
+  distinctId: string,
+  properties?: Record<string, unknown>,
+): void {
+  const c = getClient();
+  if (!c) return;
+  c.identify({
+    distinctId,
+    ...(properties && { $set: properties }),
+  });
+}
+
 /** Shutdown helper — flush any pending events. */
 export async function shutdownAnalytics(): Promise<void> {
   if (client) {

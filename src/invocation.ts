@@ -35,7 +35,7 @@ import { validatePayload } from "./schema-validate.js";
 import { sanitizePayload } from "./sanitizer.js";
 import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest, type PinnedTarget } from "./egress-guard.js";
-import { trackInvocation } from "./analytics.js";
+import { trackInvocation, identifyAgent } from "./analytics.js";
 
 // ── x402 payment verification ─────────────────────────────────────────
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
@@ -278,6 +278,16 @@ ingress.use("/:namespace/*", async (c, next) => {
   c.set(K_JSON, bodyJson);
   c.set(K_CT, contentType);
   c.set(K_PROMOTED_BY, c.req.header("x-promoted-by") ?? null);
+
+  // Identify agent in PostHog for labeled dashboards (no-op without API key)
+  const agentName = c.req.header("x-agent-name");
+  if (agentId) {
+    identifyAgent(agentId, {
+      name: agentName ?? agentId,
+      distinct_id: agentId,
+      ...(agentName && { agent_name: agentName }),
+    });
+  }
 
   await next();
 });
