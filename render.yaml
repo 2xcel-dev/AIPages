@@ -2,6 +2,7 @@ services:
   - type: web
     name: aipages-backend
     runtime: node
+    rootDirectory: .
     buildCommand: npm install && npm run build
     startCommand: node dist/src/index.js
     envVars:
