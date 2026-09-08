@@ -39,7 +39,7 @@ export function trackInvocation(params: {
   latencyMs?: number;
   feeAmountUsdc?: number;
   feeStatus?: string;
-  promotedBy?: string;
+  promotedBy?: string | null;
 }): void {
   trackEvent(params.agentId, "tool_invoked", {
     namespace: params.namespace,

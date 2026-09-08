@@ -49,6 +49,7 @@ interface InvokeVariables {
   "invoke.bodyBytes": Uint8Array;
   "invoke.bodyJson": unknown;
   "invoke.contentType": string;
+  "invoke.promotedBy": string | null;
 }
 
 const ingress = new Hono<{ Variables: InvokeVariables }>();
@@ -149,6 +150,7 @@ async function logInvocation(
   feeUsdc: number,
   feeStatus: FeeStatus,
   errorMsg?: string,
+  promotedBy?: string | null,
 ): Promise<void> {
   const record: InvocationRecord = {
     toolNamespace: tool.namespace,
@@ -196,6 +198,7 @@ async function logInvocation(
     latencyMs,
     feeAmountUsdc: feeStatus === "collected" ? feeUsdc : 0,
     feeStatus,
+    promotedBy,
   });
 }
 
@@ -212,6 +215,7 @@ const K_AGENT = "invoke.agentId";
 const K_BODY = "invoke.bodyBytes";
 const K_JSON = "invoke.bodyJson";
 const K_CT = "invoke.contentType";
+const K_PROMOTED_BY = "invoke.promotedBy";
 
 // ── 1. Verification gate middleware ────────────────────────────────────────
 
@@ -273,6 +277,7 @@ ingress.use("/:namespace/*", async (c, next) => {
   c.set(K_BODY, rawBody);
   c.set(K_JSON, bodyJson);
   c.set(K_CT, contentType);
+  c.set(K_PROMOTED_BY, c.req.header("x-promoted-by") ?? null);
 
   await next();
 });
@@ -353,6 +358,7 @@ ingress.use("/:namespace/*", async (c) => {
 
   const agentId = c.get(K_AGENT) as string;
   const bodyJson = c.get(K_JSON) as unknown;
+  const promotedBy = c.get(K_PROMOTED_BY) as string | null;
 
   // ── 4. Schema validation ─────────────────────────────────────────────────
   const sv = validatePayload(tool.schema, bodyJson);
@@ -536,7 +542,7 @@ ingress.use("/:namespace/*", async (c) => {
   }
 
   // ── 6–8. Egress guard + proxy + collect ──────────────────────────────────
-  return executeAndLog(c, tool, agentId, t0, feeUsd, bodyJson, paymentCtx);
+  return executeAndLog(c, tool, agentId, t0, feeUsd, bodyJson, paymentCtx, promotedBy);
 });
 
 /**
@@ -552,6 +558,7 @@ async function executeAndLog(
   feeUsdc: number,
   bodyJson: unknown,
   paymentCtx?: { payload: PaymentPayload; requirements: PaymentRequirements },
+  promotedBy?: string | null,
 ): Promise<Response> {
   const rawBody = c.get(K_BODY) as Uint8Array;
   const contentType = c.get(K_CT) as string;
@@ -634,6 +641,7 @@ async function executeAndLog(
     feeStatus === "collected" ? feeUsdc : 0,
     feeStatus,
     errorMsg ?? settlementError,
+    promotedBy,
   );
 
   return c.json(
