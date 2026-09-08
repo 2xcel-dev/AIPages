@@ -50,7 +50,7 @@ function parseAgentKeys(
 }
 
 export const config = {
-  port: parseInt(optional("PORT", "3000"), 10),
+  port: parseInt(optional("PORT", "3001"), 10),
 
   // MongoDB Atlas
   MONGODB_URI: process.env.MONGODB_URI ?? null, // null = in-memory fallback for dev
