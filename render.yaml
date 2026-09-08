@@ -8,3 +8,14 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+  - type: cron
+    name: aipages-crawler
+    runtime: node
+    rootDirectory: .
+    buildCommand: npm install && npm run build
+    # Run crawler one-shot cycle every 5 minutes
+    startCommand: node dist/crawler.js once
+    schedule: "*/5 * * * *"
+    envVars:
+      - key: NODE_ENV
+        value: production
