@@ -1,8 +1,26 @@
 import { crawlOnce } from "../src/crawler.js";
-import { alertOnFailure } from "../notify.js";
 import { searchForMcpRepos, sendOutreachIssue } from "./mcp-outreach.js";
 import { generatePromotionalSnippet } from "./aus-snippet.js";
 import { createStore } from "../src/db.js";
+
+// notify.ts lives in dist/ (same level as scripts/ when compiled), so we load
+// it dynamically at runtime to avoid TypeScript path resolution errors.
+function loadNotifyPath(): string {
+  // When compiled, scripts/outreach.ts -> dist/scripts/outreach.js
+  // and notify.ts -> dist/notify.js
+  // So from dist/scripts/, the path to dist/notify.js is "../notify.js"
+  return "../notify.js";
+}
+
+async function loadNotify(): Promise<{ alertOnFailure: (result: {
+  discovered: number;
+  ingested: number;
+  errors: number;
+  cycle?: number;
+}) => Promise<void> }> {
+  const mod = await import(/* @vite-ignore */ loadNotifyPath());
+  return { alertOnFailure: mod.alertOnFailure };
+}
 
 /**
  * 24/7 Acquisition Engine:
@@ -71,7 +89,8 @@ async function runOutreachCycle(cycle: number): Promise<void> {
       await new Promise((r) => setTimeout(r, 1000)); // rate-limit safety
     }
 
-    console.log(`[outreach] Cycle ${cycle} done: ${sent}/${repos.length} repos reached`);
+    console.log(`Cycle ${cycle} done: ${sent}/${repos.length} repos reached`);
+    const { alertOnFailure } = await loadNotify();
     await alertOnFailure({
       discovered: repos.length,
       ingested: sent,
@@ -80,6 +99,7 @@ async function runOutreachCycle(cycle: number): Promise<void> {
     });
   } catch (err) {
     console.error(`[outreach] Cycle ${cycle} crashed:`, (err as Error).message);
+    const { alertOnFailure } = await loadNotify();
     await alertOnFailure({
       discovered: 0,
       ingested: 0,
