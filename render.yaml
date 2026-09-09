@@ -8,6 +8,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: GITHUB_TOKEN
+        fromSecret: github_personal_access_token
+      - key: POSTHOG_API_KEY
+        fromSecret: posthog_api_key
+      - key: MONGODB_URI
+        fromSecret: mongodb_connection_string
   - type: cron
     name: aipages-crawler
     runtime: node
@@ -19,3 +25,26 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MONGODB_URI
+        fromSecret: mongodb_connection_string
+      - key: GEMINI_API_KEY
+        fromSecret: gemini_api_key
+      - key: POSTHOG_API_KEY
+        fromSecret: posthog_api_key
+      - key: POSTHOG_HOST
+        value: https://app.posthog.com
+  - type: cron
+    name: aipages-outreach
+    runtime: node
+    rootDirectory: .
+    buildCommand: npm install && npm run build
+    # Run outreach acquisition every 30 minutes
+    startCommand: node dist/scripts/outreach.js once
+    schedule: "*/30 * * * *"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GITHUB_TOKEN
+        fromSecret: github_personal_access_token
+      - key: MONGODB_URI
+        fromSecret: mongodb_connection_string
