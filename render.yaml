@@ -2,6 +2,7 @@ services:
   - type: web
     name: aipages-backend
     runtime: node
+    rootDir: "."
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
     healthCheckPath: /health
@@ -20,15 +21,6 @@ services:
         fromSecret: agent_keys_secret
       - key: ADMIN_KEY
         fromSecret: admin_key_secret
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: GITHUB_TOKEN
-        fromSecret: github_personal_access_token
-      - key: POSTHOG_API_KEY
-        fromSecret: posthog_api_key
-      - key: MONGODB_URI
-        fromSecret: mongodb_connection_string
   - type: cron
     name: aipages-crawler
     runtime: node
