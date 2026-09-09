@@ -237,7 +237,7 @@ export async function crawlOnce(): Promise<CrawlResult> {
   return result;
 }
 
-// ── continuous loop ───────────────────────────────────────────────────────
+import { alertOnFailure } from "./notify.js";
 
 export async function crawlLoop(): Promise<void> {
   console.log(`[crawler] Starting continuous crawl loop (interval=${CRAWL_INTERVAL_MS}ms)`);
@@ -269,6 +269,10 @@ export async function crawlLoop(): Promise<void> {
         `rejected=${result.rejected} extracted=${result.extracted} ` +
         `ingested=${result.ingested} active=${result.active} errors=${result.errors}`,
     );
+
+    // Send telegram alert if failure conditions detected
+    await alertOnFailure({ ...result, cycle });
+
     await sleep(CRAWL_INTERVAL_MS);
   }
 }
@@ -291,6 +295,7 @@ if (mode === "watch") {
   crawlOnce()
     .then((r) => {
       console.log("[crawler] Summary:", JSON.stringify(r));
+      void alertOnFailure({ ...r, cycle: 1 });
       process.exit(r.errors > 10 ? 2 : 0);
     })
     .catch((err) => {
