@@ -2,9 +2,24 @@ services:
   - type: web
     name: aipages-backend
     runtime: node
-    rootDirectory: .
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        fromSecret: mongodb_connection_string
+      - key: GEMINI_API_KEY
+        fromSecret: gemini_api_key
+      - key: POSTHOG_API_KEY
+        fromSecret: posthog_api_key
+      - key: POSTHOG_HOST
+        value: https://app.posthog.com
+      - key: AGENT_KEYS
+        fromSecret: agent_keys_secret
+      - key: ADMIN_KEY
+        fromSecret: admin_key_secret
     envVars:
       - key: NODE_ENV
         value: production
