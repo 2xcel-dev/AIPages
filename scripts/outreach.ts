@@ -1,5 +1,5 @@
 import { crawlOnce } from "../src/crawler.js";
-import { alertOnFailure } from "../src/notify.js";
+import { alertOnFailure } from "../notify.js";
 import { searchForMcpRepos, sendOutreachIssue } from "./mcp-outreach.js";
 import { generatePromotionalSnippet } from "./aus-snippet.js";
 import { createStore } from "../src/db.js";
