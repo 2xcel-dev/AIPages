@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: "."
     buildCommand: npm install && npm run build
-    startCommand: node dist/index.js
+    startCommand: npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -24,9 +24,7 @@ services:
   - type: cron
     name: aipages-crawler
     runtime: node
-    rootDirectory: .
     buildCommand: npm install && npm run build
-    # Run crawler one-shot cycle every 5 minutes
     startCommand: node dist/crawler.js once
     schedule: "*/5 * * * *"
     envVars:
@@ -43,9 +41,7 @@ services:
   - type: cron
     name: aipages-outreach
     runtime: node
-    rootDirectory: .
     buildCommand: npm install && npm run build
-    # Run outreach acquisition every 30 minutes
     startCommand: node dist/scripts/outreach.js once
     schedule: "*/30 * * * *"
     envVars:

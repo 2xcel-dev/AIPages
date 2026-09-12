@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node --experimental-vm-modules dist/index.js",
     "seed": "tsx scripts/seed.ts",
     "setup-index": "tsx scripts/setup-vector-index.ts",
     "ingest-tools": "tsx scripts/ingest-tools.ts",
