@@ -57,13 +57,13 @@ export const config = {
   VECTOR_INDEX_NAME: optional("VECTOR_INDEX_NAME", "vector_index"),
 
   // Gemini embeddings (via google/genai REST or SDK)
-  geminiApiKey: process.env.GEMINI_API_KEY ?? null,
+geminiApiKey: process.env.GEMINI_API_KEY ?? null,
   geminiEmbeddingModel: optional("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001"),
   geminiSchemaModel: optional("GEMINI_SCHEMA_MODEL", "gemini-3.6-flash"),
   embeddingDimensions: parseInt(optional("EMBEDDING_DIMENSIONS", "3072"), 10),
 
   // x402 payment
-  x402WalletAddress: optional("X402_WALLET_ADDRESS", "0x0000000000000000000000000000000000000000"),
+  x402WalletAddress: optional("X402_WALLET_ADDRESS", "0xB67E9D7182cDBAab513FF7345Ba45E5fE252aA9A"),
   x402Network: optional("X402_NETWORK", "eip155:84532"),
   x402PriceUsdc: optional("X402_PRICE_USDC", "0.25"),
   x402FacilitatorUrl: optional("X402_FACILITATOR_URL", "https://x402.org/facilitator"),
