@@ -30,7 +30,7 @@ import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js"
 import { deriveReliability, type Tool, type ToolSchema, type ConnectionType, type HealthStatus } from "./types.js";
 import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402.js";
 import { default as agentScraperRouter } from "./routes/agentScraper.js";
-import { findToolBySlug, renderToolPage, renderNotFoundPage } from "./views/toolPage.js";
+import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
@@ -513,7 +513,8 @@ app.get("/tools/:slug", async (c) => {
     return c.json(formatToolRecord(tool));
   }
 
-  return c.html(renderToolPage(tool));
+  const relatedTools = await findRelatedTools(store, tool, 3);
+  return c.html(renderToolPage(tool, relatedTools));
 });
 
 // ── x402 Base Payment Test Route ─────────────────────────────

@@ -85,7 +85,47 @@ export async function findToolBySlug(store: ToolStore, slug: string): Promise<To
   return null;
 }
 
-export function renderToolPage(tool: Tool): string {
+export async function findRelatedTools(
+  store: ToolStore,
+  tool: Tool,
+  limit: number = 3,
+): Promise<Tool[]> {
+  if (!tool.capabilities || tool.capabilities.length === 0) {
+    return [];
+  }
+
+  const currentCaps = new Set(
+    tool.capabilities.map((c) => c.toLowerCase().trim()),
+  );
+  const allTools = await store.list();
+
+  const candidates = allTools.filter(
+    (t) =>
+      t.namespace !== tool.namespace &&
+      (!t.status || t.status === "active") &&
+      t.capabilities &&
+      t.capabilities.length > 0,
+  );
+
+  const scored = candidates
+    .map((candidate) => {
+      const candidateCaps = (candidate.capabilities ?? []).map((c) =>
+        c.toLowerCase().trim(),
+      );
+      const shared = candidateCaps.filter((c) => currentCaps.has(c));
+      return {
+        tool: candidate,
+        sharedCount: shared.length,
+      };
+    })
+    .filter((item) => item.sharedCount > 0);
+
+  scored.sort((a, b) => b.sharedCount - a.sharedCount);
+
+  return scored.slice(0, limit).map((item) => item.tool);
+}
+
+export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   const health = deriveReliability(tool);
   const escapedName = escapeHtml(tool.name);
   const escapedNamespace = escapeHtml(tool.namespace);
@@ -512,6 +552,143 @@ export function renderToolPage(tool: Tool): string {
       max-height: 380px;
     }
 
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary);
+      color: #090d16;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn:hover {
+      background: #0284c7;
+      color: #fff;
+      text-decoration: none;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Related Tools Grid */
+    .related-tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .related-tool-card {
+      background: var(--card-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .related-tool-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .related-tool-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .related-tool-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .related-tool-name a {
+      color: #fff;
+      text-decoration: none;
+    }
+    .related-tool-name a:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .related-tool-price {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--healthy);
+      background: var(--healthy-bg);
+      border: 1px solid var(--healthy-border);
+      padding: 2px 6px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .related-tool-ns {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .related-tool-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .related-tool-caps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .cap-tag {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .cap-shared {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .related-tool-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 8px;
+      margin-top: auto;
+    }
+    .btn-link {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+    .related-tools-empty {
+      background: var(--card-surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-top: 12px;
+    }
+
     /* Footer */
     footer {
       margin-top: auto;
@@ -766,6 +943,68 @@ Content-Type: application/json</code></pre>
     `
         : ""
     }
+
+    <!-- Related Tools Section -->
+    <section class="card full-width" aria-label="Related Tools by Shared Capabilities">
+      <div class="card-header">
+        <h2 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          Related Tools by Shared Capabilities
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">
+          Directory Discovery
+        </span>
+      </div>
+      ${
+        relatedTools && relatedTools.length > 0
+          ? `
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+        Other public tools in the AIPages directory sharing capability tags with <strong>${escapedName}</strong>:
+      </p>
+      <div class="related-tools-grid">
+        ${relatedTools
+          .map((relTool) => {
+            const relName = escapeHtml(relTool.name);
+            const relNs = escapeHtml(relTool.namespace);
+            const relDesc = escapeHtml(relTool.description || "No description provided.");
+            const relPrice = relTool.pricing?.model === "free" ? "Free" : `$${relTool.pricing?.costPerCall ?? 0} USDC`;
+            const currentCaps = new Set((tool.capabilities ?? []).map((c) => c.toLowerCase().trim()));
+            const sharedCaps = (relTool.capabilities ?? []).filter((c) => currentCaps.has(c.toLowerCase().trim()));
+            const otherCaps = (relTool.capabilities ?? []).filter((c) => !currentCaps.has(c.toLowerCase().trim()));
+
+            return `
+        <div class="related-tool-card" data-namespace="${relNs}">
+          <div class="related-tool-header">
+            <h3 class="related-tool-name">
+              <a href="/tools/${relNs}">${relName}</a>
+            </h3>
+            <span class="related-tool-price">${relPrice}</span>
+          </div>
+          <div class="related-tool-ns">${relNs}</div>
+          <p class="related-tool-desc">${relDesc}</p>
+          <div class="related-tool-caps">
+            ${sharedCaps.map((c) => `<span class="cap-tag cap-shared" title="Shared capability">★ ${escapeHtml(c)}</span>`).join(" ")}
+            ${otherCaps.slice(0, 2).map((c) => `<span class="cap-tag">${escapeHtml(c)}</span>`).join(" ")}
+          </div>
+          <div class="related-tool-footer">
+            <a href="/tools/${relNs}" class="btn-link">View Details &rarr;</a>
+          </div>
+        </div>`;
+          })
+          .join("\n")}
+      </div>
+      `
+          : `
+      <div class="related-tools-empty">
+        <p>No other public tools currently share capability tags with this listing.</p>
+        <a href="/tools" class="btn btn-sm" style="margin-top: 10px;">Browse Full Directory</a>
+      </div>
+      `
+      }
+    </section>
   </main>
 
   <footer>
