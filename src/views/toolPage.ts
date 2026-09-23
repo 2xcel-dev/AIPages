@@ -311,8 +311,148 @@ console.log("Tool execution result:", data);`;
   };
 }
 
+/**
+ * Generate Schema.org JSON-LD structured data for a tool detail page.
+ * Uses existing listing fields (name, description, url, capabilities, pricing,
+ * authentication, and reliability context).
+ * Adheres strictly to the anti-falsification rule (never invents claims; unchecked health remains unchecked)
+ * and never exposes private keys or credentials.
+ */
+export function generateToolJsonLd(tool: Tool): Record<string, unknown> {
+  const health = deriveReliability(tool);
+  const isFirstParty = Boolean(
+    tool.isFirstParty ??
+    tool.developer?.isFirstParty ??
+    tool.namespace?.startsWith("net.2xcel.aus")
+  );
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tool.name,
+    identifier: tool.namespace,
+    description: tool.description || "",
+    applicationCategory: "AutonomousAgentTool",
+    operatingSystem: "Any",
+    url: `https://aipages.2xcel.net/tools/${encodeURIComponent(tool.namespace)}`,
+  };
+
+  if (tool.endpointUrl) {
+    jsonLd.installUrl = tool.endpointUrl;
+  }
+
+  if (tool.capabilities && Array.isArray(tool.capabilities) && tool.capabilities.length > 0) {
+    jsonLd.keywords = tool.capabilities.join(", ");
+    jsonLd.featureList = tool.capabilities;
+  }
+
+  // Developer / Provider info
+  const providerName = tool.developer?.name || (isFirstParty ? "2xcel" : undefined);
+  if (providerName) {
+    jsonLd.provider = {
+      "@type": "Organization",
+      name: providerName,
+      ...(tool.developer?.address ? { identifier: tool.developer.address } : {}),
+    };
+  }
+
+  // Pricing / Offers
+  if (tool.pricing) {
+    const isFree = tool.pricing.model === "free" || tool.pricing.costPerCall === 0;
+    const priceVal = tool.pricing.costPerCall !== undefined && tool.pricing.costPerCall !== null
+      ? String(tool.pricing.costPerCall)
+      : (isFree ? "0" : undefined);
+
+    jsonLd.offers = {
+      "@type": "Offer",
+      price: priceVal ?? "0",
+      priceCurrency: "USDC",
+      description: `${tool.pricing.model || (isFree ? "free" : "paid")} pricing (${priceVal ?? "0"} USDC per call)`,
+    };
+  } else {
+    jsonLd.offers = {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+      description: "Free",
+    };
+  }
+
+  // Additional technical properties (Authentication, Connection, Rate Limit, Reliability)
+  const additionalProperties: Array<{ "@type": string; name: string; value: string | number }> = [];
+
+  if (tool.connectionType) {
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "connectionType",
+      value: tool.connectionType,
+    });
+  }
+
+  if (tool.authentication) {
+    let safeAuth = typeof tool.authentication === "string" ? tool.authentication : JSON.stringify(tool.authentication);
+    safeAuth = safeAuth.replace(/0x[a-fA-F0-9]{64}/g, "[REDACTED]");
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "authentication",
+      value: safeAuth,
+    });
+  } else {
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "authentication",
+      value: "none",
+    });
+  }
+
+  if (tool.rateLimit) {
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "rateLimit",
+      value: typeof tool.rateLimit === "string" ? tool.rateLimit : JSON.stringify(tool.rateLimit),
+    });
+  }
+
+  // Reliability Context — strictly adheres to anti-falsification
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "reliabilityStatus",
+    value: health.reliability,
+  });
+
+  additionalProperties.push({
+    "@type": "PropertyValue",
+    name: "healthStatus",
+    value: health.healthStatus,
+  });
+
+  if (health.lastCheckedIso) {
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "lastChecked",
+      value: health.lastCheckedIso,
+    });
+  }
+
+  if (health.failureReason) {
+    additionalProperties.push({
+      "@type": "PropertyValue",
+      name: "failureReason",
+      value: health.failureReason,
+    });
+  }
+
+  if (additionalProperties.length > 0) {
+    jsonLd.additionalProperty = additionalProperties;
+  }
+
+  return jsonLd;
+}
+
 export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   const health = deriveReliability(tool);
+  const jsonLd = generateToolJsonLd(tool);
+  const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/</g, "\\u003c");
   const escapedName = escapeHtml(tool.name);
   const escapedNamespace = escapeHtml(tool.namespace);
   const escapedDescription = escapeHtml(tool.description || "No description provided.");
@@ -375,6 +515,9 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapedName} — AIPages Agent Tool Registry</title>
+  <script type="application/ld+json">
+${jsonLdScript}
+  </script>
   <style>
     :root {
       --bg: #090d16;
