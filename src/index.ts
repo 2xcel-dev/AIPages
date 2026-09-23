@@ -44,41 +44,62 @@ app.use("*", cors());
 
 // ── Public routes ───────────────────────────────────────────
 
-app.get("/", (c) =>
-  c.json({
-    name: "AIPages",
-    version: "0.1.0",
-    status: "running",
-    description:
-      "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
-    x402: true,
-    pricing: {
-      "/search": "free",
-      "/api/tools/submit": "free",
-      "/api/invoke/{namespace}": "$0.25 USDC platform take-rate (premium tools, collected on success only)",
-    },
-    endpoints: {
-      search: "GET /search?q=<natural-language-query>&limit=<n> (free)",
-      directory: "GET /tools?reliability=<r>&connectionType=<c>",
-      tools: "GET /api/tools?capability=<cap>&limit=<n>&offset=<n>&status=<s>&healthStatus=<h>",
-      submit: "POST /api/tools/submit (free)",
-      toolDetail: "GET /api/tools/:namespace",
-      toolPage: "GET /tools/:slug",
-      openapi: "GET /api/openapi.json",
-      ingest: "POST /ingest (admin key required)",
-      scrape: "POST /scrape (admin key required)",
-      scrapeAgents: "POST /api/scrape-agents",
-    },
-    payment: {
-      network: config.x402Network,
-      currency: "USDC",
-      model: "execution-only",
-      platformFee: `$${config.x402PriceUsdc} USDC per premium invocation`,
-      note: "Discovery and listing are free. The platform earns a flat take-rate only when a premium tool invocation succeeds.",
-    },
-    openapi: "/api/openapi.json",
-  }),
-);
+export const DISCOVERY_MANIFEST = {
+  name: "AIPages",
+  version: "0.1.0",
+  status: "running",
+  description:
+    "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
+  x402: true,
+  pricing: {
+    "/search": "free",
+    "/api/tools/submit": "free",
+    "/api/invoke/{namespace}": "$0.25 USDC platform take-rate (premium tools, collected on success only)",
+  },
+  endpoints: {
+    search: "GET /search?q=<natural-language-query>&limit=<n> (free)",
+    directory: "GET /tools?reliability=<r>&connectionType=<c>",
+    tools: "GET /api/tools?capability=<cap>&limit=<n>&offset=<n>&status=<s>&healthStatus=<h>",
+    submit: "POST /api/tools/submit (free)",
+    toolDetail: "GET /api/tools/:namespace",
+    toolPage: "GET /tools/:slug",
+    openapi: "GET /api/openapi.json",
+    ingest: "POST /ingest (admin key required)",
+    scrape: "POST /scrape (admin key required)",
+    scrapeAgents: "POST /api/scrape-agents",
+  },
+  payment: {
+    network: config.x402Network,
+    currency: "USDC",
+    model: "execution-only",
+    platformFee: `$${config.x402PriceUsdc} USDC per premium invocation`,
+    note: "Discovery and listing are free. The platform earns a flat take-rate only when a premium tool invocation succeeds.",
+  },
+  openapi: "/api/openapi.json",
+};
+
+app.get("/", async (c) => {
+  const accept = c.req.header("Accept") ?? "";
+  const format = c.req.query("format");
+  const searchQuery = c.req.query("q") ?? c.req.query("search");
+  const reliability = c.req.query("reliability");
+  const connectionType = c.req.query("connectionType");
+  const pricingModel = c.req.query("pricingModel");
+
+  const hasSearchParams = Boolean(searchQuery || reliability || connectionType || pricingModel);
+
+  // Preserve JSON discovery manifest for API/curl clients when no search parameters are supplied
+  if (!hasSearchParams) {
+    if (
+      format === "json" ||
+      (!accept.includes("text/html") && (accept.includes("application/json") || accept === "*/*" || !accept))
+    ) {
+      return c.json(DISCOVERY_MANIFEST);
+    }
+  }
+
+  return handleDirectoryRequest(c, "/");
+});
 
 app.get("/health", async (c) => {
   const ok = await store.ping();
@@ -393,9 +414,14 @@ app.get("/api/tools/:namespace", async (c) => {
   return c.json(formatToolRecord(tool));
 });
 
-// ── Public route: human-facing directory page (responsive cards + reliability & freshness) ──
+// ── Human-facing directory handler (responsive cards + reliability & freshness) ──
 
-app.get("/tools", async (c) => {
+export async function handleDirectoryRequest(
+  c: any,
+  baseUrl: string = "/",
+  targetStore?: ToolStore,
+) {
+  const currentStore = targetStore ?? store ?? (await createStore());
   const searchQuery = c.req.query("q") ?? c.req.query("search");
   const reliability = c.req.query("reliability");
   const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
@@ -406,9 +432,10 @@ app.get("/tools", async (c) => {
   const limit = Math.min(Math.max(1, Number(limitParam ?? 50)), 100);
   const offset = Math.max(0, Number(offsetParam ?? 0));
 
-  let tools = await store.list({
+  let tools = await currentStore.list({
     connectionType,
     pricingModel,
+    q: searchQuery,
   });
 
   // Filter by reliability if specified (high, degraded, failing, unchecked)
@@ -419,14 +446,15 @@ app.get("/tools", async (c) => {
     });
   }
 
-  // Filter by search query across name, description, namespace
+  // Ensure matching covers name, namespace, description, and capabilities
   if (searchQuery && searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
     tools = tools.filter(
       (t) =>
         t.name.toLowerCase().includes(q) ||
         t.namespace.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q)),
+        (t.description && t.description.toLowerCase().includes(q)) ||
+        (t.capabilities && Array.isArray(t.capabilities) && t.capabilities.some((c) => c.toLowerCase().includes(q))),
     );
   }
 
@@ -451,8 +479,13 @@ app.get("/tools", async (c) => {
       reliability,
       connectionType,
       pricingModel,
+      baseUrl,
     }),
   );
+}
+
+app.get("/tools", async (c) => {
+  return handleDirectoryRequest(c, "/tools");
 });
 
 // ── Public route: human-facing tool page (responsive detail + reliability) ──
@@ -719,8 +752,14 @@ async function seedDevTools(store: ToolStore): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  console.error("Fatal:", err);
-  shutdownAnalytics();
-  process.exit(1);
-});
+const isTestRun =
+  process.env.NODE_ENV === "test" ||
+  process.argv.some((arg) => arg.includes("test"));
+
+if (!isTestRun) {
+  main().catch((err) => {
+    console.error("Fatal:", err);
+    shutdownAnalytics();
+    process.exit(1);
+  });
+}

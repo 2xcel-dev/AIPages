@@ -136,7 +136,12 @@ class MongoToolStore implements ToolStore {
     const cap = filter?.capability ?? filter?.q;
     if (cap && cap.trim()) {
       const regex = { $regex: cap.trim(), $options: "i" };
-      query.$or = [{ name: regex }, { namespace: regex }, { description: regex }];
+      query.$or = [
+        { name: regex },
+        { namespace: regex },
+        { description: regex },
+        { capabilities: regex },
+      ];
     }
     let cursor = this.collection.find(query);
     if (filter?.offset && filter.offset > 0) {
@@ -189,7 +194,12 @@ class MongoToolStore implements ToolStore {
     const cap = filter?.capability ?? filter?.q;
     if (cap && cap.trim()) {
       const regex = { $regex: cap.trim(), $options: "i" };
-      query.$or = [{ name: regex }, { namespace: regex }, { description: regex }];
+      query.$or = [
+        { name: regex },
+        { namespace: regex },
+        { description: regex },
+        { capabilities: regex },
+      ];
     }
     return this.collection.countDocuments(query);
   }
@@ -303,6 +313,7 @@ export class InMemoryToolStore implements ToolStore {
         if (t.name.toLowerCase().includes(cLower)) return true;
         if (t.namespace.toLowerCase().includes(cLower)) return true;
         if (t.description?.toLowerCase().includes(cLower)) return true;
+        if (t.capabilities && Array.isArray(t.capabilities) && t.capabilities.some((c) => c.toLowerCase().includes(cLower))) return true;
         if (t.schema?.properties) {
           for (const [propName, propDef] of Object.entries(t.schema.properties)) {
             if (propName.toLowerCase().includes(cLower)) return true;

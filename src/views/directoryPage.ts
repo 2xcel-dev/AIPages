@@ -158,6 +158,7 @@ export interface DirectoryFilterParams {
   reliability?: string;
   connectionType?: string;
   pricingModel?: string;
+  baseUrl?: string;
 }
 
 export function renderDirectoryPage(
@@ -165,6 +166,11 @@ export function renderDirectoryPage(
   totalCount: number,
   filters: DirectoryFilterParams = {},
 ): string {
+  const baseUrl = filters.baseUrl || "/";
+  const searchQuery = escapeHtml(filters.search ?? "");
+  const activeReliability = filters.reliability ?? "all";
+  const activeConn = filters.connectionType ?? "all";
+
   const cardsHtml = tools.length > 0
     ? tools.map(renderToolCard).join("\n")
     : `<div class="empty-state">
@@ -173,13 +179,9 @@ export function renderDirectoryPage(
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         <h3>No tools matched your criteria</h3>
-        <p>Try clearing filters or search with different keywords.</p>
-        <a href="/tools" class="btn btn-primary" style="margin-top: 12px;">View All Tools</a>
+        <p>${filters.search ? `No tools found matching &ldquo;${searchQuery}&rdquo;. Try clearing filters or search with different keywords.` : "Try clearing filters or search with different keywords."}</p>
+        <a href="${baseUrl}" class="btn" style="margin-top: 14px;">View All Tools</a>
       </div>`;
-
-  const searchQuery = escapeHtml(filters.search ?? "");
-  const activeReliability = filters.reliability ?? "all";
-  const activeConn = filters.connectionType ?? "all";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -675,12 +677,12 @@ export function renderDirectoryPage(
 
     <!-- Controls -->
     <section class="directory-controls">
-      <form method="GET" action="/tools" class="search-row">
+      <form method="GET" action="${baseUrl}" class="search-row">
         <input
           type="text"
           name="q"
           class="search-input"
-          placeholder="Search tools by name, description, or namespace…"
+          placeholder="Search tools by name, description, namespace, or capability…"
           value="${searchQuery}"
         />
         <button type="submit" class="btn">
@@ -694,15 +696,15 @@ export function renderDirectoryPage(
 
       <div class="filter-pills-row">
         <span class="filter-label">Reliability:</span>
-        <a href="/tools?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "all" }).toString()}"
+        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "all" }).toString()}"
            class="filter-chip ${activeReliability === "all" ? "active" : ""}">All</a>
-        <a href="/tools?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "high" }).toString()}"
+        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "high" }).toString()}"
            class="filter-chip ${activeReliability === "high" ? "active" : ""}">Operational</a>
-        <a href="/tools?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "degraded" }).toString()}"
+        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "degraded" }).toString()}"
            class="filter-chip ${activeReliability === "degraded" ? "active" : ""}">Degraded</a>
-        <a href="/tools?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "failing" }).toString()}"
+        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "failing" }).toString()}"
            class="filter-chip ${activeReliability === "failing" ? "active" : ""}">Failing</a>
-        <a href="/tools?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "unchecked" }).toString()}"
+        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "unchecked" }).toString()}"
            class="filter-chip ${activeReliability === "unchecked" ? "active" : ""}">Unchecked</a>
       </div>
     </section>
