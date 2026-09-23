@@ -242,6 +242,7 @@ export function renderDirectoryPage(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIPages Tool Directory — Autonomous Agent Tool Registry</title>
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <style>
     :root {
       --bg: #090d16;

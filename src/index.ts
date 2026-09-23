@@ -32,6 +32,7 @@ import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middl
 import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
+import { generateSitemapXml } from "./views/sitemap.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
 const app = new Hono();
@@ -63,6 +64,7 @@ export const DISCOVERY_MANIFEST = {
     submit: "POST /api/tools/submit (free)",
     toolDetail: "GET /api/tools/:namespace",
     toolPage: "GET /tools/:slug",
+    sitemap: "GET /sitemap.xml (XML sitemap)",
     openapi: "GET /api/openapi.json",
     ingest: "POST /ingest (admin key required)",
     scrape: "POST /scrape (admin key required)",
@@ -551,6 +553,25 @@ app.get("/tools/:slug", async (c) => {
 
   const relatedTools = await findRelatedTools(store, tool, 3);
   return c.html(renderToolPage(tool, relatedTools));
+});
+
+// ── Public route: XML sitemap for search engines & crawler discovery ──
+
+app.get("/sitemap.xml", async (c) => {
+  const allTools = await store.list();
+  const xml = generateSitemapXml(allTools);
+  c.header("Content-Type", "application/xml; charset=utf-8");
+  c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
+  return c.body(xml);
+});
+
+// ── Public route: robots.txt crawler directives ──
+
+app.get("/robots.txt", (c) => {
+  const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.2xcel.net/sitemap.xml\n";
+  c.header("Content-Type", "text/plain; charset=utf-8");
+  c.header("Cache-Control", "public, max-age=86400");
+  return c.text(robots);
 });
 
 // ── x402 Base Payment Test Route ─────────────────────────────
