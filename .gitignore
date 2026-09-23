@@ -3,3 +3,8 @@ dist/
 .env
 *.log
 .DS_Store
+storage/
+.data/
+agentskills/
+generate-wallet.ts
+test-gemini.ts

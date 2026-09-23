@@ -2,6 +2,7 @@ import { crawlOnce } from "../src/crawler.js";
 import { searchForMcpRepos, sendOutreachIssue } from "./mcp-outreach.js";
 import { generatePromotionalSnippet } from "./aus-snippet.js";
 import { createStore } from "../src/db.js";
+import { runHealthCheckJob, type HealthCheckJobSummary } from "./health-check-job.js";
 
 // notify.ts lives in dist/ (same level as scripts/ when compiled), so we load
 // it dynamically at runtime to avoid TypeScript path resolution errors.
@@ -23,21 +24,34 @@ async function loadNotify(): Promise<{ alertOnFailure: (result: {
 }
 
 /**
- * 24/7 Acquisition Engine:
- *   1. Discover active MCP repo developers via GitHub search
- *   2. Send GitHub issue with embedded AUS MCP snippet
- *   3. Log referral metadata (promotedBy) for attribution
+ * 24/7 Acquisition & Health Monitoring Engine:
+ *   1. Health-check all eligible tool endpoints with bounded timeout & failure logging
+ *   2. Discover active MCP repo developers via GitHub search
+ *   3. Send GitHub issue with embedded AUS MCP snippet
+ *   4. Log referral metadata (promotedBy) for attribution
  */
 
 const INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const MAX_REPOS_PER_CYCLE = 10;
 
-async function runOutreachCycle(cycle: number): Promise<void> {
+export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?: HealthCheckJobSummary; sent: number }> {
   const store = await createStore();
   console.log(`[outreach] === Cycle ${cycle} === ${new Date().toISOString()}`);
 
+  let healthSummary: HealthCheckJobSummary | undefined;
   try {
-    // 1. Search for active MCP repos
+    // 1. Focused Health-Check Job
+    console.log(`[outreach] [health-check] Probing eligible tool endpoints...`);
+    healthSummary = await runHealthCheckJob({ store });
+    console.log(
+      `[outreach] [health-check] Completed: ${healthSummary.active} active, ${healthSummary.inactive} inactive out of ${healthSummary.totalEligible} eligible endpoints (${healthSummary.durationMs}ms)`
+    );
+  } catch (err: any) {
+    console.error(`[outreach] [health-check] Health check job error:`, err?.message);
+  }
+
+  try {
+    // 2. Search for active MCP repos
     const repos = await searchForMcpRepos(MAX_REPOS_PER_CYCLE);
     console.log(`[outreach] Found ${repos.length} qualifying repos`);
 
@@ -97,6 +111,7 @@ async function runOutreachCycle(cycle: number): Promise<void> {
       errors: repos.length - sent,
       cycle,
     });
+    return { healthSummary, sent };
   } catch (err) {
     console.error(`[outreach] Cycle ${cycle} crashed:`, (err as Error).message);
     const { alertOnFailure } = await loadNotify();
@@ -106,13 +121,34 @@ async function runOutreachCycle(cycle: number): Promise<void> {
       errors: 50,
       cycle,
     });
+    return { healthSummary, sent: 0 };
   }
 }
 
 // CLI entry point
 const mode = process.argv[2] ?? "once";
 
-if (mode === "watch") {
+if (mode === "health" || mode === "health-check") {
+  console.log(`[outreach] Running focused health-check job...`);
+  runHealthCheckJob()
+    .then((summary) => {
+      console.log(`\n=== Health-Check Job Summary ===`);
+      console.log(`Total eligible endpoints: ${summary.totalEligible}`);
+      console.log(`Active (healthy):         ${summary.active}`);
+      console.log(`Inactive (unhealthy):     ${summary.inactive}`);
+      console.log(`Duration:                 ${summary.durationMs}ms`);
+      for (const r of summary.results) {
+        const flag = r.healthStatus === "active" ? "✅ ACTIVE" : "❌ INACTIVE";
+        const reason = r.failureReason ? ` (Reason: ${r.failureReason})` : "";
+        console.log(`  - [${flag}] ${r.namespace} -> ${r.endpointUrl} [${r.latencyMs}ms]${reason}`);
+      }
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error("[outreach] Health-check job failed:", err);
+      process.exit(1);
+    });
+} else if (mode === "watch") {
   console.log(`[outreach] Starting 24/7 loop (interval: ${INTERVAL_MS / 3600000}h)`);
   let cycle = 0;
   runOutreachCycle(++cycle).catch(() => {}); // initial run

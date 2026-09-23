@@ -258,7 +258,7 @@ export async function pinnedRequest(
     }
   }
 
-  return new Response(capped, { status: nodeRes.statusCode ?? 502, headers: responseHeaders });
+  return new Response(capped as any, { status: nodeRes.statusCode ?? 502, headers: responseHeaders });
 }
 
 // ── size limits ────────────────────────────────────────────────────────────

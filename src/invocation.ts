@@ -414,7 +414,9 @@ ingress.use("/:namespace/*", async (c) => {
   // Payment context — set when payment is verified, used for settlement
   let paymentCtx: { payload: PaymentPayload; requirements: PaymentRequirements } | undefined;
 
-  if (premium && !DEV_WALLET) {
+  const onchainVerified = Boolean((c as any).get("x402.verified"));
+
+  if (premium && !DEV_WALLET && !onchainVerified) {
     const paymentHeader = c.req.header("x-payment");
     const authHeader = c.req.header("authorization");
 
@@ -624,21 +626,25 @@ async function executeAndLog(
   let feeStatus: FeeStatus = feeUsdc > 0 ? "not_collected" : "none";
   let settlementError: string | undefined;
 
-  if (feeUsdc > 0 && status === "success" && paymentCtx && x402Server) {
-    try {
-      const settleResult = await x402Server!.settlePayment(
-        paymentCtx.payload,
-        paymentCtx.requirements,
-      );
-      if (settleResult.success) {
-        feeStatus = "collected";
-      } else {
+  if (feeUsdc > 0 && status === "success") {
+    if ((c as any).get("x402.verified")) {
+      feeStatus = "collected";
+    } else if (paymentCtx && x402Server) {
+      try {
+        const settleResult = await x402Server!.settlePayment(
+          paymentCtx.payload,
+          paymentCtx.requirements,
+        );
+        if (settleResult.success) {
+          feeStatus = "collected";
+        } else {
+          feeStatus = "not_collected";
+          settlementError = settleResult.errorReason ?? settleResult.errorMessage ?? "Settlement failed";
+        }
+      } catch (err: any) {
         feeStatus = "not_collected";
-        settlementError = settleResult.errorReason ?? settleResult.errorMessage ?? "Settlement failed";
+        settlementError = `Settlement error: ${err?.message ?? String(err)}`;
       }
-    } catch (err: any) {
-      feeStatus = "not_collected";
-      settlementError = `Settlement error: ${err?.message ?? String(err)}`;
     }
   }
 

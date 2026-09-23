@@ -27,7 +27,11 @@ import { openapi } from "./openapi.js";
 import { setStore, default as ingestionRouter } from "./invocation.js";
 import { setRateLimitStore, MongoRateStore, startRateLimitCleanup } from "./rate-limit.js";
 import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
-import type { Tool, ToolSchema, ConnectionType, HealthStatus } from "./types.js";
+import { deriveReliability, type Tool, type ToolSchema, type ConnectionType, type HealthStatus } from "./types.js";
+import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402";
+import { default as agentScraperRouter } from "./routes/agentScraper.js";
+import { findToolBySlug, renderToolPage, renderNotFoundPage } from "./views/toolPage.js";
+import { renderDirectoryPage } from "./views/directoryPage.js";
 const app = new Hono();
 
 // ── Globals ─────────────────────────────────────────────────
@@ -53,11 +57,15 @@ app.get("/", (c) =>
     },
     endpoints: {
       search: "GET /search?q=<natural-language-query>&limit=<n> (free)",
+      directory: "GET /tools?reliability=<r>&connectionType=<c>",
+      tools: "GET /api/tools?capability=<cap>&limit=<n>&offset=<n>&status=<s>&healthStatus=<h>",
       submit: "POST /api/tools/submit (free)",
       toolDetail: "GET /api/tools/:namespace",
+      toolPage: "GET /tools/:slug",
       openapi: "GET /api/openapi.json",
       ingest: "POST /ingest (admin key required)",
       scrape: "POST /scrape (admin key required)",
+      scrapeAgents: "POST /api/scrape-agents",
     },
     payment: {
       network: config.x402Network,
@@ -278,6 +286,85 @@ app.post("/api/tools/submit", async (c) => {
   },
 );
 
+// ── Helper: Format tool record with health and reliability ──
+
+function formatToolRecord(tool: Tool) {
+  const health = deriveReliability(tool);
+  return {
+    namespace: tool.namespace,
+    name: tool.name,
+    description: tool.description,
+    schema: tool.schema,
+    connectionType: tool.connectionType,
+    endpointUrl: tool.endpointUrl ?? null,
+    healthStatus: health.healthStatus,
+    lastChecked: health.lastCheckedIso,
+    failureReason: health.failureReason,
+    reliability: health.reliability,
+    health: {
+      status: health.healthStatus,
+      lastChecked: health.lastCheckedIso,
+      reliability: health.reliability,
+      failureReason: health.failureReason,
+    },
+    pricing: tool.pricing ?? { model: "free", costPerCall: 0 },
+    developer: tool.developer,
+    status: tool.status ?? "active",
+    updatedAt: tool.updatedAt instanceof Date ? tool.updatedAt.toISOString() : tool.updatedAt,
+    embeddingDimensions: tool.embedding?.length ?? null,
+    schemaSource: tool.schemaSource ?? null,
+  };
+}
+
+// ── Public route: list tools (with filters, pagination, and health/reliability) ──
+
+app.get("/api/tools", async (c) => {
+  const limitParam = c.req.query("limit");
+  const offsetParam = c.req.query("offset") ?? c.req.query("skip");
+  const pageParam = c.req.query("page");
+
+  const status = c.req.query("status");
+  const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
+  const healthStatus = c.req.query("healthStatus") as HealthStatus | undefined;
+  const pricingModel = c.req.query("pricingModel");
+  const capability = c.req.query("capability") ?? c.req.query("q") ?? c.req.query("keyword");
+  const hasEndpointParam = c.req.query("hasEndpoint");
+  const hasEndpoint = hasEndpointParam !== undefined ? hasEndpointParam === "true" : undefined;
+
+  const limit = Math.min(Math.max(1, Number(limitParam ?? 20)), 100);
+  let offset = Math.max(0, Number(offsetParam ?? 0));
+  if (pageParam && !offsetParam) {
+    const page = Math.max(1, Number(pageParam));
+    offset = (page - 1) * limit;
+  }
+
+  const filter = {
+    hasEndpoint,
+    status,
+    connectionType,
+    healthStatus,
+    pricingModel,
+    capability,
+    limit,
+    offset,
+  };
+
+  const [total, tools] = await Promise.all([
+    store.count(filter),
+    store.list(filter),
+  ]);
+
+  const formattedTools = tools.map(formatToolRecord);
+
+  return c.json({
+    total,
+    count: formattedTools.length,
+    limit,
+    offset,
+    tools: formattedTools,
+  });
+});
+
 // ── Public route: tool detail by namespace ──────────────────
 
 app.get("/api/tools/:namespace", async (c) => {
@@ -291,22 +378,111 @@ app.get("/api/tools/:namespace", async (c) => {
     return c.json({ error: "Tool not found" }, 404);
   }
 
+  return c.json(formatToolRecord(tool));
+});
+
+// ── Public route: human-facing directory page (responsive cards + reliability & freshness) ──
+
+app.get("/tools", async (c) => {
+  const searchQuery = c.req.query("q") ?? c.req.query("search");
+  const reliability = c.req.query("reliability");
+  const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
+  const pricingModel = c.req.query("pricingModel");
+  const limitParam = c.req.query("limit");
+  const offsetParam = c.req.query("offset") ?? c.req.query("skip");
+
+  const limit = Math.min(Math.max(1, Number(limitParam ?? 50)), 100);
+  const offset = Math.max(0, Number(offsetParam ?? 0));
+
+  let tools = await store.list({
+    connectionType,
+    pricingModel,
+  });
+
+  // Filter by reliability if specified (high, degraded, failing, unchecked)
+  if (reliability && reliability !== "all") {
+    tools = tools.filter((t) => {
+      const h = deriveReliability(t);
+      return h.reliability === reliability;
+    });
+  }
+
+  // Filter by search query across name, description, namespace
+  if (searchQuery && searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim();
+    tools = tools.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        t.namespace.toLowerCase().includes(q) ||
+        (t.description && t.description.toLowerCase().includes(q)),
+    );
+  }
+
+  const total = tools.length;
+  const paginatedTools = tools.slice(offset, offset + limit);
+
+  const accept = c.req.header("Accept") ?? "";
+  const format = c.req.query("format");
+  if (format === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+    return c.json({
+      total,
+      count: paginatedTools.length,
+      limit,
+      offset,
+      tools: paginatedTools.map(formatToolRecord),
+    });
+  }
+
+  return c.html(
+    renderDirectoryPage(paginatedTools, total, {
+      search: searchQuery,
+      reliability,
+      connectionType,
+      pricingModel,
+    }),
+  );
+});
+
+// ── Public route: human-facing tool page (responsive detail + reliability) ──
+
+app.get("/tools/:slug", async (c) => {
+  const slug = c.req.param("slug");
+  if (!slug) {
+    return c.html(renderNotFoundPage(""), 404);
+  }
+
+  const tool = await findToolBySlug(store, slug);
+  if (!tool) {
+    const accept = c.req.header("Accept") ?? "";
+    const format = c.req.query("format");
+    if (format === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+      return c.json({ error: "Tool not found", slug }, 404);
+    }
+    return c.html(renderNotFoundPage(slug), 404);
+  }
+
+  // Content negotiation: return JSON if requested explicitly, otherwise responsive HTML
+  const accept = c.req.header("Accept") ?? "";
+  const format = c.req.query("format");
+  if (format === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+    return c.json(formatToolRecord(tool));
+  }
+
+  return c.html(renderToolPage(tool));
+});
+
+// ── x402 Base Payment Test Route ─────────────────────────────
+
+app.get("/api/x402-test", x402PaymentMiddleware, (c) => {
   return c.json({
-    namespace: tool.namespace,
-    name: tool.name,
-    description: tool.description,
-    schema: tool.schema,
-    connectionType: tool.connectionType,
-    endpointUrl: tool.endpointUrl,
-    healthStatus: tool.healthStatus,
-    pricing: tool.pricing,
-    developer: tool.developer,
-    status: tool.status,
-    updatedAt: tool.updatedAt.toISOString(),
-    embeddingDimensions: tool.embedding?.length ?? null,
-    schemaSource: tool.schemaSource ?? null,
+    success: true,
+    message: "Access granted! Payment verified successfully via x402 protocol.",
+    timestamp: new Date().toISOString(),
   });
 });
+
+// ── Agent Scraper Route ──────────────────────────────────────
+app.route("/", agentScraperRouter);
 
 // ── Start ──────────────────────────────────────────────────
 
@@ -331,8 +507,14 @@ async function main() {
       await mongoStore.ensureTtlIndex(3600); // 1-hour TTL
       setRateLimitStore(mongoStore);
       console.log("[rate-limit] MongoDB-backed rate limiting enabled");
+
+      const replayColl = db.collection("consumed_tx_hashes");
+      const mongoReplay = new MongoReplayStore(replayColl);
+      await mongoReplay.ensureIndexes();
+      setReplayStore(mongoReplay);
+      console.log("[replay-cache] MongoDB-backed persistent replay protection enabled");
     } catch (err: any) {
-      console.warn("[rate-limit] Failed to init MongoRateStore, using in-memory:", err?.message);
+      console.warn("[replay-cache] Failed to init persistent stores, using fallback:", err?.message);
     }
   }
   startRateLimitCleanup();
@@ -346,6 +528,19 @@ async function main() {
 
   console.log(`[db] Tools in store: ${total}`);
 
+  // Protect POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware
+  app.use("/api/invoke/:namespace", async (c, next) => {
+    if (c.req.method === "POST") {
+      return x402PaymentMiddleware(c, next);
+    }
+    await next();
+  });
+  app.use("/api/invoke/:namespace/*", async (c, next) => {
+    if (c.req.method === "POST") {
+      return x402PaymentMiddleware(c, next);
+    }
+    await next();
+  });
   app.route("/api/invoke", ingestionRouter);
 
   serve({ fetch: app.fetch, port: config.port }, (info) => {
@@ -353,15 +548,72 @@ async function main() {
     console.log(`  OpenAPI:  GET /api/openapi.json`);
     console.log(`  Health:   GET /health`);
     console.log(`  Search:   GET /search?q=<query>&limit=<n>  (free)`);
+    console.log(`  Tools:    GET /api/tools?limit=<n>&offset=<n>  (free)`);
+    console.log(`  Dir Cards:GET /tools  (responsive cards + reliability & freshness)`);
     console.log(`  Submit:   POST /api/tools/submit  (free)`);
     console.log(`  Detail:   GET /api/tools/:namespace`);
+    console.log(`  Page:     GET /tools/:slug  (responsive HTML)`);
     console.log(`  Invoke:   POST /api/invoke/:namespace  ($0.25 platform take-rate, premium tools, success-only)`);
+    console.log(`  x402:     GET /api/x402-test`);
     console.log(`  Ingest:   POST /ingest  (admin key)`);
-    console.log(`  Scrape:   POST /scrape   (admin key)\n`);
+    console.log(`  Scrape:   POST /scrape   (admin key)`);
+    console.log(`  Agents:   POST /api/scrape-agents\n`);
   });
 }
 
 const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
+  {
+    namespace: "net.2xcel.aus.schema-sanitizer",
+    name: "aus_schema_sanitizer",
+    description:
+      "Agent Utility Service (AUS) Schema Sanitizer: Enterprise-grade input sanitization, XSS stripping, and prompt-injection guard. Verified on Base mainnet (Chain ID 8453) with x402 ERC-20 USDC micro-payments ($0.10 USDC) to 0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C. Replay protected with on-chain transfer receipt verification. Header: X-Payment: <0x-tx-hash>.",
+    schema: {
+      type: "object",
+      properties: {
+        payload: { type: "object", description: "JSON payload to inspect and sanitize" },
+      },
+      required: ["payload"],
+    },
+    connectionType: "http",
+    endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+    healthStatus: "active",
+    status: "active",
+    pricing: {
+      model: "paid",
+      costPerCall: 0.1,
+    },
+    developer: {
+      address: "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C",
+      listingFeePaid: true,
+      listingFeeAmount: 0,
+    },
+  },
+  {
+    namespace: "net.2xcel.aus.agentic-audit",
+    name: "aus_agentic_audit",
+    description:
+      "Agent Utility Service (AUS) Agentic Audit: Autonomous runtime security audit, capability verification, and anomaly detection. Verified on Base mainnet (Chain ID 8453) with x402 ERC-20 USDC micro-payments ($0.25 USDC) to 0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C. Replay protected with on-chain transfer receipt verification. Header: X-Payment: <0x-tx-hash>.",
+    schema: {
+      type: "object",
+      properties: {
+        target: { type: "string", description: "Agent endpoint or manifest target to audit" },
+      },
+      required: ["target"],
+    },
+    connectionType: "http",
+    endpointUrl: "https://aus.2xcel.net/tools/agentic-audit",
+    healthStatus: "active",
+    status: "active",
+    pricing: {
+      model: "paid",
+      costPerCall: 0.25,
+    },
+    developer: {
+      address: "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C",
+      listingFeePaid: true,
+      listingFeeAmount: 0,
+    },
+  },
   {
     namespace: "net.2xcel.agent-utility",
     name: "web_scraper",

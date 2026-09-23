@@ -1,38 +1,45 @@
 {
-  "name": "aipages-backend",
-  "version": "0.1.0",
-  "description": "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
-  "type": "module",
-  "license": "MIT",
-  "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node --experimental-vm-modules dist/index.js",
-    "seed": "tsx scripts/seed.ts",
-    "setup-index": "tsx scripts/setup-vector-index.ts",
-    "ingest-tools": "tsx scripts/ingest-tools.ts",
-    "ingest-listings": "tsx scripts/ingest-listings.ts",
-    "crawl": "tsx src/crawler.ts once",
-    "crawl:watch": "tsx src/crawler.ts watch",
-    "typecheck": "tsc --noEmit",
-    "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts"
-  },
-  "dependencies": {
-    "@google/genai": "^1.0.0",
-    "@hono/node-server": "^1.14.1",
-    "@x402/core": "^2.0.0",
-    "@x402/evm": "^2.0.0",
-    "@x402/hono": "^2.25.0",
-    "ajv": "^8.20.0",
-    "dotenv": "^16.5.0",
-    "hono": "^4.7.10",
-    "mongodb": "^6.15.0",
-    "posthog-node": "^5.51.7",
-    "viem": "^2.56.3"
-  },
-  "devDependencies": {
-    "@types/node": "^20.17.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
-  }
+    "name": "aipages-backend",
+    "version": "0.1.0",
+    "description": "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
+    "type": "module",
+    "license": "MIT",
+    "scripts": {
+        "dev": "tsx watch --dns-result-order=ipv4first src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "seed": "tsx scripts/seed.ts",
+        "setup-index": "tsx scripts/setup-vector-index.ts",
+        "ingest-tools": "tsx scripts/ingest-tools.ts",
+        "ingest:tools": "node --env-file=.env dist/scripts/ingest-tools.js",
+        "ingest-listings": "tsx scripts/ingest-listings.ts",
+        "crawl": "tsx src/crawler.ts once",
+        "crawl:watch": "tsx src/crawler.ts watch",
+        "health-check": "tsx scripts/outreach.ts health",
+        "outreach": "tsx scripts/outreach.ts once",
+        "typecheck": "tsc --noEmit",
+        "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts"
+    },
+    "dependencies": {
+        "@google/genai": "^1.0.0",
+        "@hono/node-server": "^1.14.1",
+        "@x402/core": "^2.0.0",
+        "@x402/evm": "^2.0.0",
+        "@x402/hono": "^2.25.0",
+        "ajv": "^8.20.0",
+        "cheerio": "^1.2.0",
+        "crawlee": "^3.18.1",
+        "dotenv": "^16.5.0",
+        "ethers": "^6.17.0",
+        "hono": "^4.7.10",
+        "mongodb": "^6.15.0",
+        "playwright": "^1.63.0",
+        "posthog-node": "^5.51.7",
+        "viem": "^2.56.8"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.0",
+        "tsx": "^4.19.0",
+        "typescript": "^5.7.0"
+    }
 }

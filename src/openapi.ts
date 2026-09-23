@@ -101,6 +101,94 @@ export const openapi = {
         },
       },
     },
+    "/api/tools": {
+      get: {
+        summary: "List tools with health, freshness, and reliability status",
+        description:
+          "Returns registered tools with their latest endpoint health status, last-checked timestamp, and compact reliability indicator ('high', 'degraded', 'failing', or null/unchecked). Supports filtering by status, connectionType, healthStatus, pricingModel, hasEndpoint, and pagination via limit and offset/page.",
+        parameters: [
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 20, minimum: 1, maximum: 100 },
+            description: "Number of tools to return",
+          },
+          {
+            name: "offset",
+            in: "query",
+            required: false,
+            schema: { type: "integer", default: 0, minimum: 0 },
+            description: "Offset index for pagination",
+          },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["active", "inactive", "pending", "rejected"] },
+            description: "Filter by tool registration status",
+          },
+          {
+            name: "connectionType",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["sse", "stdio", "http", "websocket"] },
+            description: "Filter by connection protocol",
+          },
+          {
+            name: "healthStatus",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["active", "inactive", "unknown"] },
+            description: "Filter by endpoint health status",
+          },
+          {
+            name: "pricingModel",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["free", "freemium", "paid"] },
+            description: "Filter by pricing model",
+          },
+          {
+            name: "hasEndpoint",
+            in: "query",
+            required: false,
+            schema: { type: "boolean" },
+            description: "Filter tools that have a valid remote endpoint URL",
+          },
+          {
+            name: "capability",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description: "Filter tools by capability, keyword, or parameter across name, namespace, description, and schema properties",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated list of tools with health and reliability evaluation",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    total: { type: "integer" },
+                    count: { type: "integer" },
+                    limit: { type: "integer" },
+                    offset: { type: "integer" },
+                    tools: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ToolDetail" },
+                    },
+                  },
+                  required: ["total", "count", "limit", "offset", "tools"],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/api/tools/{namespace}": {
       get: {
         summary: "Get full execution metadata for a tool",
@@ -126,6 +214,106 @@ export const openapi = {
           "404": {
             description: "Tool not found",
             content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/tools": {
+      get: {
+        summary: "Responsive human-facing tool directory with reliability cards",
+        description:
+          "Renders an interactive directory grid of tool cards showcasing live endpoint reliability indicators, probe freshness relative timestamps, pricing, and connection protocols. Supports filtering by reliability state, connection type, and keyword query.",
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            required: false,
+            schema: { type: "string" },
+            description: "Keyword search across tool name, namespace, or description",
+          },
+          {
+            name: "reliability",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["all", "high", "degraded", "failing", "unchecked"] },
+            description: "Filter cards by endpoint reliability state",
+          },
+          {
+            name: "connectionType",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["sse", "stdio", "http", "websocket"] },
+            description: "Filter by connection protocol",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Tool directory HTML view or JSON tool array",
+            content: {
+              "text/html": {
+                schema: { type: "string", description: "Responsive HTML5 directory view" },
+              },
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    total: { type: "integer" },
+                    count: { type: "integer" },
+                    tools: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/ToolDetail" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/tools/{slug}": {
+      get: {
+        summary: "Responsive human-facing tool detail and reliability page",
+        description:
+          "Renders a responsive HTML detail page for a tool, featuring a prominent Reliability Section displaying endpoint liveness status, last-checked timestamp, human-readable failure reason, and recorded probe scope disclaimer. Supports content negotiation (returns JSON if Accept: application/json or ?format=json).",
+        parameters: [
+          {
+            name: "slug",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Tool namespace or normalized slug identifier",
+          },
+          {
+            name: "format",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: ["json", "html"] },
+            description: "Optional response format override",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Tool detail page (HTML) or JSON representation",
+            content: {
+              "text/html": {
+                schema: { type: "string", description: "Responsive HTML5 document" },
+              },
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ToolDetail" },
+              },
+            },
+          },
+          "404": {
+            description: "Tool not found",
+            content: {
+              "text/html": {
+                schema: { type: "string", description: "Not found HTML page" },
+              },
               "application/json": {
                 schema: { $ref: "#/components/schemas/Error" },
               },
@@ -327,6 +515,22 @@ export const openapi = {
             type: "string",
             enum: ["active", "inactive", "unknown"],
           },
+          lastChecked: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            description: "Timestamp of latest health check probe, or null if unchecked.",
+          },
+          failureReason: {
+            type: "string",
+            nullable: true,
+            description: "Concise diagnostic failure reason if endpoint check failed.",
+          },
+          reliability: {
+            type: "string",
+            enum: ["high", "degraded", "failing", "unchecked"],
+            description: "Compact reliability indicator derived from health status and freshness.",
+          },
           score: {
             type: "number",
             description: "Vector search similarity score (cosine)",
@@ -352,10 +556,35 @@ export const openapi = {
             type: "string",
             enum: ["sse", "stdio", "http", "websocket"],
           },
-          endpointUrl: { type: "string" },
+          endpointUrl: { type: "string", nullable: true },
           healthStatus: {
             type: "string",
             enum: ["active", "inactive", "unknown"],
+          },
+          lastChecked: {
+            type: "string",
+            format: "date-time",
+            nullable: true,
+            description: "Timestamp of latest health check probe, or null if unchecked.",
+          },
+          failureReason: {
+            type: "string",
+            nullable: true,
+            description: "Concise diagnostic failure reason if endpoint check failed.",
+          },
+          reliability: {
+            type: "string",
+            enum: ["high", "degraded", "failing", "unchecked"],
+            description: "Compact reliability indicator derived from health status and freshness.",
+          },
+          health: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["active", "inactive", "unknown"] },
+              lastChecked: { type: "string", format: "date-time", nullable: true },
+              reliability: { type: "string", enum: ["high", "degraded", "failing", "unchecked"] },
+              failureReason: { type: "string", nullable: true },
+            },
           },
           pricing: {
             type: "object",

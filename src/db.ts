@@ -40,17 +40,40 @@ export interface SearchHit {
   score: number;
 }
 
+export interface HealthUpdate {
+  healthStatus: HealthStatus;
+  lastChecked: Date;
+  lastCheckedAt?: Date;
+  failureReason?: string | null;
+}
+
+export interface ToolListFilter {
+  hasEndpoint?: boolean;
+  status?: string;
+  connectionType?: ConnectionType;
+  healthStatus?: HealthStatus;
+  pricingModel?: string;
+  capability?: string;
+  q?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export interface ToolStore {
   /** Insert or upsert a tool by namespace (unique key). */
   upsert(tool: Tool): Promise<void>;
   /** Bulk upsert. */
   upsertMany(tools: Tool[]): Promise<number>;
-  /** Get total document count. */
-  count(): Promise<number>;
+  /** Get total document count (optionally filtered). */
+  count(filter?: ToolListFilter): Promise<number>;
   /** Vector search: returns top-k tools matching the embedding. */
   search(queryEmbedding: number[], limit: number): Promise<SearchResult[]>;
   /** Get a single tool by namespace (full document). */
   getByNamespace(namespace: string): Promise<Tool | null>;
+  /** List tools, optionally filtering by endpoint, status, connectionType, etc. */
+  list(filter?: ToolListFilter): Promise<Tool[]>;
+  /** Update health check status and diagnostic failure metadata. */
+  updateHealth(namespace: string, update: HealthUpdate): Promise<void>;
   /** Health check — returns true if the store is reachable. */
   ping(): Promise<boolean>;
   /** Close connections. */
@@ -93,6 +116,55 @@ class MongoToolStore implements ToolStore {
     return this.collection.findOne({ namespace }) as Promise<Tool | null>;
   }
 
+  async list(filter?: ToolListFilter): Promise<Tool[]> {
+    const query: Record<string, any> = {};
+    if (filter?.hasEndpoint) {
+      query.endpointUrl = { $exists: true, $nin: [null, ""] };
+    }
+    if (filter?.status) {
+      query.status = filter.status;
+    }
+    if (filter?.connectionType) {
+      query.connectionType = filter.connectionType;
+    }
+    if (filter?.healthStatus) {
+      query.healthStatus = filter.healthStatus;
+    }
+    if (filter?.pricingModel) {
+      query["pricing.model"] = filter.pricingModel;
+    }
+    const cap = filter?.capability ?? filter?.q;
+    if (cap && cap.trim()) {
+      const regex = { $regex: cap.trim(), $options: "i" };
+      query.$or = [{ name: regex }, { namespace: regex }, { description: regex }];
+    }
+    let cursor = this.collection.find(query);
+    if (filter?.offset && filter.offset > 0) {
+      cursor = cursor.skip(filter.offset);
+    }
+    if (filter?.limit && filter.limit > 0) {
+      cursor = cursor.limit(filter.limit);
+    }
+    const docs = await cursor.toArray();
+    return docs as unknown as Tool[];
+  }
+
+  async updateHealth(namespace: string, update: HealthUpdate): Promise<void> {
+    const lastChecked = update.lastChecked ?? new Date();
+    await this.collection.updateOne(
+      { namespace },
+      {
+        $set: {
+          healthStatus: update.healthStatus,
+          lastChecked,
+          lastCheckedAt: update.lastCheckedAt ?? lastChecked,
+          failureReason: update.failureReason ?? null,
+          updatedAt: new Date(),
+        },
+      },
+    );
+  }
+
   async upsertMany(tools: Tool[]): Promise<number> {
     let count = 0;
     for (const tool of tools) {
@@ -102,8 +174,24 @@ class MongoToolStore implements ToolStore {
     return count;
   }
 
-  async count(): Promise<number> {
-    return this.collection.estimatedDocumentCount();
+  async count(filter?: ToolListFilter): Promise<number> {
+    if (!filter || Object.keys(filter).length === 0) {
+      return this.collection.estimatedDocumentCount();
+    }
+    const query: Record<string, any> = {};
+    if (filter?.hasEndpoint) {
+      query.endpointUrl = { $exists: true, $nin: [null, ""] };
+    }
+    if (filter?.status) query.status = filter.status;
+    if (filter?.connectionType) query.connectionType = filter.connectionType;
+    if (filter?.healthStatus) query.healthStatus = filter.healthStatus;
+    if (filter?.pricingModel) query["pricing.model"] = filter.pricingModel;
+    const cap = filter?.capability ?? filter?.q;
+    if (cap && cap.trim()) {
+      const regex = { $regex: cap.trim(), $options: "i" };
+      query.$or = [{ name: regex }, { namespace: regex }, { description: regex }];
+    }
+    return this.collection.countDocuments(query);
   }
 
   async search(queryEmbedding: number[], limit: number): Promise<SearchResult[]> {
@@ -166,8 +254,12 @@ export class InMemoryToolStore implements ToolStore {
     return tools.length;
   }
 
-  async count(): Promise<number> {
-    return this.tools.size;
+  async count(filter?: ToolListFilter): Promise<number> {
+    if (!filter || Object.keys(filter).length === 0) {
+      return this.tools.size;
+    }
+    const all = await this.list({ ...filter, limit: undefined, offset: undefined });
+    return all.length;
   }
 
   async search(queryEmbedding: number[], limit: number): Promise<SearchResult[]> {
@@ -183,6 +275,69 @@ export class InMemoryToolStore implements ToolStore {
 
   async getByNamespace(namespace: string): Promise<Tool | null> {
     return this.tools.get(namespace) ?? null;
+  }
+
+  async list(filter?: ToolListFilter): Promise<Tool[]> {
+    let result = Array.from(this.tools.values());
+    if (filter?.hasEndpoint) {
+      result = result.filter(
+        (t) => typeof t.endpointUrl === "string" && t.endpointUrl.trim().length > 0,
+      );
+    }
+    if (filter?.status) {
+      result = result.filter((t) => t.status === filter.status);
+    }
+    if (filter?.connectionType) {
+      result = result.filter((t) => t.connectionType === filter.connectionType);
+    }
+    if (filter?.healthStatus) {
+      result = result.filter((t) => t.healthStatus === filter.healthStatus);
+    }
+    if (filter?.pricingModel) {
+      result = result.filter((t) => t.pricing?.model === filter.pricingModel);
+    }
+    const cap = filter?.capability ?? filter?.q;
+    if (cap && cap.trim()) {
+      const cLower = cap.trim().toLowerCase();
+      result = result.filter((t) => {
+        if (t.name.toLowerCase().includes(cLower)) return true;
+        if (t.namespace.toLowerCase().includes(cLower)) return true;
+        if (t.description?.toLowerCase().includes(cLower)) return true;
+        if (t.schema?.properties) {
+          for (const [propName, propDef] of Object.entries(t.schema.properties)) {
+            if (propName.toLowerCase().includes(cLower)) return true;
+            if (
+              typeof propDef === "object" &&
+              propDef !== null &&
+              (propDef as any).description?.toLowerCase().includes(cLower)
+            ) {
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+    }
+    const offset = filter?.offset ?? 0;
+    if (offset > 0) {
+      result = result.slice(offset);
+    }
+    if (filter?.limit && filter.limit > 0) {
+      result = result.slice(0, filter.limit);
+    }
+    return result;
+  }
+
+  async updateHealth(namespace: string, update: HealthUpdate): Promise<void> {
+    const existing = this.tools.get(namespace);
+    if (existing) {
+      const lastChecked = update.lastChecked ?? new Date();
+      existing.healthStatus = update.healthStatus;
+      existing.lastChecked = lastChecked;
+      existing.lastCheckedAt = update.lastCheckedAt ?? lastChecked;
+      existing.failureReason = update.failureReason ?? null;
+      existing.updatedAt = new Date();
+    }
   }
 
   async ping(): Promise<boolean> {
