@@ -125,6 +125,192 @@ export async function findRelatedTools(
   return scored.slice(0, limit).map((item) => item.tool);
 }
 
+export function generateSamplePayload(schema: any): any {
+  if (!schema || typeof schema !== "object") {
+    return { input: "sample_value" };
+  }
+
+  if (schema.properties && typeof schema.properties === "object") {
+    const result: Record<string, any> = {};
+    for (const [key, prop] of Object.entries(schema.properties as Record<string, any>)) {
+      if (!prop || typeof prop !== "object") {
+        result[key] = "sample_value";
+        continue;
+      }
+      if (prop.default !== undefined) {
+        result[key] = prop.default;
+      } else if (prop.example !== undefined) {
+        result[key] = prop.example;
+      } else if (Array.isArray(prop.enum) && prop.enum.length > 0) {
+        result[key] = prop.enum[0];
+      } else if (prop.type === "string") {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey.includes("url")) {
+          result[key] = "https://example.com/data";
+        } else if (lowerKey.includes("query")) {
+          result[key] = "sample query";
+        } else if (lowerKey.includes("prompt")) {
+          result[key] = "Analyze this input for patterns";
+        } else if (lowerKey.includes("code")) {
+          result[key] = "console.log('hello');";
+        } else if (lowerKey.includes("address")) {
+          result[key] = "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C";
+        } else if (lowerKey.includes("hash")) {
+          result[key] = "0x<transaction_hash>";
+        } else if (lowerKey.includes("id")) {
+          result[key] = "req_12345";
+        } else {
+          result[key] = `sample_${key}`;
+        }
+      } else if (prop.type === "number" || prop.type === "integer") {
+        result[key] = 1;
+      } else if (prop.type === "boolean") {
+        result[key] = true;
+      } else if (prop.type === "array") {
+        if (prop.items && typeof prop.items === "object") {
+          if (prop.items.properties) {
+            result[key] = [generateSamplePayload(prop.items)];
+          } else if (prop.items.type === "string") {
+            result[key] = ["sample_value"];
+          } else if (prop.items.type === "number" || prop.items.type === "integer") {
+            result[key] = [1];
+          } else {
+            result[key] = [];
+          }
+        } else {
+          result[key] = [];
+        }
+      } else if (prop.type === "object") {
+        if (prop.properties) {
+          result[key] = generateSamplePayload(prop);
+        } else {
+          result[key] = { sample_key: "sample_value" };
+        }
+      } else {
+        result[key] = "sample_value";
+      }
+    }
+    return Object.keys(result).length > 0 ? result : { input: "sample_value" };
+  }
+
+  return { input: "sample_value" };
+}
+
+export interface RequestExample {
+  endpoint: string;
+  method: string;
+  headers: Record<string, string>;
+  body: Record<string, any>;
+  bodyJson: string;
+  curl: string;
+  fetchCode: string;
+  rawHttp: string;
+  authDescription: string;
+  isX402: boolean;
+  costDisplay: string;
+  recipientAddress?: string;
+}
+
+export function generateRequestExample(tool: Tool): RequestExample {
+  const method = "POST";
+  const endpoint = tool.endpointUrl || `https://aus.2xcel.net/api/invoke/${tool.namespace}`;
+
+  let host = "aus.2xcel.net";
+  let path = `/api/invoke/${tool.namespace}`;
+  try {
+    const parsed = new URL(endpoint);
+    host = parsed.host;
+    path = parsed.pathname + parsed.search;
+  } catch {
+    // fallback
+  }
+
+  const isX402 = Boolean(
+    tool.isFirstParty ||
+    tool.pricing?.model === "paid" ||
+    (tool.authentication && /x402|x-payment-receipt/i.test(tool.authentication))
+  );
+
+  const costDisplay = tool.pricing?.model === "free"
+    ? "Free ($0.00)"
+    : `$${tool.pricing?.costPerCall ?? 0.25} USDC`;
+
+  const recipientAddress = tool.developer?.address || "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C";
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  let authDescription = "No authentication required (Public free endpoint)";
+
+  if (isX402) {
+    headers["x-payment-receipt"] = "<BASE_USDC_PAYMENT_RECEIPT>";
+    authDescription = `x402 Payment Protocol — Requires ${costDisplay} on Base Mainnet (Chain ID 8453) to recipient ${recipientAddress}. Include your settled Base ERC-20 payment receipt in the 'x-payment-receipt' header (or 'X-Payment' tx hash).`;
+  } else if (tool.authentication) {
+    if (/bearer|token|apikey|key/i.test(tool.authentication)) {
+      headers["Authorization"] = "Bearer <API_KEY>";
+    }
+    authDescription = tool.authentication;
+  }
+
+  const sampleBody = generateSamplePayload(tool.schema);
+  const bodyJson = JSON.stringify(sampleBody, null, 2);
+
+  // Generate cURL
+  const headerLines = Object.entries(headers)
+    .map(([k, v]) => `  -H "${k}: ${v}" \\`)
+    .join("\n");
+  const curl = `curl -X ${method} "${endpoint}" \\\n${headerLines}\n  -d '${bodyJson}'`;
+
+  // Generate raw HTTP
+  const rawHeaders = Object.entries(headers)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join("\n");
+  const rawHttp = `${method} ${path} HTTP/1.1\nHost: ${host}\n${rawHeaders}\n\n${bodyJson}`;
+
+  // Generate JavaScript fetch code
+  const fetchHeadersObj = JSON.stringify(headers, null, 4)
+    .split("\n")
+    .map((line, idx) => (idx === 0 ? line : `  ${line}`))
+    .join("\n");
+  const fetchBodyStr = bodyJson
+    .split("\n")
+    .map((line, idx) => (idx === 0 ? line : `    ${line}`))
+    .join("\n");
+
+  const fetchCode = `// Invoke ${tool.name} with autonomous agent authorization
+const response = await fetch("${endpoint}", {
+  method: "${method}",
+  headers: ${fetchHeadersObj},
+  body: JSON.stringify(${fetchBodyStr})
+});
+
+if (!response.ok) {
+  if (response.status === 402) {
+    console.error("402 Payment Required: Settled Base USDC payment receipt required.");
+  }
+  throw new Error(\`HTTP error! status: \${response.status}\`);
+}
+
+const data = await response.json();
+console.log("Tool execution result:", data);`;
+
+  return {
+    endpoint,
+    method,
+    headers,
+    body: sampleBody,
+    bodyJson,
+    curl,
+    fetchCode,
+    rawHttp,
+    authDescription,
+    isX402,
+    costDisplay,
+    recipientAddress,
+  };
+}
+
 export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   const health = deriveReliability(tool);
   const escapedName = escapeHtml(tool.name);
@@ -137,6 +323,7 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   const devAddress = tool.developer?.address ? escapeHtml(tool.developer.address) : null;
   const updatedAtFormatted = formatTimestamp(tool.updatedAt);
   const schemaJson = tool.schema ? escapeHtml(JSON.stringify(tool.schema, null, 2)) : null;
+  const requestExample = generateRequestExample(tool);
 
   const isFirstParty = Boolean(
     tool.isFirstParty ??
@@ -705,6 +892,119 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
       gap: 16px;
       align-items: center;
     }
+
+    /* Integration & Request Example Section */
+    .integration-card {
+      border-top: 3px solid var(--primary);
+    }
+    .auth-notice-box {
+      background: var(--card-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .auth-notice-box.auth-x402 {
+      border-left: 4px solid var(--primary);
+    }
+    .auth-notice-box.auth-free {
+      border-left: 4px solid var(--healthy);
+    }
+    .auth-notice-header {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .auth-notice-desc {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .auth-notice-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .auth-notice-meta code {
+      background: var(--code-bg);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .badge-paid {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-free {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+      border: 1px solid var(--healthy-border);
+    }
+    .code-tabs-wrapper {
+      margin-top: 12px;
+    }
+    .code-tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .code-tab-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .code-tab-btn:hover {
+      border-color: var(--border-light);
+      color: #fff;
+    }
+    .code-tab-btn.active {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .btn-copy, .btn-proxy-copy {
+      background: var(--card-surface);
+      border: 1px solid var(--border-light);
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-copy:hover, .btn-proxy-copy:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .btn-copy.btn-copied, .btn-proxy-copy.btn-copied {
+      background: rgba(16, 185, 129, 0.2) !important;
+      border-color: var(--healthy) !important;
+      color: var(--healthy) !important;
+    }
   </style>
 </head>
 <body>
@@ -908,13 +1208,20 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
         </div>
 
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
-          <div style="font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 8px;">Direct Execution Proxy</div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">Direct Execution Proxy</div>
+            <button type="button" class="btn btn-sm btn-proxy-copy" onclick="copyProxySnippet(this)" style="padding: 3px 8px; font-size: 0.75rem;">
+              <span class="proxy-copy-label">Copy</span>
+            </button>
+          </div>
           <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
             Invoke dynamically with autonomous agent wallet authorization:
+            <a href="#integration-examples" style="color: var(--primary); margin-left: 6px;">View Full cURL &amp; Payload &darr;</a>
           </div>
-          <pre style="margin: 0;"><code>POST /api/invoke/${escapedNamespace}
+          <pre style="margin: 0;"><code id="proxy-snippet">POST /api/invoke/${escapedNamespace}
 Host: aus.2xcel.net
 X-Payment: &lt;base-usdc-tx-hash&gt;
+x-payment-receipt: &lt;BASE_USDC_PAYMENT_RECEIPT&gt;
 Content-Type: application/json</code></pre>
         </div>
       </section>
@@ -943,6 +1250,76 @@ Content-Type: application/json</code></pre>
     `
         : ""
     }
+
+    <!-- Integration & Request Example Section -->
+    <section class="card full-width integration-card" aria-label="Integration & Request Examples" id="integration-examples">
+      <div class="card-header">
+        <h2 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          Integration &amp; Request Example
+        </h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="badge ${requestExample.isX402 ? "badge-paid" : "badge-free"}">
+            ${requestExample.isX402 ? "💳 x402 Payment Required" : "🔓 Free Endpoint"}
+          </span>
+          <button type="button" class="btn btn-sm btn-copy" onclick="copyActiveExample(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="copy-label">Copy cURL</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-notice-box ${requestExample.isX402 ? "auth-x402" : "auth-free"}">
+        <div class="auth-notice-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <strong>Authentication &amp; Payment Protocol:</strong>
+        </div>
+        <div class="auth-notice-desc">
+          ${escapeHtml(requestExample.authDescription)}
+        </div>
+        ${
+          requestExample.isX402
+            ? `
+        <div class="auth-notice-meta">
+          <span><strong>Cost:</strong> ${escapeHtml(requestExample.costDisplay)}</span>
+          <span><strong>Network:</strong> Base Mainnet (Chain ID 8453)</span>
+          <span><strong>Header:</strong> <code>x-payment-receipt: &lt;BASE_USDC_PAYMENT_RECEIPT&gt;</code></span>
+          ${requestExample.recipientAddress ? `<span><strong>Recipient:</strong> <code>${escapeHtml(requestExample.recipientAddress)}</code></span>` : ""}
+        </div>
+        `
+            : `
+        <div class="auth-notice-meta">
+          <span><strong>Cost:</strong> Free</span>
+          <span><strong>Access:</strong> Public</span>
+        </div>
+        `
+        }
+      </div>
+
+      <div class="code-tabs-wrapper">
+        <div class="code-tabs-nav" role="tablist">
+          <button type="button" class="code-tab-btn active" role="tab" aria-selected="true" data-tab="curl" onclick="switchExampleTab('curl')">cURL</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="javascript" onclick="switchExampleTab('javascript')">JavaScript (fetch)</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="http" onclick="switchExampleTab('http')">Raw HTTP</button>
+        </div>
+        <div class="code-tab-panel active" id="panel-curl">
+          <pre><code id="snippet-curl">${escapeHtml(requestExample.curl)}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-javascript" style="display: none;">
+          <pre><code id="snippet-javascript">${escapeHtml(requestExample.fetchCode)}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-http" style="display: none;">
+          <pre><code id="snippet-http">${escapeHtml(requestExample.rawHttp)}</code></pre>
+        </div>
+      </div>
+    </section>
 
     <!-- Related Tools Section -->
     <section class="card full-width" aria-label="Related Tools by Shared Capabilities">
@@ -1017,6 +1394,94 @@ Content-Type: application/json</code></pre>
       </div>
     </div>
   </footer>
+
+  <script>
+    var activeExampleTab = 'curl';
+    function switchExampleTab(tab) {
+      activeExampleTab = tab;
+      document.querySelectorAll('.code-tab-btn').forEach(function(b) {
+        var isTarget = b.getAttribute('data-tab') === tab;
+        b.classList.toggle('active', isTarget);
+        b.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+      });
+      ['curl', 'javascript', 'http'].forEach(function(t) {
+        var panel = document.getElementById('panel-' + t);
+        if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+      });
+      var copyLabel = document.querySelector('.btn-copy .copy-label');
+      if (copyLabel) {
+        if (tab === 'curl') copyLabel.textContent = 'Copy cURL';
+        else if (tab === 'javascript') copyLabel.textContent = 'Copy JavaScript';
+        else copyLabel.textContent = 'Copy HTTP';
+      }
+    }
+
+    function fallbackCopy(text, cb) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        if (cb) cb();
+      } catch (e) {
+        console.error('Copy failed:', e);
+      }
+      document.body.removeChild(ta);
+    }
+
+    function copyActiveExample(btn) {
+      var codeEl = document.getElementById('snippet-' + activeExampleTab);
+      if (!codeEl) return;
+      var text = codeEl.innerText || codeEl.textContent;
+      var label = btn.querySelector('.copy-label') || btn;
+      var orig = label.textContent;
+
+      var updateUi = function() {
+        label.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        setTimeout(function() {
+          label.textContent = orig;
+          btn.classList.remove('btn-copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(updateUi).catch(function() {
+          fallbackCopy(text, updateUi);
+        });
+      } else {
+        fallbackCopy(text, updateUi);
+      }
+    }
+
+    function copyProxySnippet(btn) {
+      var codeEl = document.getElementById('proxy-snippet');
+      if (!codeEl) return;
+      var text = codeEl.innerText || codeEl.textContent;
+      var label = btn.querySelector('.proxy-copy-label') || btn;
+      var orig = label.textContent;
+
+      var updateUi = function() {
+        label.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        setTimeout(function() {
+          label.textContent = orig;
+          btn.classList.remove('btn-copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(updateUi).catch(function() {
+          fallbackCopy(text, updateUi);
+        });
+      } else {
+        fallbackCopy(text, updateUi);
+      }
+    }
+  </script>
 </body>
 </html>`;
 }
