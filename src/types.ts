@@ -45,10 +45,22 @@ export interface Tool {
     address: string;
     listingFeePaid?: boolean;
     listingFeeAmount?: number;
+    isFirstParty?: boolean;
+    name?: string;
   };
   status?: "active" | "inactive" | "pending" | "rejected";
   /** Provenance: URL of the manifest the schema was parsed from (crawler-only). */
   schemaSource?: string;
+  /** Explicit first-party indicator */
+  isFirstParty?: boolean;
+  /** Capability tags for discovery and query routing */
+  capabilities?: string[];
+  /** Human-readable rate limit constraint (e.g. "100 requests per 60 seconds per IP") */
+  rateLimit?: string;
+  /** Authentication and payment protocol instructions */
+  authentication?: string;
+  /** Technical protocol specification details */
+  protocolDetails?: string;
 }
 
 export type ReliabilityIndicator = "high" | "degraded" | "failing" | "unchecked";

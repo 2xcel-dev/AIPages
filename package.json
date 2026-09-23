@@ -18,6 +18,7 @@
         "health-check": "tsx scripts/outreach.ts health",
         "outreach": "tsx scripts/outreach.ts once",
         "typecheck": "tsc --noEmit",
+        "check:tools": "tsx scripts/validate-catalog.ts",
         "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts"
     },
     "dependencies": {

@@ -28,10 +28,12 @@ import { setStore, default as ingestionRouter } from "./invocation.js";
 import { setRateLimitStore, MongoRateStore, startRateLimitCleanup } from "./rate-limit.js";
 import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
 import { deriveReliability, type Tool, type ToolSchema, type ConnectionType, type HealthStatus } from "./types.js";
-import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402";
+import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402.js";
 import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
+import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
+import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
 const app = new Hono();
 
 // ── Globals ─────────────────────────────────────────────────
@@ -290,6 +292,11 @@ app.post("/api/tools/submit", async (c) => {
 
 function formatToolRecord(tool: Tool) {
   const health = deriveReliability(tool);
+  const isFirstParty = Boolean(
+    tool.isFirstParty ??
+    tool.developer?.isFirstParty ??
+    tool.namespace?.startsWith("net.2xcel.aus")
+  );
   return {
     namespace: tool.namespace,
     name: tool.name,
@@ -313,6 +320,11 @@ function formatToolRecord(tool: Tool) {
     updatedAt: tool.updatedAt instanceof Date ? tool.updatedAt.toISOString() : tool.updatedAt,
     embeddingDimensions: tool.embedding?.length ?? null,
     schemaSource: tool.schemaSource ?? null,
+    isFirstParty,
+    capabilities: tool.capabilities ?? [],
+    rateLimit: tool.rateLimit ?? (isFirstParty ? "100 requests per 60 seconds per IP" : null),
+    authentication: tool.authentication ?? null,
+    protocolDetails: tool.protocolDetails ?? null,
   };
 }
 
@@ -562,58 +574,7 @@ async function main() {
 }
 
 const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
-  {
-    namespace: "net.2xcel.aus.schema-sanitizer",
-    name: "aus_schema_sanitizer",
-    description:
-      "Agent Utility Service (AUS) Schema Sanitizer: Enterprise-grade input sanitization, XSS stripping, and prompt-injection guard. Verified on Base mainnet (Chain ID 8453) with x402 ERC-20 USDC micro-payments ($0.10 USDC) to 0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C. Replay protected with on-chain transfer receipt verification. Header: X-Payment: <0x-tx-hash>.",
-    schema: {
-      type: "object",
-      properties: {
-        payload: { type: "object", description: "JSON payload to inspect and sanitize" },
-      },
-      required: ["payload"],
-    },
-    connectionType: "http",
-    endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
-    healthStatus: "active",
-    status: "active",
-    pricing: {
-      model: "paid",
-      costPerCall: 0.1,
-    },
-    developer: {
-      address: "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C",
-      listingFeePaid: true,
-      listingFeeAmount: 0,
-    },
-  },
-  {
-    namespace: "net.2xcel.aus.agentic-audit",
-    name: "aus_agentic_audit",
-    description:
-      "Agent Utility Service (AUS) Agentic Audit: Autonomous runtime security audit, capability verification, and anomaly detection. Verified on Base mainnet (Chain ID 8453) with x402 ERC-20 USDC micro-payments ($0.25 USDC) to 0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C. Replay protected with on-chain transfer receipt verification. Header: X-Payment: <0x-tx-hash>.",
-    schema: {
-      type: "object",
-      properties: {
-        target: { type: "string", description: "Agent endpoint or manifest target to audit" },
-      },
-      required: ["target"],
-    },
-    connectionType: "http",
-    endpointUrl: "https://aus.2xcel.net/tools/agentic-audit",
-    healthStatus: "active",
-    status: "active",
-    pricing: {
-      model: "paid",
-      costPerCall: 0.25,
-    },
-    developer: {
-      address: "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C",
-      listingFeePaid: true,
-      listingFeeAmount: 0,
-    },
-  },
+  ...CANONICAL_AUS_TOOLS,
   {
     namespace: "net.2xcel.agent-utility",
     name: "web_scraper",
@@ -629,6 +590,10 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     connectionType: "sse",
     endpointUrl: "https://api.example.com/mcp",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["web-scraping", "markdown-extraction"],
   },
   {
     namespace: "io.github.crewai.file-reader",
@@ -644,6 +609,10 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     },
     connectionType: "stdio",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["file-reading", "pdf-parsing"],
   },
   {
     namespace: "com.google.gemini-code-assist",
@@ -667,6 +636,10 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     connectionType: "http",
     endpointUrl: "https://gemini.google.com/code-assist",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["code-generation", "inline-assistance"],
   },
   {
     namespace: "net.huggingface.inference",
@@ -684,6 +657,10 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     connectionType: "http",
     endpointUrl: "https://api-inference.huggingface.co",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["text-classification", "sentiment-analysis"],
   },
   {
     namespace: "io.github.anthropic.mcp-filesystem",
@@ -702,6 +679,10 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     },
     connectionType: "stdio",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["filesystem", "local-io"],
   },
   {
     namespace: "com.stripe.payment-gateway",
@@ -719,12 +700,19 @@ const DEV_SEED_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
     connectionType: "http",
     endpointUrl: "https://api.stripe.com/v1",
     healthStatus: "active",
+    lastChecked: new Date(),
+    failureReason: null,
+    pricing: { model: "free", costPerCall: 0 },
+    capabilities: ["payment-processing", "billing-automation"],
   },
 ];
 
 async function seedDevTools(store: ToolStore): Promise<void> {
+  // Pre-release guardrail: assert first-party AUS tools pass strict validation
+  assertValidFirstPartyTools(CANONICAL_AUS_TOOLS as unknown as Tool[]);
+
   for (const raw of DEV_SEED_TOOLS) {
-    const text = `${raw.namespace} ${raw.name} ${raw.description}`;
+    const text = `${raw.namespace} ${raw.name} ${raw.description} ${(raw.capabilities ?? []).join(" ")}`;
     const embedding = await embed(text);
     const tool: Tool = { ...raw, embedding, updatedAt: new Date() };
     await store.upsert(tool);

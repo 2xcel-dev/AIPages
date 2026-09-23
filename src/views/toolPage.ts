@@ -98,6 +98,12 @@ export function renderToolPage(tool: Tool): string {
   const updatedAtFormatted = formatTimestamp(tool.updatedAt);
   const schemaJson = tool.schema ? escapeHtml(JSON.stringify(tool.schema, null, 2)) : null;
 
+  const isFirstParty = Boolean(
+    tool.isFirstParty ??
+    tool.developer?.isFirstParty ??
+    tool.namespace?.startsWith("net.2xcel.aus")
+  );
+
   // Health & Reliability classification
   const isHealthy = health.reliability === "high";
   const isDegraded = health.reliability === "degraded";
@@ -336,6 +342,12 @@ export function renderToolPage(tool: Tool): string {
     .badge-unchecked .pulse-dot {
       background: var(--unchecked);
     }
+    .badge-first-party {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      font-weight: 700;
+    }
 
     /* Responsive Grid */
     .grid-layout {
@@ -537,7 +549,10 @@ export function renderToolPage(tool: Tool): string {
     <div class="hero">
       <div class="hero-top">
         <h1 class="tool-title">${escapedName}</h1>
-        ${statusBadgeHtml}
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          ${isFirstParty ? `<span class="badge badge-first-party">★ First-Party AUS Tool</span>` : ""}
+          ${statusBadgeHtml}
+        </div>
       </div>
       <div style="margin-bottom: 12px;">
         <span class="namespace-tag">${escapedNamespace}</span>
@@ -639,6 +654,34 @@ export function renderToolPage(tool: Tool): string {
         </div>
 
         <div class="meta-list">
+          ${
+            isFirstParty
+              ? `
+          <div class="meta-row">
+            <span class="meta-label">Service Tier</span>
+            <span class="meta-value"><strong>First-Party Official (Agent Utility Services)</strong></span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Authentication</span>
+            <span class="meta-value"><code>${escapeHtml(tool.authentication || "x402 (Base USDC receipt header: x-payment-receipt)")}</code></span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">Rate Limit</span>
+            <span class="meta-value">${escapeHtml(tool.rateLimit || "100 requests per 60 seconds per IP")}</span>
+          </div>
+          `
+              : ""
+          }
+          ${
+            tool.capabilities && tool.capabilities.length > 0
+              ? `
+          <div class="meta-row">
+            <span class="meta-label">Capabilities</span>
+            <span class="meta-value">${tool.capabilities.map((c) => `<code>${escapeHtml(c)}</code>`).join(" ")}</span>
+          </div>
+          `
+              : ""
+          }
           <div class="meta-row">
             <span class="meta-label">Connection</span>
             <span class="meta-value"><code>${connectionType.toUpperCase()}</code></span>

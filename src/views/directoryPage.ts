@@ -85,6 +85,12 @@ export function renderToolCard(tool: Tool): string {
       </span>`;
   }
 
+  const isFirstParty = Boolean(
+    tool.isFirstParty ??
+    tool.developer?.isFirstParty ??
+    tool.namespace?.startsWith("net.2xcel.aus")
+  );
+
   return `
     <article class="tool-card ${cardStatusClass}" data-namespace="${escapedNamespace}">
       <div class="tool-card-header">
@@ -95,6 +101,7 @@ export function renderToolCard(tool: Tool): string {
           <span class="card-ns" title="${escapedNamespace}">${escapedNamespace}</span>
         </div>
         <div class="header-right">
+          ${isFirstParty ? `<span class="pill pill-first-party" title="Official first-party Agent Utility Service (AUS)">AUS OFFICIAL</span>` : ""}
           <span class="pill pill-connection">${connectionType.toUpperCase()}</span>
           ${
             pricingModel === "free"
@@ -493,6 +500,12 @@ export function renderDirectoryPage(
       background: rgba(56, 189, 248, 0.12);
       color: var(--primary);
       border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .pill-first-party {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      font-weight: 800;
     }
 
     .card-description {
