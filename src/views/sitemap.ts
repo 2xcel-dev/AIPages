@@ -67,6 +67,12 @@ export function generateSitemapXml(
       changefreq: "daily",
       priority: 0.9,
     },
+    {
+      loc: `${normalizedBase}/capabilities`,
+      lastmod: directoryLastmod,
+      changefreq: "daily",
+      priority: 0.9,
+    },
   ];
 
   // Add all public, indexed tools

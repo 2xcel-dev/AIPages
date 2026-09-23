@@ -1159,6 +1159,8 @@ ${jsonLdScript}
         <span class="brand-badge">Registry</span>
       </a>
       <div class="nav-links">
+        <a href="/tools">Directory</a>
+        <a href="/capabilities">Capabilities</a>
         <a href="/search">Vector Search</a>
         <a href="/api/tools">Tools API</a>
         <a href="/api/openapi.json">OpenAPI Spec</a>

@@ -33,6 +33,7 @@ import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
+import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
 const app = new Hono();
@@ -64,6 +65,7 @@ export const DISCOVERY_MANIFEST = {
     submit: "POST /api/tools/submit (free)",
     toolDetail: "GET /api/tools/:namespace",
     toolPage: "GET /tools/:slug",
+    capabilities: "GET /capabilities (functional capability index)",
     sitemap: "GET /sitemap.xml (XML sitemap)",
     openapi: "GET /api/openapi.json",
     ingest: "POST /ingest (admin key required)",
@@ -572,6 +574,31 @@ app.get("/robots.txt", (c) => {
   c.header("Content-Type", "text/plain; charset=utf-8");
   c.header("Cache-Control", "public, max-age=86400");
   return c.text(robots);
+});
+
+// ── Public route: Capabilities index for directory discovery ──
+
+app.get("/capabilities", async (c) => {
+  const allTools = await store.list();
+  const publicTools = allTools.filter(
+    (t) => t.status !== "rejected" && t.status !== "pending",
+  );
+  const capabilities = getCapabilityIndex(publicTools);
+
+  const accept = c.req.header("Accept") ?? "";
+  const format = c.req.query("format");
+  if (
+    format === "json" ||
+    (accept.includes("application/json") && !accept.includes("text/html"))
+  ) {
+    return c.json({
+      totalCapabilities: capabilities.length,
+      totalTools: publicTools.length,
+      capabilities,
+    });
+  }
+
+  return c.html(renderCapabilitiesPage(capabilities, publicTools.length));
 });
 
 // ── x402 Base Payment Test Route ─────────────────────────────
