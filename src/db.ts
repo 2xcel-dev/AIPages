@@ -133,15 +133,36 @@ class MongoToolStore implements ToolStore {
     if (filter?.pricingModel) {
       query["pricing.model"] = filter.pricingModel;
     }
-    const cap = filter?.capability ?? filter?.q;
-    if (cap && cap.trim()) {
-      const regex = { $regex: cap.trim(), $options: "i" };
+    if (filter?.capability && filter.capability.trim() && filter.capability !== "all") {
+      const capRegex = { $regex: filter.capability.trim(), $options: "i" };
       query.$or = [
-        { name: regex },
-        { namespace: regex },
-        { description: regex },
-        { capabilities: regex },
+        { capabilities: capRegex },
+        { name: capRegex },
+        { namespace: capRegex },
+        { description: capRegex },
       ];
+    }
+    if (filter?.q && filter.q.trim()) {
+      const regex = { $regex: filter.q.trim(), $options: "i" };
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: [
+            { name: regex },
+            { namespace: regex },
+            { description: regex },
+            { capabilities: regex },
+          ] },
+        ];
+        delete query.$or;
+      } else {
+        query.$or = [
+          { name: regex },
+          { namespace: regex },
+          { description: regex },
+          { capabilities: regex },
+        ];
+      }
     }
     let cursor = this.collection.find(query);
     if (filter?.offset && filter.offset > 0) {
@@ -191,15 +212,36 @@ class MongoToolStore implements ToolStore {
     if (filter?.connectionType) query.connectionType = filter.connectionType;
     if (filter?.healthStatus) query.healthStatus = filter.healthStatus;
     if (filter?.pricingModel) query["pricing.model"] = filter.pricingModel;
-    const cap = filter?.capability ?? filter?.q;
-    if (cap && cap.trim()) {
-      const regex = { $regex: cap.trim(), $options: "i" };
+    if (filter?.capability && filter.capability.trim() && filter.capability !== "all") {
+      const capRegex = { $regex: filter.capability.trim(), $options: "i" };
       query.$or = [
-        { name: regex },
-        { namespace: regex },
-        { description: regex },
-        { capabilities: regex },
+        { capabilities: capRegex },
+        { name: capRegex },
+        { namespace: capRegex },
+        { description: capRegex },
       ];
+    }
+    if (filter?.q && filter.q.trim()) {
+      const regex = { $regex: filter.q.trim(), $options: "i" };
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: [
+            { name: regex },
+            { namespace: regex },
+            { description: regex },
+            { capabilities: regex },
+          ] },
+        ];
+        delete query.$or;
+      } else {
+        query.$or = [
+          { name: regex },
+          { namespace: regex },
+          { description: regex },
+          { capabilities: regex },
+        ];
+      }
     }
     return this.collection.countDocuments(query);
   }
@@ -306,9 +348,30 @@ export class InMemoryToolStore implements ToolStore {
     if (filter?.pricingModel) {
       result = result.filter((t) => t.pricing?.model === filter.pricingModel);
     }
-    const cap = filter?.capability ?? filter?.q;
-    if (cap && cap.trim()) {
-      const cLower = cap.trim().toLowerCase();
+    if (filter?.capability && filter.capability.trim() && filter.capability !== "all") {
+      const cLower = filter.capability.trim().toLowerCase();
+      result = result.filter((t) => {
+        if (t.capabilities && Array.isArray(t.capabilities) && t.capabilities.some((c) => c.toLowerCase() === cLower || c.toLowerCase().includes(cLower))) return true;
+        if (t.name.toLowerCase().includes(cLower)) return true;
+        if (t.namespace.toLowerCase().includes(cLower)) return true;
+        if (t.description?.toLowerCase().includes(cLower)) return true;
+        if (t.schema?.properties) {
+          for (const [propName, propDef] of Object.entries(t.schema.properties)) {
+            if (propName.toLowerCase().includes(cLower)) return true;
+            if (
+              typeof propDef === "object" &&
+              propDef !== null &&
+              (propDef as any).description?.toLowerCase().includes(cLower)
+            ) {
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+    }
+    if (filter?.q && filter.q.trim()) {
+      const cLower = filter.q.trim().toLowerCase();
       result = result.filter((t) => {
         if (t.name.toLowerCase().includes(cLower)) return true;
         if (t.namespace.toLowerCase().includes(cLower)) return true;

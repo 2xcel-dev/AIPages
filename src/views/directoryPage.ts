@@ -43,7 +43,11 @@ function formatRelativeTime(date: Date | null | undefined): string {
   }
 }
 
-export function renderToolCard(tool: Tool): string {
+export function renderToolCard(
+  tool: Tool,
+  baseUrl: string = "/",
+  activeCapability?: string,
+): string {
   const health = deriveReliability(tool);
   const escapedName = escapeHtml(tool.name);
   const escapedNamespace = escapeHtml(tool.namespace);
@@ -145,6 +149,19 @@ export function renderToolCard(tool: Tool): string {
           : ""
       }
 
+      ${
+        tool.capabilities && tool.capabilities.length > 0
+          ? `
+      <div class="card-caps-row">
+        ${tool.capabilities.slice(0, 4).map((c) => {
+          const isSelected = activeCapability?.toLowerCase().trim() === c.toLowerCase().trim();
+          return `<a href="${baseUrl}?capability=${encodeURIComponent(c)}" class="card-cap-pill ${isSelected ? "card-cap-selected" : ""}" title="Filter by capability: ${escapeHtml(c)}">${escapeHtml(c)}</a>`;
+        }).join(" ")}
+        ${tool.capabilities.length > 4 ? `<span class="card-cap-more">+${tool.capabilities.length - 4}</span>` : ""}
+      </div>`
+          : ""
+      }
+
       <div class="tool-card-footer">
         <span class="fee-note">${pricingModel === "free" ? "No execution fee" : "$0.25 platform take-rate"}</span>
         <a href="/tools/${escapedNamespace}" class="card-action-link">View Details &amp; Schema &rarr;</a>
@@ -159,6 +176,29 @@ export interface DirectoryFilterParams {
   connectionType?: string;
   pricingModel?: string;
   baseUrl?: string;
+  capability?: string;
+  availableCapabilities?: string[];
+}
+
+export function buildFilterUrl(
+  baseUrl: string,
+  params: {
+    q?: string;
+    reliability?: string;
+    connectionType?: string;
+    pricingModel?: string;
+    capability?: string;
+  },
+): string {
+  const query = new URLSearchParams();
+  if (params.q && params.q.trim()) query.set("q", params.q.trim());
+  if (params.reliability && params.reliability !== "all") query.set("reliability", params.reliability);
+  if (params.connectionType && params.connectionType !== "all") query.set("connectionType", params.connectionType);
+  if (params.pricingModel && params.pricingModel !== "all") query.set("pricingModel", params.pricingModel);
+  if (params.capability && params.capability !== "all") query.set("capability", params.capability);
+
+  const qs = query.toString();
+  return qs ? `${baseUrl}?${qs}` : baseUrl;
 }
 
 export function renderDirectoryPage(
@@ -169,18 +209,31 @@ export function renderDirectoryPage(
   const baseUrl = filters.baseUrl || "/";
   const searchQuery = escapeHtml(filters.search ?? "");
   const activeReliability = filters.reliability ?? "all";
+  const activeCapability = filters.capability ?? "all";
+  const availableCapabilities = filters.availableCapabilities ?? [];
   const activeConn = filters.connectionType ?? "all";
 
   const cardsHtml = tools.length > 0
-    ? tools.map(renderToolCard).join("\n")
+    ? tools.map((t) => renderToolCard(t, baseUrl, activeCapability)).join("\n")
     : `<div class="empty-state">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
         <h3>No tools matched your criteria</h3>
-        <p>${filters.search ? `No tools found matching &ldquo;${searchQuery}&rdquo;. Try clearing filters or search with different keywords.` : "Try clearing filters or search with different keywords."}</p>
+        <p>${
+          filters.capability && filters.capability !== "all"
+            ? `No tools found with capability &ldquo;${escapeHtml(filters.capability)}&rdquo;${filters.search ? ` and query &ldquo;${searchQuery}&rdquo;` : ""}.`
+            : filters.search
+              ? `No tools found matching &ldquo;${searchQuery}&rdquo;. Try clearing filters or search with different keywords.`
+              : "Try clearing filters or search with different keywords."
+        }</p>
         <a href="${baseUrl}" class="btn" style="margin-top: 14px;">View All Tools</a>
+        ${
+          filters.capability && filters.capability !== "all"
+            ? `<a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}" class="btn btn-secondary" style="margin-top: 14px; margin-left: 8px;">Clear Capability Filter</a>`
+            : ""
+        }
       </div>`;
 
   return `<!DOCTYPE html>
@@ -611,6 +664,96 @@ export function renderDirectoryPage(
       font-weight: 600;
       font-size: 0.84rem;
     }
+    .card-caps-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 8px 0 10px;
+    }
+    .card-cap-pill {
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .card-cap-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .card-cap-selected {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .card-cap-more {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      align-self: center;
+      padding: 1px 4px;
+    }
+    .capability-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .cap-filter-chip {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+    }
+    .active-filter-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .clear-tag-btn {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1;
+      margin-left: 2px;
+    }
+    .clear-tag-btn:hover {
+      color: #fff;
+    }
+    .btn-clear-filter {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      padding: 4px 10px;
+    }
+    .btn-clear-filter:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-muted);
+    }
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      color: #fff;
+    }
 
     /* Empty state */
     .empty-state {
@@ -678,6 +821,8 @@ export function renderDirectoryPage(
     <!-- Controls -->
     <section class="directory-controls">
       <form method="GET" action="${baseUrl}" class="search-row">
+        ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" />` : ""}
+        ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" />` : ""}
         <input
           type="text"
           name="q"
@@ -696,25 +841,65 @@ export function renderDirectoryPage(
 
       <div class="filter-pills-row">
         <span class="filter-label">Reliability:</span>
-        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "all" }).toString()}"
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "all" })}"
            class="filter-chip ${activeReliability === "all" ? "active" : ""}">All</a>
-        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "high" }).toString()}"
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "high" })}"
            class="filter-chip ${activeReliability === "high" ? "active" : ""}">Operational</a>
-        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "degraded" }).toString()}"
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "degraded" })}"
            class="filter-chip ${activeReliability === "degraded" ? "active" : ""}">Degraded</a>
-        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "failing" }).toString()}"
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "failing" })}"
            class="filter-chip ${activeReliability === "failing" ? "active" : ""}">Failing</a>
-        <a href="${baseUrl}?${new URLSearchParams({ ...(searchQuery ? { q: searchQuery } : {}), reliability: "unchecked" }).toString()}"
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "unchecked" })}"
            class="filter-chip ${activeReliability === "unchecked" ? "active" : ""}">Unchecked</a>
       </div>
+
+      ${
+        availableCapabilities && availableCapabilities.length > 0
+          ? `
+      <div class="filter-pills-row capability-pills-row">
+        <span class="filter-label">Capability:</span>
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}"
+           class="filter-chip ${!activeCapability || activeCapability === "all" ? "active" : ""}"
+           data-capability="all">All</a>
+        ${availableCapabilities
+          .map((cap) => {
+            const isActive = activeCapability?.toLowerCase().trim() === cap.toLowerCase().trim();
+            const targetUrl = buildFilterUrl(baseUrl, {
+              q: filters.search,
+              reliability: activeReliability,
+              capability: isActive ? "all" : cap,
+            });
+            return `<a href="${targetUrl}" class="filter-chip cap-filter-chip ${isActive ? "active" : ""}" data-capability="${escapeHtml(cap)}" title="${isActive ? "Click to clear filter" : `Filter by ${escapeHtml(cap)}`}">${isActive ? `✕ ${escapeHtml(cap)}` : escapeHtml(cap)}</a>`;
+          })
+          .join("\n        ")}
+      </div>
+      `
+          : ""
+      }
     </section>
 
     <!-- Results Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
       <div style="font-size: 0.9rem; color: var(--text-muted);">
         Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools
         ${searchQuery ? ` matching "<em>${searchQuery}</em>"` : ""}
+        ${
+          activeCapability && activeCapability !== "all"
+            ? ` with capability <span class="active-filter-tag">${escapeHtml(activeCapability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}" class="clear-tag-btn" title="Clear capability filter">&times;</a></span>`
+            : ""
+        }
       </div>
+      ${
+        activeCapability && activeCapability !== "all"
+          ? `
+      <div>
+        <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}" class="btn btn-sm btn-clear-filter">
+          Clear Capability Filter
+        </a>
+      </div>
+      `
+          : ""
+      }
     </div>
 
     <!-- Cards Grid -->

@@ -85,8 +85,11 @@ app.get("/", async (c) => {
   const reliability = c.req.query("reliability");
   const connectionType = c.req.query("connectionType");
   const pricingModel = c.req.query("pricingModel");
+  const capability = c.req.query("capability") ?? c.req.query("cap");
 
-  const hasSearchParams = Boolean(searchQuery || reliability || connectionType || pricingModel);
+  const hasSearchParams = Boolean(
+    searchQuery || reliability || connectionType || pricingModel || capability,
+  );
 
   // Preserve JSON discovery manifest for API/curl clients when no search parameters are supplied
   if (!hasSearchParams) {
@@ -426,6 +429,7 @@ export async function handleDirectoryRequest(
   const reliability = c.req.query("reliability");
   const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
   const pricingModel = c.req.query("pricingModel");
+  const capabilityParam = c.req.query("capability") ?? c.req.query("cap");
   const limitParam = c.req.query("limit");
   const offsetParam = c.req.query("offset") ?? c.req.query("skip");
 
@@ -435,6 +439,7 @@ export async function handleDirectoryRequest(
   let tools = await currentStore.list({
     connectionType,
     pricingModel,
+    capability: capabilityParam,
     q: searchQuery,
   });
 
@@ -444,6 +449,17 @@ export async function handleDirectoryRequest(
       const h = deriveReliability(t);
       return h.reliability === reliability;
     });
+  }
+
+  // Filter by capability if specified
+  if (capabilityParam && capabilityParam !== "all") {
+    const targetCap = capabilityParam.toLowerCase().trim();
+    tools = tools.filter(
+      (t) =>
+        t.capabilities &&
+        Array.isArray(t.capabilities) &&
+        t.capabilities.some((c) => c.toLowerCase().trim() === targetCap || c.toLowerCase().includes(targetCap)),
+    );
   }
 
   // Ensure matching covers name, namespace, description, and capabilities
@@ -461,6 +477,22 @@ export async function handleDirectoryRequest(
   const total = tools.length;
   const paginatedTools = tools.slice(offset, offset + limit);
 
+  // Collect all unique capabilities across tools for the filter controls.
+  // When a search query is active, facet capabilities reflect matching tools;
+  // otherwise, all catalog capabilities are displayed for discovery.
+  const allStoreTools = await currentStore.list();
+  const facetTools = (searchQuery && searchQuery.trim()) ? tools : allStoreTools;
+  const capabilitySet = new Set<string>();
+  for (const t of facetTools) {
+    if (t.capabilities && Array.isArray(t.capabilities)) {
+      for (const cap of t.capabilities) {
+        const trimmed = cap.trim();
+        if (trimmed) capabilitySet.add(trimmed);
+      }
+    }
+  }
+  const availableCapabilities = Array.from(capabilitySet).sort();
+
   const accept = c.req.header("Accept") ?? "";
   const format = c.req.query("format");
   if (format === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
@@ -469,6 +501,8 @@ export async function handleDirectoryRequest(
       count: paginatedTools.length,
       limit,
       offset,
+      capability: capabilityParam && capabilityParam !== "all" ? capabilityParam : undefined,
+      availableCapabilities,
       tools: paginatedTools.map(formatToolRecord),
     });
   }
@@ -479,6 +513,8 @@ export async function handleDirectoryRequest(
       reliability,
       connectionType,
       pricingModel,
+      capability: capabilityParam,
+      availableCapabilities,
       baseUrl,
     }),
   );
