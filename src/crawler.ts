@@ -31,13 +31,64 @@ import crypto from "node:crypto";
 import cron, { type ScheduledTask } from "node-cron";
 import { embed } from "./embedding.js";
 import { createStore, type ToolStore } from "./db.js";
-import type { Tool, HealthStatus } from "./types.js";
+import type { Tool, HealthStatus, ToolSchema } from "./types.js";
+import { config } from "./config.js";
 import { scrapeGitHub, searchGitHubRepos, fetchRepoInfo, scrapeNpm } from "./scraper.js";
 import { fetchManifest, extractTools, slugify, type ExtractedTool } from "./manifest.js";
 import { parseMcpServersConfig, probeMcpServer } from "./mcp-probe.js";
 import { healthCheck } from "./health-check.js";
 import { generateToolSchema } from "./schema-generator.js";
 import { alertOnFailure } from "./notify.js";
+
+/**
+ * Minimum viability validation for repository descriptions before invoking Gemini fallback.
+ */
+export function isViableDescription(description?: string | null): boolean {
+  if (!description) return false;
+  const trimmed = description.trim();
+  if (trimmed.length < 30) return false;
+  const lower = trimmed.toLowerCase();
+  const nonViableKeywords = [
+    "work in progress",
+    "under construction",
+    "readme",
+    "test repository",
+    "personal repository",
+  ];
+  for (const kw of nonViableKeywords) {
+    if (
+      lower === kw ||
+      lower.startsWith(kw + " ") ||
+      lower.startsWith(kw + ":") ||
+      lower.startsWith(kw + "-") ||
+      lower.startsWith(kw + " -")
+    ) {
+      return false;
+    }
+  }
+  if (lower.startsWith("todo") || lower.startsWith("wip")) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Strict schema validation for synthesized or parsed tool schemas.
+ * Ensures the schema is a non-empty object schema with at least one typed property.
+ */
+export function isViableToolSchema(schema: unknown): schema is ToolSchema {
+  if (!schema || typeof schema !== "object" || Array.isArray(schema)) return false;
+  const s = schema as ToolSchema;
+  if (s.type !== "object") return false;
+  if (!s.properties || typeof s.properties !== "object" || Array.isArray(s.properties)) return false;
+  const propKeys = Object.keys(s.properties);
+  if (propKeys.length === 0) return false;
+  for (const key of propKeys) {
+    const prop = (s.properties as any)[key];
+    if (!prop || typeof prop !== "object") return false;
+  }
+  return true;
+}
 
 // -- config (crawl-specific, optional env) ----------------------------------
 
@@ -138,16 +189,22 @@ export function diagnoseManifestRejection(manifest: { kind: string; url: string;
   }
 
   if (manifest.kind === "mcp") {
-    if (!doc.tools) {
-      if (doc.mcpServers) {
+    if (!doc.tools && !doc.mcpServers) {
+      return {
+        category: "missing_required_metadata",
+        details: `MCP manifest at ${manifest.url} missing required 'tools' array or 'mcpServers' configuration`,
+      };
+    }
+    if (doc.mcpServers && typeof doc.mcpServers === "object") {
+      if (Object.keys(doc.mcpServers).length === 0) {
         return {
           category: "missing_required_metadata",
-          details: `Config-style MCP manifest at ${manifest.url} has mcpServers launch config but no tools array (runtime probe disabled or yielded no tools)`,
+          details: `Config-style MCP manifest at ${manifest.url} contains an empty 'mcpServers' object`,
         };
       }
       return {
         category: "missing_required_metadata",
-        details: `MCP manifest at ${manifest.url} missing required 'tools' array`,
+        details: `Config-style MCP manifest at ${manifest.url} server entries lack required 'command' or 'url' fields`,
       };
     }
     if (!Array.isArray(doc.tools) || doc.tools.length === 0) {
@@ -309,34 +366,19 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
         let tools: ExtractedTool[] = [];
 
         if (!manifest) {
-          // 2c. No manifest: try Gemini schema generation from repo description.
+          // 2c. No manifest: check description viability and Gemini configuration before fallback.
           const info = await fetchRepoInfo(repo);
-          if (info && info.description && info.description.trim().length > 20) {
-            console.log(`[crawler] NO MANIFEST ${repo}: falling back to Gemini schema generation from description`);
-            const name = info.full_name.split("/")[1] ?? info.full_name;
-            const gen = await generateToolSchema(name, info.description);
-            if (gen.schema && gen.schema.properties && Object.keys(gen.schema.properties).length > 0) {
-              const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
-              tools.push({
-                name,
-                description: info.description,
-                schema: gen.schema,
-                connectionType: "http",
-                endpointUrl: info.html_url,
-                namespace: `github.${repoSlug}.${slugify(name)}`,
-                schemaSource: `gemini-fallback:${info.full_name}`,
-              });
-              console.log(`[crawler] Gemini generated schema for ${repo} -> ${Object.keys(gen.schema.properties).length} props (confidence: ${gen.confidence ?? "n/a"})`);
-            } else {
-              recordRejection(
-                result,
-                repo,
-                "invalid_schema",
-                "Missing manifest file and Gemini fallback produced no valid schema properties",
-              );
-              continue;
-            }
-          } else {
+          if (!info || !isViableDescription(info.description)) {
+            recordRejection(
+              result,
+              repo,
+              "missing_manifest",
+              "No fetchable mcp.json, openapi.json, or swagger.json manifest found and repository description does not meet minimum viability",
+            );
+            continue;
+          }
+
+          if (!config.geminiApiKey) {
             recordRejection(
               result,
               repo,
@@ -345,15 +387,39 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
             );
             continue;
           }
+
+          console.log(`[crawler] NO MANIFEST ${repo}: falling back to Gemini schema generation from description`);
+          const name = info.full_name.split("/")[1] ?? info.full_name;
+          const gen = await generateToolSchema(name, info.description!);
+          if (isViableToolSchema(gen.schema)) {
+            const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+            tools.push({
+              name,
+              description: info.description!,
+              schema: gen.schema,
+              connectionType: "http",
+              endpointUrl: info.html_url,
+              namespace: `github.${repoSlug}.${slugify(name)}`,
+              schemaSource: `gemini-fallback:${info.full_name}`,
+            });
+            console.log(`[crawler] Gemini generated schema for ${repo} -> ${Object.keys(gen.schema.properties!).length} props (confidence: ${gen.confidence ?? "n/a"})`);
+          } else {
+            recordRejection(
+              result,
+              repo,
+              "invalid_schema",
+              "Missing manifest file and Gemini fallback produced no valid, non-empty schema properties",
+            );
+            continue;
+          }
         } else {
           result.fetched++;
 
-          // 2a. Registry-style manifest (`tools[]`): parse schemas directly.
+          // 2a. Registry-style manifest (tools[]) or client-side config (mcpServers): parse schemas directly.
           tools = extractTools(repo, manifest);
 
-          // 2b. Config-style mcp.json (`mcpServers`): probe the live server for
-          // its authoritative tools/list schemas (only when the probe is enabled).
-          if (tools.length === 0 && manifest.kind === "mcp" && CRAWL_MCP_PROBE) {
+          // 2b. Config-style mcp.json (mcpServers): probe live server if probing is enabled.
+          if (manifest.kind === "mcp" && CRAWL_MCP_PROBE) {
             const configs = parseMcpServersConfig(manifest.raw);
             if (configs.length > 0 && CRAWL_MCP_EXEC) {
               console.warn(
@@ -361,6 +427,7 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
                 "Run the crawler in an isolated sandbox with no host credentials.",
               );
             }
+            const probedTools: ExtractedTool[] = [];
             for (const cfg of configs) {
               const isStdio = !!cfg.command && !cfg.url;
               if (isStdio && !CRAWL_MCP_EXEC) {
@@ -373,7 +440,7 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
               if (pr && pr.tools.length > 0) {
                 const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
                 for (const t of pr.tools) {
-                  tools.push({
+                  probedTools.push({
                     name: t.name,
                     description: t.description || `${cfg.name} / ${t.name}`,
                     schema: t.schema,
@@ -385,6 +452,9 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
                 }
                 console.log(`[crawler] probed ${repo}/${cfg.name} -> ${pr.tools.length} tools`);
               }
+            }
+            if (probedTools.length > 0) {
+              tools = probedTools;
             }
           }
         }

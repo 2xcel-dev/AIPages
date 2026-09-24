@@ -1,5 +1,5 @@
 /**
- * Authoritative manifest ingestion — the crawler's ONLY source of tool schemas.
+ * Authoritative manifest ingestion: the crawler's authoritative source of tool schemas.
  *
  * The AIPages crawler never invents schemas. A tool is ingested only when it
  * ships a genuine, parseable manifest, either:
@@ -77,7 +77,7 @@ async function fetchText(url: string, timeoutMs: number): Promise<string | null>
  * Tries, for `main` then `master`: a caller-known file path (from code search),
  * then the root `mcp.json` / `openapi.json` / `swagger.json`.
  *
- * Returns null when no candidate file exists (fetch 404 / network error) —
+ * Returns null when no candidate file exists (fetch 404 / network error);
  * the caller rejects the repo in that case.
  */
 export async function fetchManifest(
@@ -137,35 +137,123 @@ export function parseMcpManifest(raw: string): ParsedTool[] | null {
   }
   if (!doc || typeof doc !== "object") return null;
 
-  // Reject client-config shapes (`mcpServers`) — launch configs carry no schemas.
-  const tools = Array.isArray(doc.tools) ? doc.tools : null;
-  if (!tools) return null;
-
   const serverDescription = typeof doc.description === "string" ? doc.description.trim() : "";
   const transport = mcpTransport(doc);
 
-  const out: ParsedTool[] = [];
-  for (const t of tools) {
-    if (!t || typeof t !== "object") continue;
-    const name = typeof t.name === "string" ? t.name.trim() : "";
-    if (!name) continue;
-    const schema = normalizeSchema(t.inputSchema ?? t.parameters ?? null);
-    if (!schema) continue; // no genuine schema → reject this tool
-    const toolDesc = typeof t.description === "string" ? t.description.trim() : "";
-    out.push({
-      name,
-      description: toolDesc || serverDescription || name,
-      schema,
-      connectionType: mcpToolConnectionType(t, transport),
-      endpointUrl:
-        typeof t.endpointUrl === "string"
-          ? t.endpointUrl
-          : typeof doc.url === "string"
-            ? doc.url
-            : undefined,
-    });
+  // 1. Direct registry-style manifest (tools[])
+  if (Array.isArray(doc.tools) && doc.tools.length > 0) {
+    const out: ParsedTool[] = [];
+    for (const t of doc.tools) {
+      if (!t || typeof t !== "object") continue;
+      const name = typeof t.name === "string" ? t.name.trim() : "";
+      if (!name) continue;
+      const schema = normalizeSchema(t.inputSchema ?? t.parameters ?? null);
+      if (!schema) continue;
+      const toolDesc = typeof t.description === "string" ? t.description.trim() : "";
+      out.push({
+        name,
+        description: toolDesc || serverDescription || name,
+        schema,
+        connectionType: mcpToolConnectionType(t, transport),
+        endpointUrl:
+          typeof t.endpointUrl === "string"
+            ? t.endpointUrl
+            : typeof doc.url === "string"
+              ? doc.url
+              : undefined,
+      });
+    }
+    if (out.length > 0) return out;
   }
-  return out.length > 0 ? out : null;
+
+  // 2. Client-side mcpServers launch configuration (mcpServers)
+  if (doc.mcpServers && typeof doc.mcpServers === "object" && !Array.isArray(doc.mcpServers)) {
+    const out: ParsedTool[] = [];
+    for (const [serverKey, entry] of Object.entries(doc.mcpServers)) {
+      if (!entry || typeof entry !== "object") continue;
+      const e = entry as any;
+      const name = (typeof e.name === "string" && e.name.trim()) || serverKey.trim();
+      if (!name) continue;
+
+      const hasUrl = typeof e.url === "string" && e.url.trim().length > 0;
+      const hasCommand = typeof e.command === "string" && e.command.trim().length > 0;
+      if (!hasUrl && !hasCommand) continue;
+
+      let connType: ConnectionType = "stdio";
+      if (hasUrl) {
+        const tStr = String(e.type ?? transport).toLowerCase();
+        if (tStr.includes("sse")) connType = "sse";
+        else if (tStr.includes("ws") || tStr.includes("websocket")) connType = "websocket";
+        else connType = "http";
+      }
+
+      // Check for explicitly declared schema or synthesize schema from command/args or endpoint definitions
+      let schema = normalizeSchema(e.inputSchema ?? e.parameters ?? e.schema ?? null);
+      if (!schema) {
+        const properties: Record<string, unknown> = {};
+        if (hasCommand) {
+          properties.command = {
+            type: "string",
+            description: "Server executable command",
+            default: e.command,
+          };
+          if (Array.isArray(e.args) && e.args.length > 0) {
+            properties.args = {
+              type: "array",
+              items: { type: "string" },
+              description: "Command line arguments",
+              default: e.args.map(String),
+            };
+          }
+          if (e.env && typeof e.env === "object") {
+            properties.env = {
+              type: "object",
+              description: "Environment variables required by the server",
+            };
+          }
+        }
+        if (hasUrl) {
+          properties.url = {
+            type: "string",
+            description: "MCP server endpoint URL",
+            default: e.url,
+          };
+          if (e.type) {
+            properties.transport = {
+              type: "string",
+              description: "Connection transport protocol",
+              default: String(e.type),
+            };
+          }
+        }
+
+        schema = {
+          type: "object",
+          properties,
+        };
+      }
+
+      const desc =
+        typeof e.description === "string" && e.description.trim()
+          ? e.description.trim()
+          : serverDescription
+            ? `${serverDescription} (${name})`
+            : hasCommand
+              ? `MCP server '${name}' executable: ${e.command}`
+              : `MCP server '${name}' endpoint: ${e.url}`;
+
+      out.push({
+        name,
+        description: desc,
+        schema,
+        connectionType: connType,
+        endpointUrl: hasUrl ? e.url : undefined,
+      });
+    }
+    if (out.length > 0) return out;
+  }
+
+  return null;
 }
 
 function mcpTransport(doc: any): string {
@@ -305,7 +393,7 @@ function resolveLocalRef(schema: unknown, doc: any): unknown {
 /**
  * Validate that a value is a real JSON Schema and return it verbatim.
  * Rejects null/primitives/arrays and objects carrying no schema keyword at all
- * (the tell-tale of an empty or bogus schema — never ingested).
+ * (the indicator of an empty or bogus schema; never ingested).
  */
 export function normalizeSchema(schemaRaw: unknown): ToolSchema | null {
   if (!schemaRaw || typeof schemaRaw !== "object" || Array.isArray(schemaRaw)) return null;
@@ -315,7 +403,7 @@ export function normalizeSchema(schemaRaw: unknown): ToolSchema | null {
   const hasRef = typeof s.$ref === "string";
   const hasItems = s.items && typeof s.items === "object";
   if (!hasType && !hasProperties && !hasRef && !hasItems) return null;
-  // Preserve the full schema faithfully — no projection, no invention.
+  // Preserve the full schema faithfully: no projection, no invention.
   return { ...s } as ToolSchema;
 }
 
@@ -323,7 +411,7 @@ function deriveServerUrl(doc: any): string | null {
   // OpenAPI 3: servers[0].url
   if (Array.isArray(doc.servers) && doc.servers[0]?.url) {
     const u = String(doc.servers[0].url);
-    if (u.includes("{")) return null; // templated — cannot health-check
+    if (u.includes("{")) return null; // templated: cannot health-check
     return u.replace(/\/+$/, "");
   }
   // Swagger 2: schemes[0] + host + basePath

@@ -10,8 +10,11 @@ import {
   createInitialRejectionBreakdown,
   recordRejection,
   diagnoseManifestRejection,
+  isViableDescription,
+  isViableToolSchema,
   type CrawlResult,
 } from '../src/crawler.js';
+import { extractTools, parseMcpManifest } from '../src/manifest.js';
 import { findToolBySlug } from '../src/views/toolPage.js';
 import type { Tool } from '../src/types.js';
 
@@ -388,23 +391,32 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
     });
 
     it('diagnoses missing_required_metadata on MCP manifests without tools or missing tool names', () => {
-      // Missing tools array
+      // Missing tools array and mcpServers
       const noTools = diagnoseManifestRejection({
         kind: 'mcp',
         url: 'https://example.com/mcp.json',
         raw: JSON.stringify({ name: 'my-server' }),
       });
       assert.equal(noTools.category, 'missing_required_metadata');
-      assert.ok(noTools.details.includes("missing required 'tools' array"));
+      assert.ok(noTools.details.includes("missing required 'tools' array or 'mcpServers' configuration"));
 
-      // Config style mcpServers without tools
-      const mcpServersOnly = diagnoseManifestRejection({
+      // Config style empty mcpServers
+      const emptyMcpServers = diagnoseManifestRejection({
         kind: 'mcp',
         url: 'https://example.com/mcp.json',
-        raw: JSON.stringify({ mcpServers: { myServer: { command: 'node' } } }),
+        raw: JSON.stringify({ mcpServers: {} }),
       });
-      assert.equal(mcpServersOnly.category, 'missing_required_metadata');
-      assert.ok(mcpServersOnly.details.includes('mcpServers launch config'));
+      assert.equal(emptyMcpServers.category, 'missing_required_metadata');
+      assert.ok(emptyMcpServers.details.includes("empty 'mcpServers' object"));
+
+      // Config style mcpServers without command or url
+      const mcpServersNoCmd = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ mcpServers: { myServer: { description: 'no command or url' } } }),
+      });
+      assert.equal(mcpServersNoCmd.category, 'missing_required_metadata');
+      assert.ok(mcpServersNoCmd.details.includes("lack required 'command' or 'url' fields"));
 
       // Empty tools array
       const emptyTools = diagnoseManifestRejection({
@@ -481,12 +493,103 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
     });
   });
 
+  describe('Client-Side mcpServers Configuration Support', () => {
+    it('normalizes command-based stdio mcpServers launch configs into valid tool records', () => {
+      const raw = JSON.stringify({
+        mcpServers: {
+          'protect-mcp': {
+            command: 'npx',
+            args: ['-y', 'protect-mcp@0.7.1', 'serve', '--enforce'],
+            description: 'Ed25519 receipt signing policy enforcement',
+          },
+        },
+      });
+
+      const parsed = parseMcpManifest(raw);
+      assert.ok(parsed);
+      assert.equal(parsed.length, 1);
+      assert.equal(parsed[0].name, 'protect-mcp');
+      assert.equal(parsed[0].connectionType, 'stdio');
+      assert.equal(parsed[0].endpointUrl, undefined);
+      assert.equal(parsed[0].description, 'Ed25519 receipt signing policy enforcement');
+      assert.equal(parsed[0].schema.type, 'object');
+      assert.ok(parsed[0].schema.properties?.command);
+      assert.ok(parsed[0].schema.properties?.args);
+
+      const tools = extractTools('ScopeBlind/scopeblind-gateway', {
+        kind: 'mcp',
+        url: 'https://raw.githubusercontent.com/ScopeBlind/scopeblind-gateway/main/mcp.json',
+        raw,
+      });
+      assert.equal(tools.length, 1);
+      assert.equal(tools[0].namespace, 'github.scopeblind.scopeblind-gateway.protect-mcp');
+    });
+
+    it('normalizes url-based streamable HTTP mcpServers into valid tool records with endpoints', () => {
+      const raw = JSON.stringify({
+        mcpServers: {
+          worldmonitor: {
+            type: 'streamable-http',
+            url: 'https://worldmonitor.app/mcp',
+          },
+          'worldmonitor-docs': {
+            type: 'streamable-http',
+            url: 'https://www.worldmonitor.app/docs/mcp',
+          },
+        },
+      });
+
+      const parsed = parseMcpManifest(raw);
+      assert.ok(parsed);
+      assert.equal(parsed.length, 2);
+      assert.equal(parsed[0].name, 'worldmonitor');
+      assert.equal(parsed[0].connectionType, 'http');
+      assert.equal(parsed[0].endpointUrl, 'https://worldmonitor.app/mcp');
+      assert.equal(parsed[0].schema.type, 'object');
+      assert.ok(parsed[0].schema.properties?.url);
+
+      assert.equal(parsed[1].name, 'worldmonitor-docs');
+      assert.equal(parsed[1].endpointUrl, 'https://www.worldmonitor.app/docs/mcp');
+    });
+  });
+
+  describe('Refined Gemini Fallback Validation and Description Viability', () => {
+    it('isViableDescription enforces minimum character length and excludes boilerplate', () => {
+      assert.equal(isViableDescription(undefined), false);
+      assert.equal(isViableDescription(''), false);
+      assert.equal(isViableDescription('Too short'), false);
+      assert.equal(isViableDescription('WIP: under construction for test'), false);
+      assert.equal(isViableDescription('work in progress test repository here'), false);
+      assert.equal(isViableDescription('TODO: write description for this repo'), false);
+
+      const viable = 'Authoritative cryptographic audit and policy enforcement engine for autonomous agent tools';
+      assert.equal(isViableDescription(viable), true);
+    });
+
+    it('isViableToolSchema rejects empty schemas or schemas without valid properties', () => {
+      assert.equal(isViableToolSchema(undefined), false);
+      assert.equal(isViableToolSchema({}), false);
+      assert.equal(isViableToolSchema({ type: 'object' }), false);
+      assert.equal(isViableToolSchema({ type: 'object', properties: {} }), false);
+      assert.equal(isViableToolSchema({ type: 'string' }), false);
+
+      const validSchema = {
+        type: 'object',
+        properties: {
+          payload: { type: 'string' },
+        },
+      };
+      assert.equal(isViableToolSchema(validSchema), true);
+    });
+  });
+
   describe('Zero em dash constraint verification in modified files', () => {
-    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, src/scraper.ts, render.yaml, or tests/crawler-persistence.test.ts', () => {
+    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, src/scraper.ts, src/manifest.ts, render.yaml, or tests/crawler-persistence.test.ts', () => {
       const filesToCheck = [
         path.resolve(process.cwd(), 'src/db.ts'),
         path.resolve(process.cwd(), 'src/crawler.ts'),
         path.resolve(process.cwd(), 'src/scraper.ts'),
+        path.resolve(process.cwd(), 'src/manifest.ts'),
         path.resolve(process.cwd(), 'render.yaml'),
         path.resolve(process.cwd(), 'tests/crawler-persistence.test.ts'),
       ];
