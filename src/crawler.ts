@@ -55,6 +55,30 @@ const CRAWL_MCP_TIMEOUT_MS = Math.max(5000, parseInt(process.env.CRAWL_MCP_TIMEO
 
 export const BI_DAILY_CRON_SCHEDULE = "0 2,14 * * *";
 
+export type RejectionReasonCategory =
+  | "missing_manifest"
+  | "invalid_schema"
+  | "missing_required_metadata"
+  | "fetch_failure";
+
+export interface CandidateRejection {
+  repo: string;
+  reasonCategory: RejectionReasonCategory;
+  details: string;
+  timestamp: string;
+}
+
+export type RejectionBreakdown = Record<RejectionReasonCategory, number>;
+
+export function createInitialRejectionBreakdown(): RejectionBreakdown {
+  return {
+    missing_manifest: 0,
+    invalid_schema: 0,
+    missing_required_metadata: 0,
+    fetch_failure: 0,
+  };
+}
+
 export interface CrawlResult {
   discovered: number; // candidate repos found via code search
   fetched: number; // manifests successfully fetched
@@ -64,6 +88,112 @@ export interface CrawlResult {
   active: number; // tools whose endpoint responded
   ingested: number; // tools upserted
   errors: number;
+  rejectionsByCategory: RejectionBreakdown;
+  rejections: CandidateRejection[];
+}
+
+export function recordRejection(
+  result: CrawlResult,
+  repo: string,
+  category: RejectionReasonCategory,
+  details: string,
+): void {
+  result.rejected++;
+  result.rejectionsByCategory[category] = (result.rejectionsByCategory[category] ?? 0) + 1;
+  result.rejections.push({
+    repo,
+    reasonCategory: category,
+    details,
+    timestamp: new Date().toISOString(),
+  });
+  console.log(`[crawler] REJECT ${repo} [${category}]: ${details}`);
+}
+
+export function diagnoseManifestRejection(manifest: { kind: string; url: string; raw: string } | null): {
+  category: RejectionReasonCategory;
+  details: string;
+} {
+  if (!manifest) {
+    return {
+      category: "missing_manifest",
+      details: "No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository",
+    };
+  }
+
+  let doc: any;
+  try {
+    doc = JSON.parse(manifest.raw);
+  } catch (err) {
+    return {
+      category: "invalid_schema",
+      details: `Manifest at ${manifest.url} is not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  if (!doc || typeof doc !== "object") {
+    return {
+      category: "invalid_schema",
+      details: `Manifest at ${manifest.url} does not contain a JSON object at its root`,
+    };
+  }
+
+  if (manifest.kind === "mcp") {
+    if (!doc.tools) {
+      if (doc.mcpServers) {
+        return {
+          category: "missing_required_metadata",
+          details: `Config-style MCP manifest at ${manifest.url} has mcpServers launch config but no tools array (runtime probe disabled or yielded no tools)`,
+        };
+      }
+      return {
+        category: "missing_required_metadata",
+        details: `MCP manifest at ${manifest.url} missing required 'tools' array`,
+      };
+    }
+    if (!Array.isArray(doc.tools) || doc.tools.length === 0) {
+      return {
+        category: "missing_required_metadata",
+        details: `MCP manifest at ${manifest.url} contains an empty or non-array 'tools' property`,
+      };
+    }
+    const hasAnyName = doc.tools.some((t: any) => t && typeof t.name === "string" && t.name.trim());
+    if (!hasAnyName) {
+      return {
+        category: "missing_required_metadata",
+        details: `MCP manifest at ${manifest.url} has tools missing required 'name' field`,
+      };
+    }
+    return {
+      category: "invalid_schema",
+      details: `MCP manifest at ${manifest.url} declares tools but none contain a valid JSON Schema (missing or invalid inputSchema/parameters)`,
+    };
+  }
+
+  if (manifest.kind === "openapi") {
+    const isSwagger2 = doc.swagger === "2.0";
+    const isOpenApi3 = typeof doc.openapi === "string" && doc.openapi.startsWith("3.");
+    if (!isSwagger2 && !isOpenApi3) {
+      return {
+        category: "invalid_schema",
+        details: `OpenAPI manifest at ${manifest.url} lacks a valid 'openapi: 3.x' or 'swagger: 2.0' declaration`,
+      };
+    }
+    if (!doc.paths || typeof doc.paths !== "object" || Object.keys(doc.paths).length === 0) {
+      return {
+        category: "missing_required_metadata",
+        details: `OpenAPI manifest at ${manifest.url} lacks required 'paths' object or paths is empty`,
+      };
+    }
+    return {
+      category: "invalid_schema",
+      details: `OpenAPI manifest at ${manifest.url} paths contain no valid schema-bearing operations`,
+    };
+  }
+
+  return {
+    category: "invalid_schema",
+    details: `Manifest at ${manifest.url} yielded no parseable schemas`,
+  };
 }
 
 // Database-backed distributed lock configuration (lease expiration in ms)
@@ -149,6 +279,8 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
       active: 0,
       ingested: 0,
       errors: 0,
+      rejectionsByCategory: createInitialRejectionBreakdown(),
+      rejections: [],
     };
   }
 
@@ -164,6 +296,8 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
       active: 0,
       ingested: 0,
       errors: 0,
+      rejectionsByCategory: createInitialRejectionBreakdown(),
+      rejections: [],
     };
 
     console.log(`[crawler] Discovered ${result.discovered} candidate repos this cycle`);
@@ -194,13 +328,21 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
               });
               console.log(`[crawler] Gemini generated schema for ${repo} -> ${Object.keys(gen.schema.properties).length} props (confidence: ${gen.confidence ?? "n/a"})`);
             } else {
-              result.rejected++;
-              console.log(`[crawler] REJECT ${repo}: no manifest + Gemini produced no useful schema`);
+              recordRejection(
+                result,
+                repo,
+                "invalid_schema",
+                "Missing manifest file and Gemini fallback produced no valid schema properties",
+              );
               continue;
             }
           } else {
-            result.rejected++;
-            console.log(`[crawler] REJECT ${repo}: no fetchable mcp.json / openapi.json / swagger.json`);
+            recordRejection(
+              result,
+              repo,
+              "missing_manifest",
+              "No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository",
+            );
             continue;
           }
         } else {
@@ -248,8 +390,8 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
         }
 
         if (tools.length === 0) {
-          result.rejected++;
-          console.log(`[crawler] REJECT ${repo}: no schema-bearing tools (manifest parsed or probe yielded none)`);
+          const diag = diagnoseManifestRejection(manifest);
+          recordRejection(result, repo, diag.category, diag.details);
           continue;
         }
         result.extracted += tools.length;
@@ -301,6 +443,12 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
         }
       } catch (err) {
         result.errors++;
+        recordRejection(
+          result,
+          repo,
+          "fetch_failure",
+          `Unexpected exception while processing candidate repository: ${err instanceof Error ? err.message : String(err)}`,
+        );
         console.error(`[crawler] error processing ${repo}:`, err);
       }
 
@@ -334,6 +482,8 @@ export async function crawlLoop(): Promise<void> {
       active: 0,
       ingested: 0,
       errors: 0,
+      rejectionsByCategory: createInitialRejectionBreakdown(),
+      rejections: [],
     };
     try {
       result = await crawlOnce();
@@ -346,7 +496,8 @@ export async function crawlLoop(): Promise<void> {
       `[crawler] Cycle ${cycle} done in ${elapsed}ms: ` +
         `discovered=${result.discovered} fetched=${result.fetched} ` +
         `rejected=${result.rejected} extracted=${result.extracted} ` +
-        `ingested=${result.ingested} active=${result.active} errors=${result.errors}`,
+        `ingested=${result.ingested} active=${result.active} errors=${result.errors} ` +
+        `rejections=${JSON.stringify(result.rejectionsByCategory)}`,
     );
 
     // Send alert if failure conditions detected

@@ -4,7 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import cron from 'node-cron';
 import { InMemoryToolStore } from '../src/db.js';
-import { BI_DAILY_CRON_SCHEDULE, crawlOnce } from '../src/crawler.js';
+import {
+  BI_DAILY_CRON_SCHEDULE,
+  crawlOnce,
+  createInitialRejectionBreakdown,
+  recordRejection,
+  diagnoseManifestRejection,
+  type CrawlResult,
+} from '../src/crawler.js';
 import { findToolBySlug } from '../src/views/toolPage.js';
 import type { Tool } from '../src/types.js';
 
@@ -279,18 +286,208 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
       assert.equal(result.discovered, 0);
       assert.equal(result.ingested, 0);
       assert.equal(result.errors, 0);
+      assert.deepEqual(result.rejectionsByCategory, createInitialRejectionBreakdown());
+      assert.deepEqual(result.rejections, []);
 
       // Cleanup
       await store.releaseLock(CRAWLER_LOCK_KEY, 'external-worker-pod');
     });
   });
 
+  describe('Verbose Candidate Rejection Logging and Telemetry', () => {
+    it('initializes rejection breakdown with all four required categories at zero', () => {
+      const breakdown = createInitialRejectionBreakdown();
+      assert.deepEqual(breakdown, {
+        missing_manifest: 0,
+        invalid_schema: 0,
+        missing_required_metadata: 0,
+        fetch_failure: 0,
+      });
+    });
+
+    it('records rejection telemetry with category counts, timestamp, and itemized details', () => {
+      const result: CrawlResult = {
+        discovered: 4,
+        fetched: 2,
+        rejected: 0,
+        extracted: 0,
+        healthChecked: 0,
+        active: 0,
+        ingested: 0,
+        errors: 0,
+        rejectionsByCategory: createInitialRejectionBreakdown(),
+        rejections: [],
+      };
+
+      recordRejection(
+        result,
+        'example/missing-repo',
+        'missing_manifest',
+        'No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository',
+      );
+
+      recordRejection(
+        result,
+        'example/bad-schema-repo',
+        'invalid_schema',
+        'MCP manifest declares tools but none contain a valid JSON Schema',
+      );
+
+      recordRejection(
+        result,
+        'example/missing-metadata-repo',
+        'missing_required_metadata',
+        'MCP manifest missing required tools array',
+      );
+
+      recordRejection(
+        result,
+        'example/network-fail-repo',
+        'fetch_failure',
+        'Network timeout fetching repository manifest',
+      );
+
+      assert.equal(result.rejected, 4);
+      assert.equal(result.rejectionsByCategory.missing_manifest, 1);
+      assert.equal(result.rejectionsByCategory.invalid_schema, 1);
+      assert.equal(result.rejectionsByCategory.missing_required_metadata, 1);
+      assert.equal(result.rejectionsByCategory.fetch_failure, 1);
+
+      assert.equal(result.rejections.length, 4);
+      assert.equal(result.rejections[0].repo, 'example/missing-repo');
+      assert.equal(result.rejections[0].reasonCategory, 'missing_manifest');
+      assert.ok(result.rejections[0].timestamp);
+      assert.ok(result.rejections[0].details.includes('No fetchable'));
+
+      assert.equal(result.rejections[3].repo, 'example/network-fail-repo');
+      assert.equal(result.rejections[3].reasonCategory, 'fetch_failure');
+    });
+
+    it('diagnoses missing_manifest when manifest is null', () => {
+      const diag = diagnoseManifestRejection(null);
+      assert.equal(diag.category, 'missing_manifest');
+      assert.ok(diag.details.includes('No fetchable'));
+    });
+
+    it('diagnoses invalid_schema when manifest JSON is unparseable or root is non-object', () => {
+      const malformedJson = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: '{ invalid json here',
+      });
+      assert.equal(malformedJson.category, 'invalid_schema');
+      assert.ok(malformedJson.details.includes('is not valid JSON'));
+
+      const nonObject = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: '"just a string"',
+      });
+      assert.equal(nonObject.category, 'invalid_schema');
+      assert.ok(nonObject.details.includes('JSON object'));
+    });
+
+    it('diagnoses missing_required_metadata on MCP manifests without tools or missing tool names', () => {
+      // Missing tools array
+      const noTools = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ name: 'my-server' }),
+      });
+      assert.equal(noTools.category, 'missing_required_metadata');
+      assert.ok(noTools.details.includes("missing required 'tools' array"));
+
+      // Config style mcpServers without tools
+      const mcpServersOnly = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ mcpServers: { myServer: { command: 'node' } } }),
+      });
+      assert.equal(mcpServersOnly.category, 'missing_required_metadata');
+      assert.ok(mcpServersOnly.details.includes('mcpServers launch config'));
+
+      // Empty tools array
+      const emptyTools = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ tools: [] }),
+      });
+      assert.equal(emptyTools.category, 'missing_required_metadata');
+
+      // Tools missing name
+      const noNameTools = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ tools: [{ description: 'missing name' }] }),
+      });
+      assert.equal(noNameTools.category, 'missing_required_metadata');
+      assert.ok(noNameTools.details.includes("missing required 'name' field"));
+    });
+
+    it('diagnoses invalid_schema on MCP tools without valid schemas', () => {
+      const invalidSchemaTool = diagnoseManifestRejection({
+        kind: 'mcp',
+        url: 'https://example.com/mcp.json',
+        raw: JSON.stringify({ tools: [{ name: 'calc', inputSchema: 'not-an-object' }] }),
+      });
+      assert.equal(invalidSchemaTool.category, 'invalid_schema');
+      assert.ok(invalidSchemaTool.details.includes('valid JSON Schema'));
+    });
+
+    it('diagnoses OpenAPI manifest rejection reasons accurately', () => {
+      // Missing version
+      const noVersion = diagnoseManifestRejection({
+        kind: 'openapi',
+        url: 'https://example.com/openapi.json',
+        raw: JSON.stringify({ info: { title: 'Test' } }),
+      });
+      assert.equal(noVersion.category, 'invalid_schema');
+      assert.ok(noVersion.details.includes('openapi: 3.x'));
+
+      // Missing paths
+      const noPaths = diagnoseManifestRejection({
+        kind: 'openapi',
+        url: 'https://example.com/openapi.json',
+        raw: JSON.stringify({ openapi: '3.0.0', info: { title: 'Test' } }),
+      });
+      assert.equal(noPaths.category, 'missing_required_metadata');
+      assert.ok(noPaths.details.includes("'paths' object"));
+
+      // Empty paths
+      const emptyPaths = diagnoseManifestRejection({
+        kind: 'openapi',
+        url: 'https://example.com/openapi.json',
+        raw: JSON.stringify({ openapi: '3.0.0', paths: {} }),
+      });
+      assert.equal(emptyPaths.category, 'missing_required_metadata');
+
+      // Paths with no operations carrying schema
+      const noSchemaPaths = diagnoseManifestRejection({
+        kind: 'openapi',
+        url: 'https://example.com/openapi.json',
+        raw: JSON.stringify({
+          openapi: '3.0.0',
+          paths: {
+            '/health': {
+              get: {
+                summary: 'health check',
+              },
+            },
+          },
+        }),
+      });
+      assert.equal(noSchemaPaths.category, 'invalid_schema');
+      assert.ok(noSchemaPaths.details.includes('no valid schema-bearing operations'));
+    });
+  });
+
   describe('Zero em dash constraint verification in modified files', () => {
-    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, or render.yaml', () => {
+    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, render.yaml, or tests/crawler-persistence.test.ts', () => {
       const filesToCheck = [
         path.resolve(process.cwd(), 'src/db.ts'),
         path.resolve(process.cwd(), 'src/crawler.ts'),
         path.resolve(process.cwd(), 'render.yaml'),
+        path.resolve(process.cwd(), 'tests/crawler-persistence.test.ts'),
       ];
 
       const dashRegex = /[\u2013\u2014]/;
