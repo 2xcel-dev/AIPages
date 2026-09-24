@@ -182,6 +182,109 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
     });
   });
 
+  describe('Strict Index Enforcement on MongoToolStore.connect', () => {
+    it('throws immediately when unique namespace index creation fails rather than catching silently', async () => {
+      const { MongoToolStore } = await import('../src/db.js');
+      const store = new MongoToolStore('mongodb://localhost:27017/test_db');
+
+      // Mock client methods and collection index creation
+      const mockClient = store.getClient();
+      mockClient.connect = async () => mockClient;
+      mockClient.db = (() => ({
+        command: async () => ({ ok: 1 }),
+      })) as any;
+
+      (store as any).collection = {
+        createIndex: async (indexSpec: any) => {
+          if (indexSpec.namespace === 1) {
+            throw new Error('E11000 duplicate key error collection: tools index: namespace_1');
+          }
+          return 'index_created';
+        },
+      };
+      (store as any).locksCollection = {
+        createIndex: async () => 'index_created',
+      };
+
+      await assert.rejects(
+        async () => {
+          await store.connect();
+        },
+        {
+          name: 'Error',
+          message: 'E11000 duplicate key error collection: tools index: namespace_1',
+        },
+        'store.connect() must throw when unique namespace index fails'
+      );
+    });
+  });
+
+  describe('Database-backed distributed lock semantics', () => {
+    it('manages lock acquisition, contention, expiration, and release', async () => {
+      const store = new InMemoryToolStore();
+      const lockKey = 'test:crawler:lock';
+
+      // 1. Initial acquisition succeeds
+      const acquired1 = await store.acquireLock(lockKey, 'runner-1', 1000);
+      assert.equal(acquired1, true, 'runner-1 should acquire free lock');
+
+      // 2. Contention: runner-2 fails to acquire active lock
+      const acquired2 = await store.acquireLock(lockKey, 'runner-2', 1000);
+      assert.equal(acquired2, false, 'runner-2 should be rejected while runner-1 holds lock');
+
+      // 3. Same runner can re-acquire or extend lease
+      const extended = await store.acquireLock(lockKey, 'runner-1', 1000);
+      assert.equal(extended, true, 'runner-1 should be able to extend its own lease');
+
+      // 4. Release by wrong runner does not free the lock
+      const wrongRelease = await store.releaseLock(lockKey, 'runner-2');
+      assert.equal(wrongRelease, false, 'runner-2 should not be able to release runner-1 lock');
+
+      // 5. Release by valid owner frees the lock
+      const validRelease = await store.releaseLock(lockKey, 'runner-1');
+      assert.equal(validRelease, true, 'runner-1 should release lock');
+
+      // 6. runner-2 can now acquire the freed lock
+      const acquiredAfterRelease = await store.acquireLock(lockKey, 'runner-2', 1000);
+      assert.equal(acquiredAfterRelease, true, 'runner-2 should acquire freed lock');
+      await store.releaseLock(lockKey, 'runner-2');
+    });
+
+    it('allows acquisition of an expired lock lease', async () => {
+      const store = new InMemoryToolStore();
+      const lockKey = 'test:expired:lock';
+
+      // Acquire lock with short ttl (1ms)
+      await store.acquireLock(lockKey, 'old-runner', 1);
+
+      // Wait 10ms for lease to expire
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // New runner can acquire expired lease
+      const acquiredExpired = await store.acquireLock(lockKey, 'new-runner', 1000);
+      assert.equal(acquiredExpired, true, 'new runner should acquire expired lock');
+      await store.releaseLock(lockKey, 'new-runner');
+    });
+
+    it('prevents overlapping crawl execution via distributed lock in crawlOnce', async () => {
+      const store = new InMemoryToolStore();
+      const { CRAWLER_LOCK_KEY } = await import('../src/crawler.js');
+
+      // Pre-acquire the distributed lock by an external runner
+      const preAcquired = await store.acquireLock(CRAWLER_LOCK_KEY, 'external-worker-pod', 60000);
+      assert.equal(preAcquired, true);
+
+      // Trigger crawlOnce with this store: must detect lock is held and abort cleanly
+      const result = await crawlOnce(store);
+      assert.equal(result.discovered, 0);
+      assert.equal(result.ingested, 0);
+      assert.equal(result.errors, 0);
+
+      // Cleanup
+      await store.releaseLock(CRAWLER_LOCK_KEY, 'external-worker-pod');
+    });
+  });
+
   describe('Zero em dash constraint verification in modified files', () => {
     it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, or render.yaml', () => {
       const filesToCheck = [

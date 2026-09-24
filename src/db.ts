@@ -74,6 +74,10 @@ export interface ToolStore {
   list(filter?: ToolListFilter): Promise<Tool[]>;
   /** Update health check status and diagnostic failure metadata. */
   updateHealth(namespace: string, update: HealthUpdate): Promise<void>;
+  /** Acquire distributed lock by key with expiration lease (ms). */
+  acquireLock(lockKey: string, owner: string, ttlMs: number): Promise<boolean>;
+  /** Release distributed lock by key for the given owner. */
+  releaseLock(lockKey: string, owner: string): Promise<boolean>;
   /** Health check - returns true if the store is reachable. */
   ping(): Promise<boolean>;
   /** Close connections. */
@@ -82,9 +86,10 @@ export interface ToolStore {
 
 // ──────────────────── MongoDB Atlas Store ────────────────────
 
-class MongoToolStore implements ToolStore {
+export class MongoToolStore implements ToolStore {
   private client: MongoClient;
   private collection: Collection<Document>;
+  private locksCollection: Collection<Document>;
 
   constructor(uri: string) {
     this.client = new MongoClient(uri, {
@@ -93,16 +98,15 @@ class MongoToolStore implements ToolStore {
     });
     // Default database from URI
     this.collection = this.client.db().collection("tools");
+    this.locksCollection = this.client.db().collection("distributed_locks");
   }
 
   async connect(): Promise<void> {
     await this.client.connect();
     await this.client.db().command({ ping: 1 });
-    try {
-      await this.collection.createIndex({ namespace: 1 }, { unique: true });
-    } catch (err) {
-      console.warn("[db] Warning creating unique namespace index:", err);
-    }
+    // Strict index enforcement: throw error if unique index creation fails
+    await this.collection.createIndex({ namespace: 1 }, { unique: true });
+    await this.locksCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   }
 
   async upsert(tool: Tool): Promise<void> {
@@ -295,6 +299,49 @@ class MongoToolStore implements ToolStore {
     return docs.map((doc: any) => toSearchResult(doc, doc.score));
   }
 
+  async acquireLock(lockKey: string, owner: string, ttlMs: number): Promise<boolean> {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + ttlMs);
+
+    try {
+      const result = await this.locksCollection.findOneAndUpdate(
+        {
+          _id: lockKey as any,
+          $or: [
+            { expiresAt: { $lte: now } },
+            { owner: owner },
+          ],
+        },
+        {
+          $set: {
+            owner,
+            acquiredAt: now,
+            expiresAt,
+          },
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+        },
+      );
+      return result !== null;
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        // Lock document exists and is actively held by another runner
+        return false;
+      }
+      throw err;
+    }
+  }
+
+  async releaseLock(lockKey: string, owner: string): Promise<boolean> {
+    const result = await this.locksCollection.deleteOne({
+      _id: lockKey as any,
+      owner,
+    });
+    return result.deletedCount > 0;
+  }
+
   async ping(): Promise<boolean> {
     try {
       await this.client.db().command({ ping: 1 });
@@ -313,6 +360,7 @@ class MongoToolStore implements ToolStore {
 
 export class InMemoryToolStore implements ToolStore {
   private tools = new Map<string, Tool>();
+  private locks = new Map<string, { owner: string; expiresAt: Date }>();
 
   async upsert(tool: Tool): Promise<void> {
     const existing = this.tools.get(tool.namespace);
@@ -452,6 +500,28 @@ export class InMemoryToolStore implements ToolStore {
       existing.failureReason = update.failureReason ?? null;
       existing.updatedAt = new Date();
     }
+  }
+
+  async acquireLock(lockKey: string, owner: string, ttlMs: number): Promise<boolean> {
+    const now = new Date();
+    const existing = this.locks.get(lockKey);
+    if (!existing || existing.expiresAt <= now || existing.owner === owner) {
+      this.locks.set(lockKey, {
+        owner,
+        expiresAt: new Date(now.getTime() + ttlMs),
+      });
+      return true;
+    }
+    return false;
+  }
+
+  async releaseLock(lockKey: string, owner: string): Promise<boolean> {
+    const existing = this.locks.get(lockKey);
+    if (existing && existing.owner === owner) {
+      this.locks.delete(lockKey);
+      return true;
+    }
+    return false;
   }
 
   async ping(): Promise<boolean> {

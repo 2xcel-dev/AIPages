@@ -26,9 +26,11 @@
  *   CRAWL_TIMEOUT_MS      : per-fetch / per-health-check timeout (default 8 s)
  */
 
+import os from "node:os";
+import crypto from "node:crypto";
 import cron, { type ScheduledTask } from "node-cron";
 import { embed } from "./embedding.js";
-import { createStore } from "./db.js";
+import { createStore, type ToolStore } from "./db.js";
 import type { Tool, HealthStatus } from "./types.js";
 import { scrapeGitHub, searchGitHubRepos, fetchRepoInfo, scrapeNpm } from "./scraper.js";
 import { fetchManifest, extractTools, slugify, type ExtractedTool } from "./manifest.js";
@@ -64,8 +66,13 @@ export interface CrawlResult {
   errors: number;
 }
 
-// Mutex lock to prevent overlapping crawl executions and race conditions
-let isCrawlRunning = false;
+// Database-backed distributed lock configuration (lease expiration in ms)
+export const CRAWLER_LOCK_KEY = "crawler:execution";
+export const CRAWLER_LOCK_TTL_MS = Math.max(
+  60000,
+  parseInt(process.env.CRAWL_LOCK_TTL_MS ?? "900000", 10),
+);
+export const RUNNER_INSTANCE_ID = `${os.hostname()}:${process.pid}:${crypto.randomUUID().slice(0, 8)}`;
 
 // -- candidate discovery (GitHub + npm) -------------------------------------
 
@@ -121,9 +128,18 @@ export async function discoverCandidates(
 
 // -- one-shot crawl cycle ---------------------------------------------------
 
-export async function crawlOnce(): Promise<CrawlResult> {
-  if (isCrawlRunning) {
-    console.warn("[crawler] Crawl cycle already in progress; skipping duplicate run to prevent race conditions.");
+export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult> {
+  const store = existingStore ?? (await createStore());
+  const lockAcquired = await store.acquireLock(
+    CRAWLER_LOCK_KEY,
+    RUNNER_INSTANCE_ID,
+    CRAWLER_LOCK_TTL_MS,
+  );
+
+  if (!lockAcquired) {
+    console.warn(
+      `[crawler] Distributed lock '${CRAWLER_LOCK_KEY}' is currently held by another runner process; skipping cycle to prevent race conditions.`,
+    );
     return {
       discovered: 0,
       fetched: 0,
@@ -136,9 +152,7 @@ export async function crawlOnce(): Promise<CrawlResult> {
     };
   }
 
-  isCrawlRunning = true;
   try {
-    const store = await createStore();
     const candidates = await discoverCandidates(CRAWL_MAX_REPOS);
 
     const result: CrawlResult = {
@@ -296,7 +310,11 @@ export async function crawlOnce(): Promise<CrawlResult> {
 
     return result;
   } finally {
-    isCrawlRunning = false;
+    try {
+      await store.releaseLock(CRAWLER_LOCK_KEY, RUNNER_INSTANCE_ID);
+    } catch (releaseErr) {
+      console.warn("[crawler] Warning releasing distributed lock:", releaseErr);
+    }
   }
 }
 
