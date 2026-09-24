@@ -100,7 +100,7 @@ export function renderToolCard(
       <div class="tool-card-header">
         <div class="header-left">
           <h3 class="card-title">
-            <a href="/tools/${escapedNamespace}">${escapedName}</a>
+            <a href="/tool/${escapedNamespace}">${escapedName}</a>
           </h3>
           <span class="card-ns" title="${escapedNamespace}">${escapedNamespace}</span>
         </div>
@@ -164,7 +164,7 @@ export function renderToolCard(
 
       <div class="tool-card-footer">
         <span class="fee-note">${pricingModel === "free" ? "No execution fee" : "$0.25 platform take-rate"}</span>
-        <a href="/tools/${escapedNamespace}" class="card-action-link">View Details &amp; Schema &rarr;</a>
+        <a href="/tool/${escapedNamespace}" class="card-action-link">View Details &amp; Schema &rarr;</a>
       </div>
     </article>
   `;
@@ -241,7 +241,7 @@ export function renderDirectoryPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIPages Tool Directory — Autonomous Agent Tool Registry</title>
+  <title>AIPages Tool Directory - Autonomous Agent Tool Registry</title>
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <style>
     :root {
@@ -802,7 +802,7 @@ export function renderDirectoryPage(
         <span class="brand-badge">Registry</span>
       </a>
       <div class="nav-links">
-        <a href="/tools">Directory</a>
+        <a href="/tool">Directory</a>
         <a href="/capabilities">Capabilities</a>
         <a href="/search">Vector Search</a>
         <a href="/api/tools">API Tools</a>
@@ -912,7 +912,7 @@ export function renderDirectoryPage(
 
   <footer>
     <div class="container footer-inner">
-      <div>AIPages — Machine-Native Discovery &amp; Vector Index for Autonomous Agents. Base Mainnet.</div>
+      <div>AIPages: Machine-Native Discovery &amp; Vector Index for Autonomous Agents. Base Mainnet.</div>
       <div>
         <a href="/api/tools">API Tools</a> &bull; 
         <a href="/api/openapi.json">OpenAPI 3.1</a> &bull; 

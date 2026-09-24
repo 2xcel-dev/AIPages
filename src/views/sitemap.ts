@@ -33,7 +33,7 @@ function formatDate(date: Date | string | null | undefined): string | null {
  */
 export function generateSitemapXml(
   tools: Tool[],
-  baseUrl: string = "https://aipages.2xcel.net",
+  baseUrl: string = "https://aipages.tech",
 ): string {
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const nowIso = new Date().toISOString();
@@ -62,6 +62,12 @@ export function generateSitemapXml(
       priority: 1.0,
     },
     {
+      loc: `${normalizedBase}/tool`,
+      lastmod: directoryLastmod,
+      changefreq: "daily",
+      priority: 0.9,
+    },
+    {
       loc: `${normalizedBase}/tools`,
       lastmod: directoryLastmod,
       changefreq: "daily",
@@ -86,7 +92,7 @@ export function generateSitemapXml(
     const toolSlug = encodeURIComponent(tool.namespace);
 
     entries.push({
-      loc: `${normalizedBase}/tools/${toolSlug}`,
+      loc: `${normalizedBase}/tool/${toolSlug}`,
       lastmod: toolDate,
       changefreq: "weekly",
       priority: 0.8,

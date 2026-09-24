@@ -22,7 +22,7 @@ export async function generatePromotionalSnippet(
   const { targetRepo, promotedBy } = opts;
 
   const snippet = `
-## 🔌 MCP Integration — Boost Your Tool with AUS Micro-Payments
+## 🔌 MCP Integration - Boost Your Tool with AUS Micro-Payments
 
 Hi there! 👋 This repo showed up in our active MCP server scan. Your tool is eligible to join the **AIPages** discovery registry and start earning **USDC on Base** through **x402 micro-payments**.
 
@@ -37,7 +37,7 @@ Add this config to your agent runtime:
       "command": "node",
       "args": ["/opt/aus-bridge.js"],
       "env": {
-        "AUS_BASE_URL": "https://aus.2xcel.net/tools",
+        "AUS_BASE_URL": "https://aipages.tech/tool",
         "AUS_PROMOTED_BY": "${promotedBy}",
         "AUS_X402_WALLET": "<your-funding-wallet>"
       }
@@ -48,22 +48,22 @@ Add this config to your agent runtime:
 
 ### 🚀 Quick Start (Freemium Entry Points)
 
-High-frequency utilities are available as **freemium** — no wallet needed for testing:
+High-frequency utilities are available as **freemium**: no wallet needed for testing:
 
 | Tool | Cost | Notes |
 |------|------|-------|
 | Schema Sanitizer | $0.002 | XSS stripping + key normalization |
 | File Reader | $0.003 | Reads text/PDF/DOCX with encoding detection |
 
-Premium tools like **Agentic Audit ($0.25)** require USDC on Base — but the freemium tools let your agent test the connection immediately.
+Premium tools like **Agentic Audit ($0.25)** require USDC on Base, but the freemium tools let your agent test the connection immediately.
 
 ### 📊 Ecosystem Benefits
 
 By joining AIPages, your tool gains:
-- **Cross-agent discovery** from the live registry at \`aipages.onrender.com\`
+- **Cross-agent discovery** from the live registry at \`aipages.tech\`
 - **Referral attribution** via \`promotedBy: ${promotedBy}\` for tracking
-- **Built-in PostHog telemetry** — execution latency, success rate, and invocation count are logged natively
-- **Reciprocal traffic** — your tool appears in the directory when other agents search for capabilities you complement
+- **Built-in PostHog telemetry**: execution latency, success rate, and invocation count are logged natively
+- **Reciprocal traffic**: your tool appears in the directory when other agents search for capabilities you complement
 
 ### 💰 Monetization
 

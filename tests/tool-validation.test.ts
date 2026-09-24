@@ -41,7 +41,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         assert.equal(res.errors.length, 0);
 
         // Required specifications
-        assert.ok(tool.endpointUrl?.startsWith("https://aus.2xcel.net/tools/"));
+        assert.ok(tool.endpointUrl?.startsWith("https://aipages.tech/tool/"));
         assert.ok(tool.capabilities && tool.capabilities.length >= 1);
         assert.equal(tool.pricing?.model, "paid");
         assert.ok(tool.pricing && tool.pricing.costPerCall > 0);
@@ -92,7 +92,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "third_party",
         description: "First-party claims with external namespace.",
         connectionType: "http",
-        endpointUrl: "https://aus.2xcel.net/tools/third_party",
+        endpointUrl: "https://aipages.tech/tool/third_party",
         healthStatus: "unknown",
         capabilities: ["test"],
         pricing: { model: "paid", costPerCall: 0.1 },
@@ -111,7 +111,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "insecure_tool",
         description: "Valid description for insecure testing tool.",
         connectionType: "http",
-        endpointUrl: "http://aus.2xcel.net/tools/insecure-test",
+        endpointUrl: "http://aipages.tech/tool/insecure-test",
         healthStatus: "unknown",
         capabilities: ["testing"],
         pricing: { model: "paid", costPerCall: 0.1 },
@@ -136,7 +136,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         rateLimit: "100 req/60s",
       });
       assert.equal(res.valid, false);
-      assert.ok(res.errors.some((e) => e.includes("must reside on canonical host \"aus.2xcel.net\"")));
+      assert.ok(res.errors.some((e) => e.includes("must reside on canonical host \"aipages.tech\"")));
     });
 
     it("rejects completely malformed endpoint URLs", () => {
@@ -160,7 +160,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "unknown" as const,
         pricing: { model: "paid" as const, costPerCall: 0.1 },
         authentication: "x402",
@@ -186,7 +186,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "unknown" as const,
         capabilities: ["sanitization"],
         authentication: "x402",
@@ -224,7 +224,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "unknown" as const,
         capabilities: ["sanitization"],
         pricing: { model: "paid" as const, costPerCall: 0.1 },
@@ -247,7 +247,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "active" as const, // Falsified: claiming active without probe!
         lastChecked: undefined,
         capabilities: ["sanitization"],
@@ -271,7 +271,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "active" as const,
         lastChecked: new Date(Date.now() - 3600000), // 1 hour ago
         capabilities: ["sanitization"],
@@ -294,7 +294,7 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
         name: "schema_sanitizer",
         description: "Valid tool description with sufficient length.",
         connectionType: "http" as const,
-        endpointUrl: "https://aus.2xcel.net/tools/schema-sanitizer",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
         healthStatus: "active" as const,
         lastChecked: new Date(Date.now() + 86400000), // Tomorrow
         capabilities: ["sanitization"],

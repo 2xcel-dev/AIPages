@@ -17,7 +17,7 @@
 | **Tool Detail Page & Scope Disclaimer** | ✅ Completed | Responsive `/tools/:slug` page with prominent reliability card, last-checked time, human-readable failure state, and probe scope disclaimer. |
 | **Directory Cards (Reliability & Freshness)** | ✅ Completed | Rendering health status, reliability badges (`Operational`, `Degraded`, `Failing`, `Unchecked`), and freshness relative timestamps directly on directory cards (`GET /tools`). |
 | **Keyword & Capability Search** | 🟡 Next Up | Adding keyword query filtering (`q`) and capability-based schema filtering to `/` and `/api/tools`. |
-| **Production Smoke Testing** | ⚪ Planned | End-to-end verification against live public service (`https://aus.2xcel.net`) validating the complete response contract. |
+| **Production Smoke Testing** | ⚪ Planned | End-to-end verification against live public service (`https://aipages.tech`) validating the complete response contract. |
 
 ---
 
@@ -38,7 +38,7 @@
 - [ ] Update root endpoint (`GET /`) manifest to advertise keyword and capability search capabilities.
 
 ### Slice 3: Production Smoke Testing & Contract Verification
-- [ ] Test live endpoints on `https://aus.2xcel.net`:
+- [ ] Test live endpoints on `https://aipages.tech`:
   - `GET /` health + pricing manifest.
   - `GET /api/tools` contract and reliability status.
   - `GET /tools/:slug` responsive detail rendering.

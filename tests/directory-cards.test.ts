@@ -5,7 +5,7 @@ import { createStore, type ToolStore } from "../src/db.js";
 import { type Tool, deriveReliability } from "../src/types.js";
 import { renderToolCard, renderDirectoryPage } from "../src/views/directoryPage.js";
 
-describe("Directory Cards — Reliability & Freshness", () => {
+describe("Directory Cards - Reliability & Freshness", () => {
   let store: ToolStore;
   let app: Hono;
 
@@ -121,7 +121,7 @@ describe("Directory Cards — Reliability & Freshness", () => {
       assert.ok(html.includes("Operational"), "Should state Operational");
       assert.ok(html.includes("Freshness"), "Should include Freshness label");
       assert.ok(html.includes("2h ago"), "Should render relative freshness timestamp");
-      assert.ok(html.includes("/tools/net.2xcel.card.healthy"), "Should link to tool detail page");
+      assert.ok(html.includes("/tool/net.2xcel.card.healthy"), "Should link to tool detail page");
       assert.ok(html.includes("$0.1 USDC"), "Should display pricing badge");
     });
 

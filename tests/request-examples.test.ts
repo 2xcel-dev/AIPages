@@ -301,7 +301,7 @@ describe("Copyable Request Examples on Tool Detail Pages (/tools/:slug)", () => 
 
       const html = await res.text();
       assert.ok(html.includes("Integration &amp; Request Example"));
-      assert.ok(html.includes("https://aus.2xcel.net/tools/schema-sanitizer"));
+      assert.ok(html.includes("https://aipages.tech/tool/schema-sanitizer"));
       assert.ok(html.includes("x-payment-receipt"));
       assert.ok(html.includes("&lt;BASE_USDC_PAYMENT_RECEIPT&gt;"));
       assert.ok(html.includes("Copy cURL"));

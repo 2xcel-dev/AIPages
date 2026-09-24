@@ -107,7 +107,7 @@ describe("Task 8: Schema.org JSON-LD Metadata on Tool Detail Pages", () => {
       assert.equal(jsonLd.operatingSystem, "Any");
       assert.equal(
         jsonLd.url,
-        "https://aipages.2xcel.net/tools/net.2xcel.test.schema-linter",
+        "https://aipages.tech/tool/net.2xcel.test.schema-linter",
       );
       assert.equal(jsonLd.installUrl, "https://api.example.com/v1/lint");
       assert.equal(jsonLd.keywords, "validation, schema-linting, json-schema");

@@ -1,7 +1,7 @@
 /**
  * Authoritative First-Party Agent Utility Services (AUS) Fleet Definitions.
  *
- * All services are hosted on the canonical gateway: https://aus.2xcel.net
+ * All services are hosted on the canonical gateway: https://aipages.tech
  * Monetized via x402 payment protocol on Base Mainnet.
  * All health statuses are explicitly "unknown" (unverified) until probed by
  * the background health worker, guaranteeing reliability resolves to "unchecked".
@@ -9,7 +9,7 @@
 import type { Tool } from "../types.js";
 
 export const AUS_DEVELOPER_ADDRESS = "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C";
-export const AUS_BASE_URL = "https://aus.2xcel.net";
+export const AUS_BASE_URL = "https://aipages.tech";
 export const AUS_STANDARD_RATE_LIMIT = "100 requests per 60 seconds per IP";
 export const AUS_AUTH_SPEC =
   "x402 payment protocol (Header: x-payment-receipt; Token: USDC on Base Mainnet; Recipient: 0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C)";
@@ -38,7 +38,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["data"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/schema-sanitizer`,
+    endpointUrl: `${AUS_BASE_URL}/tool/schema-sanitizer`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -91,7 +91,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["transactions"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/financial-audit`,
+    endpointUrl: `${AUS_BASE_URL}/tool/financial-audit`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -128,7 +128,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["data"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/verification-oracle`,
+    endpointUrl: `${AUS_BASE_URL}/tool/verification-oracle`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -178,7 +178,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["origin", "destination"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/geospatial-verifier`,
+    endpointUrl: `${AUS_BASE_URL}/tool/geospatial-verifier`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -224,7 +224,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["code"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/sandbox-execution`,
+    endpointUrl: `${AUS_BASE_URL}/tool/sandbox-execution`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -260,7 +260,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["prompt"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/claude-reason`,
+    endpointUrl: `${AUS_BASE_URL}/tool/claude-reason`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -298,7 +298,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: [],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/media-transcoder`,
+    endpointUrl: `${AUS_BASE_URL}/tool/media-transcoder`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,
@@ -349,7 +349,7 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       required: ["steps"],
     },
     connectionType: "http",
-    endpointUrl: `${AUS_BASE_URL}/tools/agentic-audit`,
+    endpointUrl: `${AUS_BASE_URL}/tool/agentic-audit`,
     healthStatus: "unknown",
     lastChecked: undefined,
     failureReason: null,

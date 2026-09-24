@@ -1,5 +1,5 @@
 /**
- * AIPages Backend — main application entry point.
+ * AIPages Backend: main application entry point.
  *
  * Hono API with route groups:
  *   - Public:  GET /              health + pricing manifest
@@ -60,11 +60,11 @@ export const DISCOVERY_MANIFEST = {
   },
   endpoints: {
     search: "GET /search?q=<natural-language-query>&limit=<n> (free)",
-    directory: "GET /tools?reliability=<r>&connectionType=<c>",
+    directory: "GET /tool?reliability=<r>&connectionType=<c>",
     tools: "GET /api/tools?capability=<cap>&limit=<n>&offset=<n>&status=<s>&healthStatus=<h>",
     submit: "POST /api/tools/submit (free)",
     toolDetail: "GET /api/tools/:namespace",
-    toolPage: "GET /tools/:slug",
+    toolPage: "GET /tool/:slug",
     capabilities: "GET /capabilities (functional capability index)",
     sitemap: "GET /sitemap.xml (XML sitemap)",
     openapi: "GET /api/openapi.json",
@@ -293,7 +293,7 @@ app.post("/api/tools/submit", async (c) => {
       connectionType: connectionType as string,
     });
 
-    // Listing is free — no fee to verify. Monetization happens only on
+    // Listing is free - no fee to verify. Monetization happens only on
     // successful invocation via the proxy's platform take-rate.
     return c.json(
       {
@@ -524,13 +524,17 @@ export async function handleDirectoryRequest(
   );
 }
 
+app.get("/tool", async (c) => {
+  return handleDirectoryRequest(c, "/tool");
+});
+
 app.get("/tools", async (c) => {
-  return handleDirectoryRequest(c, "/tools");
+  return handleDirectoryRequest(c, "/tool");
 });
 
 // ── Public route: human-facing tool page (responsive detail + reliability) ──
 
-app.get("/tools/:slug", async (c) => {
+async function handleToolDetail(c: any) {
   const slug = c.req.param("slug");
   if (!slug) {
     return c.html(renderNotFoundPage(""), 404);
@@ -555,7 +559,10 @@ app.get("/tools/:slug", async (c) => {
 
   const relatedTools = await findRelatedTools(store, tool, 3);
   return c.html(renderToolPage(tool, relatedTools));
-});
+}
+
+app.get("/tool/:slug", handleToolDetail);
+app.get("/tools/:slug", handleToolDetail);
 
 // ── Public route: XML sitemap for search engines & crawler discovery ──
 
@@ -570,7 +577,7 @@ app.get("/sitemap.xml", async (c) => {
 // ── Public route: robots.txt crawler directives ──
 
 app.get("/robots.txt", (c) => {
-  const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.2xcel.net/sitemap.xml\n";
+  const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.tech/sitemap.xml\n";
   c.header("Content-Type", "text/plain; charset=utf-8");
   c.header("Cache-Control", "public, max-age=86400");
   return c.text(robots);
@@ -651,7 +658,7 @@ async function main() {
 
   // Auto-seed in dev mode (in-memory store with no Mongo URI)
   if (total === 0 && !config.MONGODB_URI) {
-    console.log("[db] Empty store — auto-seeding sample tools (dev mode)…");
+    console.log("[db] Empty store - auto-seeding sample tools (dev mode)...");
     await seedDevTools(store);
     total = await store.count();
   }

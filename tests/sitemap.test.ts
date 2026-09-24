@@ -75,7 +75,7 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
     });
 
     app.get("/robots.txt", (c) => {
-      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.2xcel.net/sitemap.xml\n";
+      const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.tech/sitemap.xml\n";
       c.header("Content-Type", "text/plain; charset=utf-8");
       c.header("Cache-Control", "public, max-age=86400");
       return c.text(robots);
@@ -107,11 +107,11 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
     it("includes homepage and tools directory with high priority and daily changefreq", () => {
       const xml = generateSitemapXml([sampleToolA]);
 
-      assert.ok(xml.includes("<loc>https://aipages.2xcel.net/</loc>"));
+      assert.ok(xml.includes("<loc>https://aipages.tech/</loc>"));
       assert.ok(xml.includes("<changefreq>daily</changefreq>"));
       assert.ok(xml.includes("<priority>1.0</priority>"));
 
-      assert.ok(xml.includes("<loc>https://aipages.2xcel.net/tools</loc>"));
+      assert.ok(xml.includes("<loc>https://aipages.tech/tools</loc>"));
       assert.ok(xml.includes("<priority>0.9</priority>"));
     });
 
@@ -119,10 +119,10 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
       const xml = generateSitemapXml([sampleToolA, sampleToolB]);
 
       assert.ok(
-        xml.includes("<loc>https://aipages.2xcel.net/tools/net.2xcel.test.sample-a</loc>"),
+        xml.includes("<loc>https://aipages.tech/tool/net.2xcel.test.sample-a</loc>"),
       );
       assert.ok(
-        xml.includes("<loc>https://aipages.2xcel.net/tools/net.2xcel.test.sample-b</loc>"),
+        xml.includes("<loc>https://aipages.tech/tool/net.2xcel.test.sample-b</loc>"),
       );
       assert.ok(xml.includes("<lastmod>2026-09-23T08:00:00.000Z</lastmod>"));
       assert.ok(xml.includes("<lastmod>2026-09-22T08:00:00.000Z</lastmod>"));
@@ -152,13 +152,13 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
 
       const body = await res.text();
       assert.ok(body.includes('<?xml version="1.0" encoding="UTF-8"?>'));
-      assert.ok(body.includes("<loc>https://aipages.2xcel.net/</loc>"));
-      assert.ok(body.includes("<loc>https://aipages.2xcel.net/tools</loc>"));
+      assert.ok(body.includes("<loc>https://aipages.tech/</loc>"));
+      assert.ok(body.includes("<loc>https://aipages.tech/tools</loc>"));
 
       // All 8 canonical AUS tools must be present
       for (const aus of CANONICAL_AUS_TOOLS) {
         assert.ok(
-          body.includes(`<loc>https://aipages.2xcel.net/tools/${aus.namespace}</loc>`),
+          body.includes(`<loc>https://aipages.tech/tool/${aus.namespace}</loc>`),
           `Expected sitemap to include canonical AUS tool ${aus.namespace}`,
         );
       }
@@ -174,7 +174,7 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
       const body = await res.text();
       assert.ok(body.includes("User-agent: *"));
       assert.ok(body.includes("Allow: /"));
-      assert.ok(body.includes("Sitemap: https://aipages.2xcel.net/sitemap.xml"));
+      assert.ok(body.includes("Sitemap: https://aipages.tech/sitemap.xml"));
     });
 
     it("HTML pages include discovery link tag in head for sitemap", async () => {

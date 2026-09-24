@@ -1,5 +1,5 @@
 /**
- * Focused Health-Check Job — aipages-outreach worker area.
+ * Focused Health-Check Job: aipages-outreach worker area.
  *
  * Inspects eligible tool endpoints with a bounded timeout and updates their
  * health results deterministically in MongoDB Atlas (or in-memory store in dev/test).
@@ -103,7 +103,7 @@ export async function probeEndpoint(
 
   const cleanHeaders = {
     Accept: "*/*",
-    "User-Agent": "AIPages-HealthWorker/1.0 (+https://aipages.2xcel.net)",
+    "User-Agent": "AIPages-HealthWorker/1.0 (+https://aipages.tech)",
   };
 
   try {

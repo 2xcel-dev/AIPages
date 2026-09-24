@@ -213,10 +213,10 @@ export interface RequestExample {
 
 export function generateRequestExample(tool: Tool): RequestExample {
   const method = "POST";
-  const endpoint = tool.endpointUrl || `https://aus.2xcel.net/api/invoke/${tool.namespace}`;
+  const endpoint = tool.endpointUrl || `https://aipages.tech/tool/${tool.namespace}`;
 
-  let host = "aus.2xcel.net";
-  let path = `/api/invoke/${tool.namespace}`;
+  let host = "aipages.tech";
+  let path = `/tool/${tool.namespace}`;
   try {
     const parsed = new URL(endpoint);
     host = parsed.host;
@@ -245,7 +245,7 @@ export function generateRequestExample(tool: Tool): RequestExample {
 
   if (isX402) {
     headers["x-payment-receipt"] = "<BASE_USDC_PAYMENT_RECEIPT>";
-    authDescription = `x402 Payment Protocol — Requires ${costDisplay} on Base Mainnet (Chain ID 8453) to recipient ${recipientAddress}. Include your settled Base ERC-20 payment receipt in the 'x-payment-receipt' header (or 'X-Payment' tx hash).`;
+    authDescription = `x402 Payment Protocol - Requires ${costDisplay} on Base Mainnet (Chain ID 8453) to recipient ${recipientAddress}. Include your settled Base ERC-20 payment receipt in the 'x-payment-receipt' header (or 'X-Payment' tx hash).`;
   } else if (tool.authentication) {
     if (/bearer|token|apikey|key/i.test(tool.authentication)) {
       headers["Authorization"] = "Bearer <API_KEY>";
@@ -334,7 +334,7 @@ export function generateToolJsonLd(tool: Tool): Record<string, unknown> {
     description: tool.description || "",
     applicationCategory: "AutonomousAgentTool",
     operatingSystem: "Any",
-    url: `https://aipages.2xcel.net/tools/${encodeURIComponent(tool.namespace)}`,
+    url: `https://aipages.tech/tool/${encodeURIComponent(tool.namespace)}`,
   };
 
   if (tool.endpointUrl) {
@@ -413,7 +413,7 @@ export function generateToolJsonLd(tool: Tool): Record<string, unknown> {
     });
   }
 
-  // Reliability Context — strictly adheres to anti-falsification
+  // Reliability Context - strictly adheres to anti-falsification
   additionalProperties.push({
     "@type": "PropertyValue",
     name: "reliabilityStatus",
@@ -514,7 +514,7 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapedName} — AIPages Agent Tool Registry</title>
+  <title>${escapedName} - AIPages Agent Tool Registry</title>
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">
 ${jsonLdScript}
@@ -1159,7 +1159,7 @@ ${jsonLdScript}
         <span class="brand-badge">Registry</span>
       </a>
       <div class="nav-links">
-        <a href="/tools">Directory</a>
+        <a href="/tool">Directory</a>
         <a href="/capabilities">Capabilities</a>
         <a href="/search">Vector Search</a>
         <a href="/api/tools">Tools API</a>
@@ -1364,8 +1364,8 @@ ${jsonLdScript}
             Invoke dynamically with autonomous agent wallet authorization:
             <a href="#integration-examples" style="color: var(--primary); margin-left: 6px;">View Full cURL &amp; Payload &darr;</a>
           </div>
-          <pre style="margin: 0;"><code id="proxy-snippet">POST /api/invoke/${escapedNamespace}
-Host: aus.2xcel.net
+          <pre style="margin: 0;"><code id="proxy-snippet">POST /tool/${escapedNamespace}
+Host: aipages.tech
 X-Payment: &lt;base-usdc-tx-hash&gt;
 x-payment-receipt: &lt;BASE_USDC_PAYMENT_RECEIPT&gt;
 Content-Type: application/json</code></pre>
@@ -1532,7 +1532,7 @@ Content-Type: application/json</code></pre>
 
   <footer>
     <div class="container footer-inner">
-      <div>AIPages — Autonomous AI Agent Registry &amp; Vector Index. Base Mainnet.</div>
+      <div>AIPages: Autonomous AI Agent Registry &amp; Vector Index. Base Mainnet.</div>
       <div>
         <a href="/api/tools">API Tools</a> &bull; 
         <a href="/api/openapi.json">OpenAPI 3.1</a> &bull; 
@@ -1639,7 +1639,7 @@ export function renderNotFoundPage(slug: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tool Not Found — AIPages</title>
+  <title>Tool Not Found - AIPages</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;

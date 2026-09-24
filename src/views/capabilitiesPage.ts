@@ -104,7 +104,7 @@ export function getCapabilityIndex(tools: Tool[]): CapabilitySummary[] {
           name: cap,
           toolCount: 0,
           description: desc,
-          directoryUrl: `/tools?capability=${encodeURIComponent(cap)}`,
+          directoryUrl: `/tool?capability=${encodeURIComponent(cap)}`,
           tools: [],
         });
       }
@@ -130,7 +130,7 @@ export function getCapabilityIndex(tools: Tool[]): CapabilitySummary[] {
 export function renderCapabilitiesPage(
   capabilities: CapabilitySummary[],
   totalToolsCount: number,
-  baseUrl: string = "https://aipages.2xcel.net",
+  baseUrl: string = "https://aipages.tech",
 ): string {
   const normalizedBase = baseUrl.replace(/\/+$/, "");
 
@@ -182,7 +182,7 @@ export function renderCapabilitiesPage(
             : `$${t.costPerCall} USDC`;
 
           return `
-            <a href="/tools/${encodeURIComponent(t.namespace)}" class="cap-tool-pill" title="${escapedNs}">
+            <a href="/tool/${encodeURIComponent(t.namespace)}" class="cap-tool-pill" title="${escapedNs}">
               <span class="cap-tool-name">${escapedToolName}</span>
               ${t.isFirstParty ? `<span class="badge-aus" title="First-Party AUS Tool">★ AUS</span>` : ""}
               <span class="cap-tool-price">${priceDisplay}</span>
@@ -232,7 +232,7 @@ export function renderCapabilitiesPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tool Capabilities Index — AIPages Agent Tool Registry</title>
+  <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">
@@ -679,7 +679,7 @@ ${jsonLdScript}
         <span class="brand-badge">Registry</span>
       </a>
       <div class="nav-links">
-        <a href="/tools">Directory</a>
+        <a href="/tool">Directory</a>
         <a href="/capabilities" class="active">Capabilities</a>
         <a href="/search">Vector Search</a>
         <a href="/api/tools">API Tools</a>
@@ -739,7 +739,7 @@ ${jsonLdScript}
 
   <footer class="footer">
     <div class="container">
-      <p>AIPages — Machine-native discovery registry and vector search index for autonomous AI agent tools.</p>
+      <p>AIPages: Machine-native discovery registry and vector search index for autonomous AI agent tools.</p>
     </div>
   </footer>
 

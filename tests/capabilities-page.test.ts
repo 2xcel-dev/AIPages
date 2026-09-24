@@ -125,7 +125,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       const dataCleaning = index.find((c) => c.name === "data-cleaning");
       assert.ok(dataCleaning, "Must aggregate 'data-cleaning'");
       assert.equal(dataCleaning.toolCount, 2);
-      assert.equal(dataCleaning.directoryUrl, "/tools?capability=data-cleaning");
+      assert.equal(dataCleaning.directoryUrl, "/tool?capability=data-cleaning");
       assert.equal(dataCleaning.tools.length, 2);
 
       const schemaSan = index.find((c) => c.name === "schema-sanitization");
@@ -191,7 +191,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       const html = renderCapabilitiesPage(capabilities, 2);
 
       assert.ok(html.includes("<!DOCTYPE html>"));
-      assert.ok(html.includes("<title>Tool Capabilities Index — AIPages Agent Tool Registry</title>"));
+      assert.ok(html.includes("<title>Tool Capabilities Index - AIPages Agent Tool Registry</title>"));
       assert.ok(html.includes('<link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">'));
 
       // Validate JSON-LD script
@@ -211,7 +211,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       assert.ok(html.includes("2 tools"));
       assert.ok(html.includes("sanitizer_pro"));
       assert.ok(html.includes("fast_cleaner"));
-      assert.ok(html.includes("/tools?capability=data-cleaning"));
+      assert.ok(html.includes("/tool?capability=data-cleaning"));
       assert.ok(html.includes("Browse data-cleaning Tools &rarr;"));
     });
 
@@ -239,7 +239,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       assert.ok(body.includes("schema-sanitization"));
       assert.ok(body.includes("financial-audit"));
       assert.ok(body.includes("sandbox-execution"));
-      assert.ok(body.includes("/tools?capability="));
+      assert.ok(body.includes("/tool?capability="));
     });
 
     it("GET /capabilities with Accept: application/json returns structured JSON", async () => {
@@ -260,7 +260,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       assert.ok(san);
       assert.ok(san.toolCount >= 1);
       assert.ok(san.tools.length >= 1);
-      assert.ok(san.directoryUrl.includes("/tools?capability=schema-sanitization"));
+      assert.ok(san.directoryUrl.includes("/tool?capability=schema-sanitization"));
     });
 
     it("GET /capabilities?format=json returns structured JSON", async () => {
@@ -274,7 +274,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       const res = await app.request("http://localhost/sitemap.xml");
       assert.equal(res.status, 200);
       const xml = await res.text();
-      assert.ok(xml.includes("<loc>https://aipages.2xcel.net/capabilities</loc>"));
+      assert.ok(xml.includes("<loc>https://aipages.tech/capabilities</loc>"));
     });
 
     it("Navbar on directory and tool detail pages links to /capabilities", async () => {

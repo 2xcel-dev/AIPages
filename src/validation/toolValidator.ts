@@ -9,7 +9,7 @@ import { deriveReliability, type Tool, type ConnectionType, type HealthStatus, t
 
 export const NAMESPACE_REGEX = /^[a-z0-9]+(\.[a-z0-9_-]+)+$/;
 export const FIRST_PARTY_NAMESPACE_REGEX = /^net\.2xcel\.aus\.[a-z0-9_-]+$/;
-export const CANONICAL_AUS_HOST = "aus.2xcel.net";
+export const CANONICAL_AUS_HOST = "aipages.tech";
 export const VALID_CONNECTION_TYPES: readonly ConnectionType[] = ["http", "sse", "stdio", "websocket"] as const;
 export const VALID_PRICING_MODELS = ["free", "freemium", "paid"] as const;
 export const VALID_HEALTH_STATUSES: readonly HealthStatus[] = ["active", "inactive", "unknown"] as const;
@@ -116,8 +116,8 @@ export function validateToolRecord(
             `First-party AUS endpoint must reside on canonical host "${CANONICAL_AUS_HOST}", received "${parsedUrl.hostname}"`,
           );
         }
-        if (!parsedUrl.pathname.startsWith("/tools/")) {
-          errors.push(`First-party AUS endpoint path must start with "/tools/", received "${parsedUrl.pathname}"`);
+        if (!parsedUrl.pathname.startsWith("/tool/") && !parsedUrl.pathname.startsWith("/tools/")) {
+          errors.push(`First-party AUS endpoint path must start with "/tool/", received "${parsedUrl.pathname}"`);
         }
       }
     } catch {
