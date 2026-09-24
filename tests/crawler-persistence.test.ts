@@ -595,8 +595,11 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
         path.resolve(process.cwd(), 'src/discovery/types.ts'),
         path.resolve(process.cwd(), 'src/discovery/official-registry.ts'),
         path.resolve(process.cwd(), 'src/discovery/index.ts'),
+        path.resolve(process.cwd(), 'src/api/tools.ts'),
+        path.resolve(process.cwd(), 'src/api/syndication.ts'),
         path.resolve(process.cwd(), 'render.yaml'),
         path.resolve(process.cwd(), 'tests/crawler-persistence.test.ts'),
+        path.resolve(process.cwd(), 'tests/api-directory-syndication.test.ts'),
       ];
 
       const dashRegex = /[\u2013\u2014]/;

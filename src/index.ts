@@ -36,6 +36,9 @@ import { generateSitemapXml } from "./views/sitemap.js";
 import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
+import { handleGetTools, formatToolRecord } from "./api/tools.js";
+import { handleSyndicationFeed } from "./api/syndication.js";
+export { formatToolRecord };
 const app = new Hono();
 
 // ── Globals ─────────────────────────────────────────────────
@@ -61,7 +64,8 @@ export const DISCOVERY_MANIFEST = {
   endpoints: {
     search: "GET /search?q=<natural-language-query>&limit=<n> (free)",
     directory: "GET /tool?reliability=<r>&connectionType=<c>",
-    tools: "GET /api/tools?capability=<cap>&limit=<n>&offset=<n>&status=<s>&healthStatus=<h>",
+    tools: "GET /api/tools?source=<s>&search=<q>&active=<b>&limit=<n>&page=<p>",
+    syndication: "GET /api/feed.json (JSON Feed v1.1 syndication)",
     submit: "POST /api/tools/submit (free)",
     toolDetail: "GET /api/tools/:namespace",
     toolPage: "GET /tool/:slug",
@@ -316,124 +320,18 @@ app.post("/api/tools/submit", async (c) => {
   },
 );
 
-// ── Helper: Format tool record with health and reliability ──
-
-function formatToolRecord(tool: Tool) {
-  const health = deriveReliability(tool);
-  const isFirstParty = Boolean(
-    tool.isFirstParty ??
-    tool.developer?.isFirstParty ??
-    tool.namespace?.startsWith("net.2xcel.aus")
-  );
-  const pricingModel = tool.pricing?.model ?? "free";
-  const costPerCall = tool.pricing?.costPerCall ?? 0;
-
-  return {
-    namespace: tool.namespace,
-    name: tool.name,
-    description: tool.description,
-    schema: tool.schema,
-    connectionType: tool.connectionType,
-    endpointUrl: tool.endpointUrl ?? null,
-    healthStatus: health.healthStatus,
-    lastChecked: health.lastCheckedIso,
-    failureReason: health.failureReason,
-    reliability: health.reliability,
-    health: {
-      status: health.healthStatus,
-      lastChecked: health.lastCheckedIso,
-      reliability: health.reliability,
-      failureReason: health.failureReason,
-    },
-    pricing: {
-      model: pricingModel,
-      costPerCall,
-      currency: "USDC",
-      chain: "Base",
-    },
-    developer: tool.developer,
-    status: tool.status ?? "active",
-    updatedAt: tool.updatedAt instanceof Date ? tool.updatedAt.toISOString() : tool.updatedAt,
-    embeddingDimensions: tool.embedding?.length ?? null,
-    schemaSource: tool.schemaSource ?? null,
-    isFirstParty,
-    capabilities: tool.capabilities ?? [],
-    rateLimit: tool.rateLimit ?? (isFirstParty ? "100 requests per 60 seconds per IP" : null),
-    authentication: tool.authentication ?? (isFirstParty ? "x402 payment protocol" : null),
-    protocolDetails: tool.protocolDetails ?? null,
-  };
-}
-
-// ── Public route: list tools (with filters, pagination, and health/reliability) ──
+// ── Public route: list tools (with source, search, active, pagination, and health) ──
 
 app.get("/api/tools", async (c) => {
-  const limitParam = c.req.query("limit");
-  const offsetParam = c.req.query("offset") ?? c.req.query("skip");
-  const pageParam = c.req.query("page");
-
-  const status = c.req.query("status");
-  const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
-  const healthStatus = c.req.query("healthStatus") as HealthStatus | undefined;
-  const pricingModel = c.req.query("pricingModel");
-  const capability = c.req.query("capability") ?? c.req.query("q") ?? c.req.query("keyword");
-  const hasEndpointParam = c.req.query("hasEndpoint");
-  const hasEndpoint = hasEndpointParam !== undefined ? hasEndpointParam === "true" : undefined;
-  const reliabilityParam = c.req.query("reliability");
-
-  // Validate reliability query parameter if provided
-  if (reliabilityParam !== undefined) {
-    const validReliabilities = ["high", "degraded", "failing", "unchecked", "all"];
-    const normalizedReliability = reliabilityParam.toLowerCase().trim();
-    if (!validReliabilities.includes(normalizedReliability)) {
-      return c.json(
-        {
-          error: "Invalid reliability filter parameter",
-          message: "Allowed values for 'reliability' are: 'high', 'degraded', 'failing', 'unchecked', or 'all'.",
-          provided: reliabilityParam,
-        },
-        400,
-      );
-    }
-  }
-
-  const limit = Math.min(Math.max(1, Number(limitParam ?? 20)), 100);
-  let offset = Math.max(0, Number(offsetParam ?? 0));
-  if (pageParam && !offsetParam) {
-    const page = Math.max(1, Number(pageParam));
-    offset = (page - 1) * limit;
-  }
-
-  const filter = {
-    hasEndpoint,
-    status,
-    connectionType,
-    healthStatus,
-    pricingModel,
-    capability,
-  };
-
-  let tools = await store.list(filter);
-
-  // Apply reliability filter based on derived health
-  if (reliabilityParam) {
-    const targetReliability = reliabilityParam.toLowerCase().trim();
-    if (targetReliability !== "all") {
-      tools = tools.filter((t) => deriveReliability(t).reliability === targetReliability);
-    }
-  }
-
-  const total = tools.length;
-  const paginatedTools = tools.slice(offset, offset + limit);
-  const formattedTools = paginatedTools.map(formatToolRecord);
-
-  return c.json({
-    total,
-    count: formattedTools.length,
-    limit,
-    offset,
-    tools: formattedTools,
-  });
+  return handleGetTools(c, store);
 });
+
+// ── Public route: standard JSON syndication feed (JSON Feed v1.1) ──
+
+app.get("/api/feed.json", async (c) => handleSyndicationFeed(c, store));
+app.get("/api/syndication", async (c) => handleSyndicationFeed(c, store));
+app.get("/api/syndication/feed.json", async (c) => handleSyndicationFeed(c, store));
+app.get("/feed.json", async (c) => handleSyndicationFeed(c, store));
 
 // ── Public route: single-tool specification API endpoint ─────────
 
