@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Hono } from 'hono';
 import { InMemoryToolStore } from '../src/db.js';
 import { deriveReliability, type Tool, type ConnectionType, type HealthStatus } from '../src/types.js';
+import { findToolBySlug } from '../src/views/toolPage.js';
 
 describe('GET /api/tools & Health Reliability Extension', () => {
   describe('deriveReliability logic', () => {
@@ -70,6 +71,8 @@ describe('GET /api/tools & Health Reliability Extension', () => {
 
       function formatToolRecord(tool: Tool) {
         const health = deriveReliability(tool);
+        const pricingModel = tool.pricing?.model ?? 'free';
+        const costPerCall = tool.pricing?.costPerCall ?? 0;
         return {
           namespace: tool.namespace,
           name: tool.name,
@@ -87,7 +90,12 @@ describe('GET /api/tools & Health Reliability Extension', () => {
             reliability: health.reliability,
             failureReason: health.failureReason,
           },
-          pricing: tool.pricing ?? { model: 'free', costPerCall: 0 },
+          pricing: {
+            model: pricingModel,
+            costPerCall,
+            currency: 'USDC',
+            chain: 'Base',
+          },
           developer: tool.developer,
           status: tool.status ?? 'active',
           updatedAt: tool.updatedAt instanceof Date ? tool.updatedAt.toISOString() : tool.updatedAt,
@@ -98,10 +106,26 @@ describe('GET /api/tools & Health Reliability Extension', () => {
         const limitParam = c.req.query('limit');
         const offsetParam = c.req.query('offset') ?? c.req.query('skip');
         const status = c.req.query('status');
-        const connectionType = c.req.query('connectionType') as ConnectionType | undefined;
-        const healthStatus = c.req.query('healthStatus') as HealthStatus | undefined;
+        const connectionType = c.req.query("connectionType") as ConnectionType | undefined;
+        const healthStatus = c.req.query("healthStatus") as HealthStatus | undefined;
         const pricingModel = c.req.query('pricingModel');
         const capability = c.req.query('capability') ?? c.req.query('q') ?? c.req.query('keyword');
+        const reliabilityParam = c.req.query('reliability');
+
+        if (reliabilityParam !== undefined) {
+          const validReliabilities = ['high', 'degraded', 'failing', 'unchecked', 'all'];
+          const normalized = reliabilityParam.toLowerCase().trim();
+          if (!validReliabilities.includes(normalized)) {
+            return c.json(
+              {
+                error: 'Invalid reliability filter parameter',
+                message: "Allowed values for 'reliability' are: 'high', 'degraded', 'failing', 'unchecked', or 'all'.",
+                provided: reliabilityParam,
+              },
+              400,
+            );
+          }
+        }
 
         const limit = Math.min(Math.max(1, Number(limitParam ?? 20)), 100);
         const offset = Math.max(0, Number(offsetParam ?? 0));
@@ -112,30 +136,39 @@ describe('GET /api/tools & Health Reliability Extension', () => {
           healthStatus,
           pricingModel,
           capability,
-          limit,
-          offset,
         };
 
-        const [total, tools] = await Promise.all([
-          store.count(filter),
-          store.list(filter),
-        ]);
+        let tools = await store.list(filter);
+
+        if (reliabilityParam) {
+          const target = reliabilityParam.toLowerCase().trim();
+          if (target !== 'all') {
+            tools = tools.filter((t) => deriveReliability(t).reliability === target);
+          }
+        }
+
+        const total = tools.length;
+        const paginated = tools.slice(offset, offset + limit);
 
         return c.json({
           total,
-          count: tools.length,
+          count: paginated.length,
           limit,
           offset,
-          tools: tools.map(formatToolRecord),
+          tools: paginated.map(formatToolRecord),
         });
       });
 
-      app.get('/api/tools/:namespace', async (c) => {
-        const namespace = c.req.param('namespace');
-        const tool = await store.getByNamespace(namespace);
-        if (!tool) return c.json({ error: 'Tool not found' }, 404);
+      async function handleApiToolDetail(c: any) {
+        const slug = c.req.param('slug') || c.req.param('namespace');
+        if (!slug) return c.json({ error: 'Missing tool identifier' }, 400);
+        const tool = await findToolBySlug(store, slug);
+        if (!tool) return c.json({ error: 'Tool not found', slug }, 404);
         return c.json(formatToolRecord(tool));
-      });
+      }
+
+      app.get('/api/tools/:slug', handleApiToolDetail);
+      app.get('/api/tool/:slug', handleApiToolDetail);
 
       return { app, store };
     }
@@ -313,6 +346,87 @@ describe('GET /api/tools & Health Reliability Extension', () => {
       // Non-existent tool returns 404
       const res404 = await app.request('/api/tools/nonexistent');
       assert.equal(res404.status, 404);
+    });
+
+    it('filters tools by reliability parameter on GET /api/tools', async () => {
+      const { app, store } = setupApp();
+
+      const freshTool: Tool = {
+        namespace: 'com.test.fresh-rel',
+        name: 'fresh_rel',
+        description: 'Fresh active tool',
+        schema: {},
+        connectionType: 'http',
+        healthStatus: 'active',
+        lastChecked: new Date(Date.now() - 3600000),
+        updatedAt: new Date(),
+      };
+
+      const failingTool: Tool = {
+        namespace: 'com.test.failing-rel',
+        name: 'failing_rel',
+        description: 'Failing tool',
+        schema: {},
+        connectionType: 'http',
+        healthStatus: 'inactive',
+        lastChecked: new Date(Date.now() - 10000),
+        failureReason: 'Connection refused',
+        updatedAt: new Date(),
+      };
+
+      await store.upsert(freshTool);
+      await store.upsert(failingTool);
+
+      const highRes = await app.request('/api/tools?reliability=high');
+      assert.equal(highRes.status, 200);
+      const highData = await highRes.json() as any;
+      assert.equal(highData.count, 1);
+      assert.equal(highData.tools[0].namespace, 'com.test.fresh-rel');
+
+      const failRes = await app.request('/api/tools?reliability=failing');
+      assert.equal(failRes.status, 200);
+      const failData = await failRes.json() as any;
+      assert.equal(failData.count, 1);
+      assert.equal(failData.tools[0].namespace, 'com.test.failing-rel');
+
+      const badRes = await app.request('/api/tools?reliability=invalid_value');
+      assert.equal(badRes.status, 400);
+      const badData = await badRes.json() as any;
+      assert.ok(badData.error.includes('Invalid reliability'));
+    });
+
+    it('resolves tool specification by short name slug on /api/tools/:slug and /api/tool/:slug', async () => {
+      const { app, store } = setupApp();
+
+      await store.upsert({
+        namespace: 'net.2xcel.aus.schema-sanitizer',
+        name: 'schema_sanitizer',
+        description: 'Sanitizer tool for autonomous agents',
+        schema: { type: 'object' },
+        connectionType: 'http',
+        endpointUrl: 'https://aipages.tech/tool/schema-sanitizer',
+        healthStatus: 'unknown',
+        pricing: { model: 'paid', costPerCall: 0.1 },
+        updatedAt: new Date(),
+      });
+
+      const resSlug = await app.request('/api/tools/schema-sanitizer');
+      assert.equal(resSlug.status, 200);
+      const dataSlug = await resSlug.json() as any;
+      assert.equal(dataSlug.namespace, 'net.2xcel.aus.schema-sanitizer');
+      assert.equal(dataSlug.name, 'schema_sanitizer');
+      assert.equal(dataSlug.pricing.currency, 'USDC');
+      assert.equal(dataSlug.pricing.chain, 'Base');
+
+      const resName = await app.request('/api/tools/schema_sanitizer');
+      assert.equal(resName.status, 200);
+      const dataName = await resName.json() as any;
+      assert.equal(dataName.namespace, 'net.2xcel.aus.schema-sanitizer');
+
+      const resAlias = await app.request('/api/tool/schema-sanitizer');
+      assert.equal(resAlias.status, 200);
+      const dataAlias = await resAlias.json() as any;
+      assert.equal(dataAlias.namespace, 'net.2xcel.aus.schema-sanitizer');
     });
   });
 });

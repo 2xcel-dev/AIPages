@@ -212,6 +212,15 @@ export function renderDirectoryPage(
   const activeCapability = filters.capability ?? "all";
   const availableCapabilities = filters.availableCapabilities ?? [];
   const activeConn = filters.connectionType ?? "all";
+  const activePricing = filters.pricingModel ?? "all";
+
+  const hasActiveFilters = Boolean(
+    (filters.search && filters.search.trim()) ||
+    (activeCapability && activeCapability !== "all") ||
+    (activeReliability && activeReliability !== "all") ||
+    (activeConn && activeConn !== "all") ||
+    (activePricing && activePricing !== "all")
+  );
 
   const cardsHtml = tools.length > 0
     ? tools.map((t) => renderToolCard(t, baseUrl, activeCapability)).join("\n")
@@ -880,23 +889,33 @@ export function renderDirectoryPage(
       }
     </section>
 
-    <!-- Results Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-      <div style="font-size: 0.9rem; color: var(--text-muted);">
-        Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools
+    <!-- Results Header: Match Count Summary and Filter Reset State -->
+    <div class="results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+      <div style="font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+        <span>Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools</span>
         ${searchQuery ? ` matching "<em>${searchQuery}</em>"` : ""}
         ${
           activeCapability && activeCapability !== "all"
-            ? ` with capability <span class="active-filter-tag">${escapeHtml(activeCapability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}" class="clear-tag-btn" title="Clear capability filter">&times;</a></span>`
+            ? ` with capability <span class="active-filter-tag">${escapeHtml(activeCapability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="clear-tag-btn" title="Clear capability filter">&times;</a></span>`
+            : ""
+        }
+        ${
+          activeReliability && activeReliability !== "all"
+            ? ` with reliability <span class="active-filter-tag">${escapeHtml(activeReliability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, connectionType: activeConn, pricingModel: activePricing, reliability: "all" })}" class="clear-tag-btn" title="Clear reliability filter">&times;</a></span>`
             : ""
         }
       </div>
       ${
-        activeCapability && activeCapability !== "all"
+        hasActiveFilters
           ? `
-      <div>
-        <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}" class="btn btn-sm btn-clear-filter">
-          Clear Capability Filter
+      <div style="display: flex; gap: 8px; align-items: center;">
+        ${
+          activeCapability && activeCapability !== "all"
+            ? `<a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="btn btn-sm btn-clear-filter">Clear Capability Filter</a>`
+            : ""
+        }
+        <a href="${baseUrl}" class="btn btn-sm btn-clear-filter" title="Reset all filters and view full directory">
+          Reset All Filters
         </a>
       </div>
       `

@@ -325,6 +325,9 @@ function formatToolRecord(tool: Tool) {
     tool.developer?.isFirstParty ??
     tool.namespace?.startsWith("net.2xcel.aus")
   );
+  const pricingModel = tool.pricing?.model ?? "free";
+  const costPerCall = tool.pricing?.costPerCall ?? 0;
+
   return {
     namespace: tool.namespace,
     name: tool.name,
@@ -342,7 +345,12 @@ function formatToolRecord(tool: Tool) {
       reliability: health.reliability,
       failureReason: health.failureReason,
     },
-    pricing: tool.pricing ?? { model: "free", costPerCall: 0 },
+    pricing: {
+      model: pricingModel,
+      costPerCall,
+      currency: "USDC",
+      chain: "Base",
+    },
     developer: tool.developer,
     status: tool.status ?? "active",
     updatedAt: tool.updatedAt instanceof Date ? tool.updatedAt.toISOString() : tool.updatedAt,
@@ -351,7 +359,7 @@ function formatToolRecord(tool: Tool) {
     isFirstParty,
     capabilities: tool.capabilities ?? [],
     rateLimit: tool.rateLimit ?? (isFirstParty ? "100 requests per 60 seconds per IP" : null),
-    authentication: tool.authentication ?? null,
+    authentication: tool.authentication ?? (isFirstParty ? "x402 payment protocol" : null),
     protocolDetails: tool.protocolDetails ?? null,
   };
 }
@@ -370,6 +378,23 @@ app.get("/api/tools", async (c) => {
   const capability = c.req.query("capability") ?? c.req.query("q") ?? c.req.query("keyword");
   const hasEndpointParam = c.req.query("hasEndpoint");
   const hasEndpoint = hasEndpointParam !== undefined ? hasEndpointParam === "true" : undefined;
+  const reliabilityParam = c.req.query("reliability");
+
+  // Validate reliability query parameter if provided
+  if (reliabilityParam !== undefined) {
+    const validReliabilities = ["high", "degraded", "failing", "unchecked", "all"];
+    const normalizedReliability = reliabilityParam.toLowerCase().trim();
+    if (!validReliabilities.includes(normalizedReliability)) {
+      return c.json(
+        {
+          error: "Invalid reliability filter parameter",
+          message: "Allowed values for 'reliability' are: 'high', 'degraded', 'failing', 'unchecked', or 'all'.",
+          provided: reliabilityParam,
+        },
+        400,
+      );
+    }
+  }
 
   const limit = Math.min(Math.max(1, Number(limitParam ?? 20)), 100);
   let offset = Math.max(0, Number(offsetParam ?? 0));
@@ -385,16 +410,21 @@ app.get("/api/tools", async (c) => {
     healthStatus,
     pricingModel,
     capability,
-    limit,
-    offset,
   };
 
-  const [total, tools] = await Promise.all([
-    store.count(filter),
-    store.list(filter),
-  ]);
+  let tools = await store.list(filter);
 
-  const formattedTools = tools.map(formatToolRecord);
+  // Apply reliability filter based on derived health
+  if (reliabilityParam) {
+    const targetReliability = reliabilityParam.toLowerCase().trim();
+    if (targetReliability !== "all") {
+      tools = tools.filter((t) => deriveReliability(t).reliability === targetReliability);
+    }
+  }
+
+  const total = tools.length;
+  const paginatedTools = tools.slice(offset, offset + limit);
+  const formattedTools = paginatedTools.map(formatToolRecord);
 
   return c.json({
     total,
@@ -405,21 +435,24 @@ app.get("/api/tools", async (c) => {
   });
 });
 
-// ── Public route: tool detail by namespace ──────────────────
+// ── Public route: single-tool specification API endpoint ─────────
 
-app.get("/api/tools/:namespace", async (c) => {
-  const namespace = c.req.param("namespace");
-  if (!namespace) {
-    return c.json({ error: "Missing namespace" }, 400);
+async function handleApiToolDetail(c: any) {
+  const slug = c.req.param("slug") || c.req.param("namespace");
+  if (!slug) {
+    return c.json({ error: "Missing tool identifier" }, 400);
   }
 
-  const tool = await store.getByNamespace(namespace);
+  const tool = await findToolBySlug(store, slug);
   if (!tool) {
-    return c.json({ error: "Tool not found" }, 404);
+    return c.json({ error: "Tool not found", slug }, 404);
   }
 
   return c.json(formatToolRecord(tool));
-});
+}
+
+app.get("/api/tools/:slug", handleApiToolDetail);
+app.get("/api/tool/:slug", handleApiToolDetail);
 
 // ── Human-facing directory handler (responsive cards + reliability & freshness) ──
 
