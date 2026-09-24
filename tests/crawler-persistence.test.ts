@@ -291,6 +291,8 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
       assert.equal(result.errors, 0);
       assert.deepEqual(result.rejectionsByCategory, createInitialRejectionBreakdown());
       assert.deepEqual(result.rejections, []);
+      assert.ok(result.bySource);
+      assert.equal(result.bySource['official-registry'].discovered, 0);
 
       // Cleanup
       await store.releaseLock(CRAWLER_LOCK_KEY, 'external-worker-pod');
@@ -590,6 +592,9 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
         path.resolve(process.cwd(), 'src/crawler.ts'),
         path.resolve(process.cwd(), 'src/scraper.ts'),
         path.resolve(process.cwd(), 'src/manifest.ts'),
+        path.resolve(process.cwd(), 'src/discovery/types.ts'),
+        path.resolve(process.cwd(), 'src/discovery/official-registry.ts'),
+        path.resolve(process.cwd(), 'src/discovery/index.ts'),
         path.resolve(process.cwd(), 'render.yaml'),
         path.resolve(process.cwd(), 'tests/crawler-persistence.test.ts'),
       ];

@@ -34,11 +34,18 @@ import { createStore, type ToolStore } from "./db.js";
 import type { Tool, HealthStatus, ToolSchema } from "./types.js";
 import { config } from "./config.js";
 import { scrapeGitHub, searchGitHubRepos, fetchRepoInfo, scrapeNpm } from "./scraper.js";
-import { fetchManifest, extractTools, slugify, type ExtractedTool } from "./manifest.js";
+import { fetchManifest, extractTools, slugify, type ExtractedTool, type ManifestResult } from "./manifest.js";
 import { parseMcpServersConfig, probeMcpServer } from "./mcp-probe.js";
 import { healthCheck } from "./health-check.js";
 import { generateToolSchema } from "./schema-generator.js";
 import { alertOnFailure } from "./notify.js";
+import {
+  type Candidate,
+  type CandidateSource,
+  type SourceYieldMetrics,
+  createInitialSourceYieldMap,
+} from "./discovery/types.js";
+import { fetchOfficialRegistryCandidates } from "./discovery/official-registry.js";
 
 /**
  * Minimum viability validation for repository descriptions before invoking Gemini fallback.
@@ -114,6 +121,7 @@ export type RejectionReasonCategory =
 
 export interface CandidateRejection {
   repo: string;
+  source?: CandidateSource;
   reasonCategory: RejectionReasonCategory;
   details: string;
   timestamp: string;
@@ -131,7 +139,7 @@ export function createInitialRejectionBreakdown(): RejectionBreakdown {
 }
 
 export interface CrawlResult {
-  discovered: number; // candidate repos found via code search
+  discovered: number; // candidate targets found via registries and code search
   fetched: number; // manifests successfully fetched
   rejected: number; // repos with no parseable, schema-bearing manifest
   extracted: number; // schema-bearing tools parsed from manifests
@@ -141,6 +149,7 @@ export interface CrawlResult {
   errors: number;
   rejectionsByCategory: RejectionBreakdown;
   rejections: CandidateRejection[];
+  bySource?: Record<CandidateSource, SourceYieldMetrics>;
 }
 
 export function recordRejection(
@@ -148,16 +157,21 @@ export function recordRejection(
   repo: string,
   category: RejectionReasonCategory,
   details: string,
+  source?: CandidateSource,
 ): void {
   result.rejected++;
   result.rejectionsByCategory[category] = (result.rejectionsByCategory[category] ?? 0) + 1;
+  if (source && result.bySource && result.bySource[source]) {
+    result.bySource[source].rejected++;
+  }
   result.rejections.push({
     repo,
+    source,
     reasonCategory: category,
     details,
     timestamp: new Date().toISOString(),
   });
-  console.log(`[crawler] REJECT ${repo} [${category}]: ${details}`);
+  console.log(`[crawler] REJECT ${repo}${source ? ` [source:${source}]` : ""} [${category}]: ${details}`);
 }
 
 export function diagnoseManifestRejection(manifest: { kind: string; url: string; raw: string } | null): {
@@ -263,23 +277,43 @@ export const RUNNER_INSTANCE_ID = `${os.hostname()}:${process.pid}:${crypto.rand
 
 // -- candidate discovery (GitHub + npm) -------------------------------------
 
-/** Discover candidate repos (deduped by full name; keep first matched path). */
+/** Discover candidate repos and tool endpoints (deduped by repo or primary URL). */
 export async function discoverCandidates(
   max: number,
-): Promise<Array<{ repo: string; path?: string }>> {
-  const candidates: Array<{ repo: string; path?: string }> = [];
+): Promise<Candidate[]> {
+  const candidates: Candidate[] = [];
   const seen = new Set<string>();
 
-  // 1. Prefer GitHub code search (precise manifest path) when a token is available.
+  // 1. Discover candidates from the official Model Context Protocol registry.
+  try {
+    const officialCandidates = await fetchOfficialRegistryCandidates(Math.min(max, 30));
+    for (const c of officialCandidates) {
+      const key = c.repo?.toLowerCase() || c.repoOrPackageUrl.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        candidates.push(c);
+      }
+    }
+  } catch (err) {
+    console.warn("[crawler] official registry discovery notice:", err);
+  }
+
+  // 2. Prefer GitHub code search (precise manifest path) when a token is available.
   const byCode = await scrapeGitHub(max);
   for (const item of byCode) {
-    if (!seen.has(item.repository.full_name)) {
-      seen.add(item.repository.full_name);
-      candidates.push({ repo: item.repository.full_name, path: item.path });
+    const key = item.repository.full_name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      candidates.push({
+        source: "github",
+        repoOrPackageUrl: item.repository.html_url,
+        repo: item.repository.full_name,
+        path: item.path,
+      });
     }
   }
 
-  // 2. Discover MCP packages from npm and inspect linked GitHub repositories
+  // 3. Discover MCP packages from npm and inspect linked GitHub repositories
   try {
     const npmResults = await scrapeNpm(Math.min(max, 20));
     for (const obj of npmResults.objects) {
@@ -288,10 +322,25 @@ export async function discoverCandidates(
         const match = repoUrl.match(/github\.com\/([^\/]+\/[^\/\.]+)/);
         if (match && match[1]) {
           const repoName = match[1].replace(/\.git$/, "");
-          if (!seen.has(repoName)) {
-            seen.add(repoName);
-            candidates.push({ repo: repoName });
+          const key = repoName.toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            candidates.push({
+              source: "npm",
+              repoOrPackageUrl: repoUrl,
+              repo: repoName,
+            });
           }
+        }
+      } else if (obj.package.name) {
+        const pkgUrl = `https://www.npmjs.com/package/${obj.package.name}`;
+        const key = obj.package.name.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          candidates.push({
+            source: "npm",
+            repoOrPackageUrl: pkgUrl,
+          });
         }
       }
     }
@@ -299,13 +348,18 @@ export async function discoverCandidates(
     console.warn("[crawler] npm discovery fallback notice:", err);
   }
 
-  // 3. Fallback: topic-based repository search if still below quota (works unauthenticated).
+  // 4. Fallback: topic-based repository search if still below quota (works unauthenticated).
   if (candidates.length < max) {
     const repos = await searchGitHubRepos("topic:mcp-server topic:mcp", max - candidates.length);
     for (const r of repos) {
-      if (!seen.has(r.full_name)) {
-        seen.add(r.full_name);
-        candidates.push({ repo: r.full_name });
+      const key = r.full_name.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        candidates.push({
+          source: "github",
+          repoOrPackageUrl: r.html_url,
+          repo: r.full_name,
+        });
       }
     }
   }
@@ -338,6 +392,7 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
       errors: 0,
       rejectionsByCategory: createInitialRejectionBreakdown(),
       rejections: [],
+      bySource: createInitialSourceYieldMap(),
     };
   }
 
@@ -355,25 +410,61 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
       errors: 0,
       rejectionsByCategory: createInitialRejectionBreakdown(),
       rejections: [],
+      bySource: createInitialSourceYieldMap(),
     };
 
-    console.log(`[crawler] Discovered ${result.discovered} candidate repos this cycle`);
+    console.log(`[crawler] Discovered ${result.discovered} candidate targets this cycle`);
 
-    for (const { repo, path } of candidates) {
+    for (const candidate of candidates) {
+      const repoOrIdentifier = candidate.repo || candidate.repoOrPackageUrl;
+      const source = candidate.source;
+
+      if (result.bySource && result.bySource[source]) {
+        result.bySource[source].discovered++;
+      }
+
       try {
-        // 2. Fetch + parse the manifest. Reject on any failure to produce schemas.
-        const manifest = await fetchManifest(repo, path, CRAWL_TIMEOUT_MS);
+        let manifest: ManifestResult | null = null;
         let tools: ExtractedTool[] = [];
 
-        if (!manifest) {
-          // 2c. No manifest: check description viability and Gemini configuration before fallback.
-          const info = await fetchRepoInfo(repo);
+        // 2a. Registry-style manifest hint (from official registry or direct feed)
+        if (candidate.manifestHint) {
+          const raw =
+            typeof candidate.manifestHint === "string"
+              ? candidate.manifestHint
+              : JSON.stringify(candidate.manifestHint);
+          manifest = {
+            kind: "mcp",
+            url: candidate.repoOrPackageUrl,
+            raw,
+          };
+          const prefix =
+            candidate.source === "official-registry" && !candidate.repo ? "mcp.registry" : undefined;
+          tools = extractTools(candidate.repo || candidate.repoOrPackageUrl, manifest, prefix);
+          if (tools.length > 0) {
+            result.fetched++;
+          }
+        }
+
+        // 2b. GitHub repository manifest fetch if candidate has a repo and either had no hint or hint yielded no tools
+        if (tools.length === 0 && candidate.repo) {
+          manifest = await fetchManifest(candidate.repo, candidate.path, CRAWL_TIMEOUT_MS);
+          if (manifest) {
+            result.fetched++;
+            tools = extractTools(candidate.repo, manifest);
+          }
+        }
+
+        // 2c. Fallback for repository without manifest: inspect description viability and Gemini fallback
+        if (tools.length === 0 && !manifest && candidate.repo) {
+          const info = await fetchRepoInfo(candidate.repo);
           if (!info || !isViableDescription(info.description)) {
             recordRejection(
               result,
-              repo,
+              candidate.repo,
               "missing_manifest",
               "No fetchable mcp.json, openapi.json, or swagger.json manifest found and repository description does not meet minimum viability",
+              source,
             );
             continue;
           }
@@ -381,18 +472,19 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
           if (!config.geminiApiKey) {
             recordRejection(
               result,
-              repo,
+              candidate.repo,
               "missing_manifest",
               "No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository",
+              source,
             );
             continue;
           }
 
-          console.log(`[crawler] NO MANIFEST ${repo}: falling back to Gemini schema generation from description`);
+          console.log(`[crawler] NO MANIFEST ${candidate.repo}: falling back to Gemini schema generation from description`);
           const name = info.full_name.split("/")[1] ?? info.full_name;
           const gen = await generateToolSchema(name, info.description!);
           if (isViableToolSchema(gen.schema)) {
-            const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+            const repoSlug = candidate.repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
             tools.push({
               name,
               description: info.description!,
@@ -402,69 +494,66 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
               namespace: `github.${repoSlug}.${slugify(name)}`,
               schemaSource: `gemini-fallback:${info.full_name}`,
             });
-            console.log(`[crawler] Gemini generated schema for ${repo} -> ${Object.keys(gen.schema.properties!).length} props (confidence: ${gen.confidence ?? "n/a"})`);
+            console.log(`[crawler] Gemini generated schema for ${candidate.repo} -> ${Object.keys(gen.schema.properties!).length} props (confidence: ${gen.confidence ?? "n/a"})`);
           } else {
             recordRejection(
               result,
-              repo,
+              candidate.repo,
               "invalid_schema",
               "Missing manifest file and Gemini fallback produced no valid, non-empty schema properties",
+              source,
             );
             continue;
           }
-        } else {
-          result.fetched++;
-
-          // 2a. Registry-style manifest (tools[]) or client-side config (mcpServers): parse schemas directly.
-          tools = extractTools(repo, manifest);
-
-          // 2b. Config-style mcp.json (mcpServers): probe live server if probing is enabled.
-          if (manifest.kind === "mcp" && CRAWL_MCP_PROBE) {
-            const configs = parseMcpServersConfig(manifest.raw);
-            if (configs.length > 0 && CRAWL_MCP_EXEC) {
-              console.warn(
-                "[crawler] CRAWL_MCP_EXEC=true: spawning MCP servers runs their code. " +
-                "Run the crawler in an isolated sandbox with no host credentials.",
+        } else if (manifest && manifest.kind === "mcp" && CRAWL_MCP_PROBE) {
+          const configs = parseMcpServersConfig(manifest.raw);
+          if (configs.length > 0 && CRAWL_MCP_EXEC) {
+            console.warn(
+              "[crawler] CRAWL_MCP_EXEC=true: spawning MCP servers runs their code. " +
+              "Run the crawler in an isolated sandbox with no host credentials.",
+            );
+          }
+          const probedTools: ExtractedTool[] = [];
+          for (const cfg of configs) {
+            const isStdio = !!cfg.command && !cfg.url;
+            if (isStdio && !CRAWL_MCP_EXEC) {
+              console.log(
+                `[crawler] SKIP stdio probe ${repoOrIdentifier}/${cfg.name}: set CRAWL_MCP_EXEC=true to allow process spawn`,
               );
+              continue;
             }
-            const probedTools: ExtractedTool[] = [];
-            for (const cfg of configs) {
-              const isStdio = !!cfg.command && !cfg.url;
-              if (isStdio && !CRAWL_MCP_EXEC) {
-                console.log(
-                  `[crawler] SKIP stdio probe ${repo}/${cfg.name}: set CRAWL_MCP_EXEC=true to allow process spawn`,
-                );
-                continue;
+            const pr = await probeMcpServer(cfg, CRAWL_MCP_TIMEOUT_MS);
+            if (pr && pr.tools.length > 0) {
+              const repoSlug = repoOrIdentifier.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+              for (const t of pr.tools) {
+                probedTools.push({
+                  name: t.name,
+                  description: t.description || `${cfg.name} / ${t.name}`,
+                  schema: t.schema,
+                  connectionType: pr.transport === "stdio" ? "stdio" : "http",
+                  endpointUrl: pr.transport === "http" ? cfg.url : undefined,
+                  namespace: `github.${repoSlug}.${slugify(cfg.name)}.${slugify(t.name)}`,
+                  schemaSource: `${manifest.url}#server=${cfg.name}`,
+                });
               }
-              const pr = await probeMcpServer(cfg, CRAWL_MCP_TIMEOUT_MS);
-              if (pr && pr.tools.length > 0) {
-                const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
-                for (const t of pr.tools) {
-                  probedTools.push({
-                    name: t.name,
-                    description: t.description || `${cfg.name} / ${t.name}`,
-                    schema: t.schema,
-                    connectionType: pr.transport === "stdio" ? "stdio" : "http",
-                    endpointUrl: pr.transport === "http" ? cfg.url : undefined,
-                    namespace: `github.${repoSlug}.${slugify(cfg.name)}.${slugify(t.name)}`,
-                    schemaSource: `${manifest.url}#server=${cfg.name}`,
-                  });
-                }
-                console.log(`[crawler] probed ${repo}/${cfg.name} -> ${pr.tools.length} tools`);
-              }
+              console.log(`[crawler] probed ${repoOrIdentifier}/${cfg.name} -> ${pr.tools.length} tools`);
             }
-            if (probedTools.length > 0) {
-              tools = probedTools;
-            }
+          }
+          if (probedTools.length > 0) {
+            tools = probedTools;
           }
         }
 
         if (tools.length === 0) {
           const diag = diagnoseManifestRejection(manifest);
-          recordRejection(result, repo, diag.category, diag.details);
+          recordRejection(result, repoOrIdentifier, diag.category, diag.details, source);
           continue;
         }
+
         result.extracted += tools.length;
+        if (result.bySource && result.bySource[source]) {
+          result.bySource[source].extracted += tools.length;
+        }
 
         // 3. Health-check + embed + upsert each genuine tool.
         for (const t of tools) {
@@ -509,17 +598,21 @@ export async function crawlOnce(existingStore?: ToolStore): Promise<CrawlResult>
 
           await store.upsert(toolDoc);
           result.ingested++;
+          if (result.bySource && result.bySource[source]) {
+            result.bySource[source].ingested++;
+          }
           if (healthStatus === "active") result.active++;
         }
       } catch (err) {
         result.errors++;
         recordRejection(
           result,
-          repo,
+          repoOrIdentifier,
           "fetch_failure",
-          `Unexpected exception while processing candidate repository: ${err instanceof Error ? err.message : String(err)}`,
+          `Unexpected exception while processing candidate: ${err instanceof Error ? err.message : String(err)}`,
+          source,
         );
-        console.error(`[crawler] error processing ${repo}:`, err);
+        console.error(`[crawler] error processing ${repoOrIdentifier}:`, err);
       }
 
       // Be a good citizen: small delay between repos.
@@ -554,6 +647,7 @@ export async function crawlLoop(): Promise<void> {
       errors: 0,
       rejectionsByCategory: createInitialRejectionBreakdown(),
       rejections: [],
+      bySource: createInitialSourceYieldMap(),
     };
     try {
       result = await crawlOnce();
@@ -567,7 +661,8 @@ export async function crawlLoop(): Promise<void> {
         `discovered=${result.discovered} fetched=${result.fetched} ` +
         `rejected=${result.rejected} extracted=${result.extracted} ` +
         `ingested=${result.ingested} active=${result.active} errors=${result.errors} ` +
-        `rejections=${JSON.stringify(result.rejectionsByCategory)}`,
+        `rejections=${JSON.stringify(result.rejectionsByCategory)} ` +
+        `bySource=${JSON.stringify(result.bySource)}`,
     );
 
     // Send alert if failure conditions detected

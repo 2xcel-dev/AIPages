@@ -111,7 +111,11 @@ export async function fetchManifest(
  * Returns an empty array when the manifest is invalid, unparseable, or
  * declares no tool with a genuine schema (the caller rejects the repo).
  */
-export function extractTools(repo: string, manifest: ManifestResult): ExtractedTool[] {
+export function extractTools(
+  repo: string,
+  manifest: ManifestResult,
+  namespacePrefix?: string,
+): ExtractedTool[] {
   const parsed =
     manifest.kind === "mcp"
       ? parseMcpManifest(manifest.raw)
@@ -119,10 +123,11 @@ export function extractTools(repo: string, manifest: ManifestResult): ExtractedT
   if (!parsed) return [];
 
   const repoSlug = repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+  const prefix = namespacePrefix ?? (repo.includes("/") ? "github" : "mcp.registry");
   return parsed.map((p) => ({
     ...p,
     schemaSource: manifest.url,
-    namespace: `github.${repoSlug}.${slugify(p.name)}`,
+    namespace: `${prefix}.${repoSlug}.${slugify(p.name)}`,
   }));
 }
 
