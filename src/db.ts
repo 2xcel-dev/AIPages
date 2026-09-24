@@ -1,5 +1,5 @@
 /**
- * Database abstraction — MongoDB Atlas Vector Search with an in-memory fallback.
+ * Database abstraction: MongoDB Atlas Vector Search with an in-memory fallback.
  *
  * If MONGODB_URI is set, connects to Atlas and runs `$vectorSearch` aggregations.
  * If not, uses an in-memory array with cosine similarity (dev / test mode).
@@ -74,7 +74,7 @@ export interface ToolStore {
   list(filter?: ToolListFilter): Promise<Tool[]>;
   /** Update health check status and diagnostic failure metadata. */
   updateHealth(namespace: string, update: HealthUpdate): Promise<void>;
-  /** Health check — returns true if the store is reachable. */
+  /** Health check - returns true if the store is reachable. */
   ping(): Promise<boolean>;
   /** Close connections. */
   close(): Promise<void>;
@@ -98,12 +98,31 @@ class MongoToolStore implements ToolStore {
   async connect(): Promise<void> {
     await this.client.connect();
     await this.client.db().command({ ping: 1 });
+    try {
+      await this.collection.createIndex({ namespace: 1 }, { unique: true });
+    } catch (err) {
+      console.warn("[db] Warning creating unique namespace index:", err);
+    }
   }
 
   async upsert(tool: Tool): Promise<void> {
+    const { _id, ...fieldsToUpdate } = tool as any;
+    const cleanFields: Record<string, any> = {};
+    for (const [key, value] of Object.entries(fieldsToUpdate)) {
+      if (value !== undefined) {
+        cleanFields[key] = value;
+      }
+    }
+    cleanFields.updatedAt = cleanFields.updatedAt ?? new Date();
+
     await this.collection.updateOne(
       { namespace: tool.namespace },
-      { $set: tool },
+      {
+        $set: cleanFields,
+        $setOnInsert: {
+          createdAt: new Date(),
+        },
+      },
       { upsert: true },
     );
   }
@@ -296,7 +315,28 @@ export class InMemoryToolStore implements ToolStore {
   private tools = new Map<string, Tool>();
 
   async upsert(tool: Tool): Promise<void> {
-    this.tools.set(tool.namespace, tool);
+    const existing = this.tools.get(tool.namespace);
+    const { _id, ...fieldsToUpdate } = tool as any;
+    const cleanFields: Record<string, any> = {};
+    for (const [key, value] of Object.entries(fieldsToUpdate)) {
+      if (value !== undefined) {
+        cleanFields[key] = value;
+      }
+    }
+    cleanFields.updatedAt = cleanFields.updatedAt ?? new Date();
+
+    if (existing) {
+      this.tools.set(tool.namespace, {
+        ...existing,
+        ...cleanFields,
+      });
+    } else {
+      this.tools.set(tool.namespace, {
+        ...tool,
+        ...cleanFields,
+        createdAt: new Date(),
+      });
+    }
   }
 
   async upsertMany(tools: Tool[]): Promise<number> {
@@ -444,7 +484,7 @@ export async function createStore(): Promise<ToolStore> {
     console.log("[db] Connected to MongoDB Atlas.");
     return store;
   }
-  console.warn("[db] No MONGODB_URI — using in-memory store (dev mode).");
+  console.warn("[db] No MONGODB_URI - using in-memory store (dev mode).");
   const store = new InMemoryToolStore();
   return store;
 }

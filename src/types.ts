@@ -6,7 +6,7 @@
  * A JSON Schema describing a tool's input parameters.
  *
  * The two typed hints (`type`/`properties`/`required`) exist for ergonomics,
- * but the schema is stored faithfully — `$ref`, `items`, `enum`, `anyOf`,
+ * but the schema is stored faithfully: `$ref`, `items`, `enum`, `anyOf`,
  * nested schemas, and any other JSON Schema keyword are preserved via the
  * index signature. Schemas are NEVER inferred or guessed by the crawler;
  * they come verbatim from an `mcp.json` or OpenAPI manifest.
@@ -30,6 +30,7 @@ export interface Tool {
   endpointUrl?: string;
   embedding?: number[];
   healthStatus: HealthStatus;
+  createdAt?: Date;
   updatedAt: Date;
   /** Timestamp of the most recent health check probe */
   lastChecked?: Date;
