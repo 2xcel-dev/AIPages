@@ -482,10 +482,11 @@ describe('MongoDB Upsert and Crawler Persistence Logic', () => {
   });
 
   describe('Zero em dash constraint verification in modified files', () => {
-    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, render.yaml, or tests/crawler-persistence.test.ts', () => {
+    it('ensures no em dashes or en dashes exist in src/db.ts, src/crawler.ts, src/scraper.ts, render.yaml, or tests/crawler-persistence.test.ts', () => {
       const filesToCheck = [
         path.resolve(process.cwd(), 'src/db.ts'),
         path.resolve(process.cwd(), 'src/crawler.ts'),
+        path.resolve(process.cwd(), 'src/scraper.ts'),
         path.resolve(process.cwd(), 'render.yaml'),
         path.resolve(process.cwd(), 'tests/crawler-persistence.test.ts'),
       ];

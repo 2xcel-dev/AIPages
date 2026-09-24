@@ -1,11 +1,11 @@
 /**
- * Scraper & Ingester — aggregates tool manifests from open registries.
+ * Scraper & Ingester: aggregates tool manifests from open registries.
  *
  * GitHub: code search for repos shipping `mcp.json`, `openapi.json`, or
  * `swagger.json` manifests (the crawler fetches + parses each one).
  * npm: package keyword search (used by the admin /scrape endpoint).
  *
- * Schemas are never invented here — the crawler parses genuine manifests via
+ * Schemas are never invented here: the crawler parses genuine manifests via
  * manifest.ts and rejects anything without a real, parseable schema.
  */
 
@@ -71,7 +71,7 @@ export interface GitHubSearchItem {
  * Uses the GitHub Search API (unauthenticated = 60 req/hr, 5000 with token).
  * Searches for repos containing `mcp.json`, `openapi.json`, or `swagger.json`.
  *
- * Returns raw search items (including the matched file path) — the crawler
+ * Returns raw search items (including the matched file path); the crawler
  * fetches and parses each manifest, rejecting anything unparseable.
  */
 export async function scrapeGitHub(
@@ -225,7 +225,7 @@ export interface NpmSearchResult {
 /**
  * Scrape npm for packages tagged with "mcp" or "ai-agent-tool".
  *
- * Used by the admin /scrape endpoint only — the crawler does not ingest from
+ * Used by the admin /scrape endpoint only; the crawler does not ingest from
  * npm, since npm packages provide no genuine tool schema.
  */
 export async function scrapeNpm(maxResults = 20): Promise<NpmSearchResult> {
