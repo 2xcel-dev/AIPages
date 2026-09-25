@@ -1,0 +1,1 @@
+{"version":3,"file":"agentScraper.d.ts","sourceRoot":"","sources":["../../src/services/agentScraper.ts"],"names":[],"mappings":"AAEA,MAAM,WAAW,YAAY;IAC3B,GAAG,EAAE,MAAM,CAAC;IACZ,KAAK,EAAE,MAAM,CAAC;IACd,WAAW,EAAE,MAAM,CAAC;IACpB,QAAQ,CAAC,EAAE,MAAM,CAAC,MAAM,EAAE,GAAG,CAAC,CAAC;CAChC;AAED,wBAAsB,oBAAoB,CAAC,SAAS,EAAE,MAAM,EAAE,GAAG,OAAO,CAAC,YAAY,EAAE,CAAC,CA2BvF"}

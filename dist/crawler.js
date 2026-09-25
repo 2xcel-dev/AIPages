@@ -1,0 +1,598 @@
+/**
+ * Automated Discovery & Growth Engine: background cron crawler.
+ *
+ * Authoritative ingestion: a tool is ingested ONLY when it ships a genuine,
+ * parseable manifest: an `mcp.json` (MCP manifest) or `openapi.json` /
+ * `swagger.json` (OpenAPI/Swagger) document. Schemas are parsed verbatim from
+ * those manifests. Nothing is ever inferred by an LLM or guessed from a name
+ * or description; repos whose manifest is missing, unparseable, or schema-less
+ * are rejected outright.
+ *
+ * Pipeline per cycle:
+ *   1. Discover candidate GitHub repos and npm packages (code and registry search).
+ *   2. Fetch + parse the manifest for each repo (see manifest.ts).
+ *   3. Reject repos with no genuine schema-bearing tools.
+ *   4. For each extracted tool: health-check endpoint, embed description, upsert.
+ *
+ * Run modes:
+ *   npm run crawl         : one-shot cycle
+ *   npm run crawl:watch   : continuous loop with CRAWL_INTERVAL_MS delay
+ *   npm run crawl:cron    : bi-daily cron schedule (0 2,14 * * *)
+ *
+ * Environment (all optional):
+ *   GITHUB_TOKEN          : GitHub PAT (unauthenticated code search = 60 req/hr)
+ *   CRAWL_INTERVAL_MS     : sleep between cycles (default 5 min)
+ *   CRAWL_MAX_REPOS       : max candidate repos per cycle (default 20)
+ *   CRAWL_TIMEOUT_MS      : per-fetch / per-health-check timeout (default 8 s)
+ */
+import os from "node:os";
+import crypto from "node:crypto";
+import cron from "node-cron";
+import { embed } from "./embedding.js";
+import { createStore } from "./db.js";
+import { config } from "./config.js";
+import { scrapeGitHub, searchGitHubRepos, fetchRepoInfo, scrapeNpm } from "./scraper.js";
+import { fetchManifest, extractTools, slugify } from "./manifest.js";
+import { parseMcpServersConfig, probeMcpServer } from "./mcp-probe.js";
+import { healthCheck } from "./health-check.js";
+import { generateToolSchema } from "./schema-generator.js";
+import { alertOnFailure } from "./notify.js";
+import { createInitialSourceYieldMap, } from "./discovery/types.js";
+import { fetchOfficialRegistryCandidates } from "./discovery/official-registry.js";
+/**
+ * Minimum viability validation for repository descriptions before invoking Gemini fallback.
+ */
+export function isViableDescription(description) {
+    if (!description)
+        return false;
+    const trimmed = description.trim();
+    if (trimmed.length < 30)
+        return false;
+    const lower = trimmed.toLowerCase();
+    const nonViableKeywords = [
+        "work in progress",
+        "under construction",
+        "readme",
+        "test repository",
+        "personal repository",
+    ];
+    for (const kw of nonViableKeywords) {
+        if (lower === kw ||
+            lower.startsWith(kw + " ") ||
+            lower.startsWith(kw + ":") ||
+            lower.startsWith(kw + "-") ||
+            lower.startsWith(kw + " -")) {
+            return false;
+        }
+    }
+    if (lower.startsWith("todo") || lower.startsWith("wip")) {
+        return false;
+    }
+    return true;
+}
+/**
+ * Strict schema validation for synthesized or parsed tool schemas.
+ * Ensures the schema is a non-empty object schema with at least one typed property.
+ */
+export function isViableToolSchema(schema) {
+    if (!schema || typeof schema !== "object" || Array.isArray(schema))
+        return false;
+    const s = schema;
+    if (s.type !== "object")
+        return false;
+    if (!s.properties || typeof s.properties !== "object" || Array.isArray(s.properties))
+        return false;
+    const propKeys = Object.keys(s.properties);
+    if (propKeys.length === 0)
+        return false;
+    for (const key of propKeys) {
+        const prop = s.properties[key];
+        if (!prop || typeof prop !== "object")
+            return false;
+    }
+    return true;
+}
+// -- config (crawl-specific, optional env) ----------------------------------
+const CRAWL_INTERVAL_MS = Math.max(5000, parseInt(process.env.CRAWL_INTERVAL_MS ?? "300000", 10));
+const CRAWL_MAX_REPOS = Math.max(1, parseInt(process.env.CRAWL_MAX_REPOS ?? "20", 10));
+const CRAWL_TIMEOUT_MS = Math.max(1000, parseInt(process.env.CRAWL_TIMEOUT_MS ?? "8000", 10));
+// MCP runtime probe: OFF by default. Probing runs server code; see mcp-probe.ts.
+const CRAWL_MCP_PROBE = (process.env.CRAWL_MCP_PROBE ?? "false") === "true";
+const CRAWL_MCP_EXEC = (process.env.CRAWL_MCP_EXEC ?? "false") === "true";
+const CRAWL_MCP_TIMEOUT_MS = Math.max(5000, parseInt(process.env.CRAWL_MCP_TIMEOUT_MS ?? "30000", 10));
+export const BI_DAILY_CRON_SCHEDULE = "0 2,14 * * *";
+export function createInitialRejectionBreakdown() {
+    return {
+        missing_manifest: 0,
+        invalid_schema: 0,
+        missing_required_metadata: 0,
+        fetch_failure: 0,
+    };
+}
+export function recordRejection(result, repo, category, details, source) {
+    result.rejected++;
+    result.rejectionsByCategory[category] = (result.rejectionsByCategory[category] ?? 0) + 1;
+    if (source && result.bySource && result.bySource[source]) {
+        result.bySource[source].rejected++;
+    }
+    result.rejections.push({
+        repo,
+        source,
+        reasonCategory: category,
+        details,
+        timestamp: new Date().toISOString(),
+    });
+    console.log(`[crawler] REJECT ${repo}${source ? ` [source:${source}]` : ""} [${category}]: ${details}`);
+}
+export function diagnoseManifestRejection(manifest) {
+    if (!manifest) {
+        return {
+            category: "missing_manifest",
+            details: "No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository",
+        };
+    }
+    let doc;
+    try {
+        doc = JSON.parse(manifest.raw);
+    }
+    catch (err) {
+        return {
+            category: "invalid_schema",
+            details: `Manifest at ${manifest.url} is not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+        };
+    }
+    if (!doc || typeof doc !== "object") {
+        return {
+            category: "invalid_schema",
+            details: `Manifest at ${manifest.url} does not contain a JSON object at its root`,
+        };
+    }
+    if (manifest.kind === "mcp") {
+        if (!doc.tools && !doc.mcpServers) {
+            return {
+                category: "missing_required_metadata",
+                details: `MCP manifest at ${manifest.url} missing required 'tools' array or 'mcpServers' configuration`,
+            };
+        }
+        if (doc.mcpServers && typeof doc.mcpServers === "object") {
+            if (Object.keys(doc.mcpServers).length === 0) {
+                return {
+                    category: "missing_required_metadata",
+                    details: `Config-style MCP manifest at ${manifest.url} contains an empty 'mcpServers' object`,
+                };
+            }
+            return {
+                category: "missing_required_metadata",
+                details: `Config-style MCP manifest at ${manifest.url} server entries lack required 'command' or 'url' fields`,
+            };
+        }
+        if (!Array.isArray(doc.tools) || doc.tools.length === 0) {
+            return {
+                category: "missing_required_metadata",
+                details: `MCP manifest at ${manifest.url} contains an empty or non-array 'tools' property`,
+            };
+        }
+        const hasAnyName = doc.tools.some((t) => t && typeof t.name === "string" && t.name.trim());
+        if (!hasAnyName) {
+            return {
+                category: "missing_required_metadata",
+                details: `MCP manifest at ${manifest.url} has tools missing required 'name' field`,
+            };
+        }
+        return {
+            category: "invalid_schema",
+            details: `MCP manifest at ${manifest.url} declares tools but none contain a valid JSON Schema (missing or invalid inputSchema/parameters)`,
+        };
+    }
+    if (manifest.kind === "openapi") {
+        const isSwagger2 = doc.swagger === "2.0";
+        const isOpenApi3 = typeof doc.openapi === "string" && doc.openapi.startsWith("3.");
+        if (!isSwagger2 && !isOpenApi3) {
+            return {
+                category: "invalid_schema",
+                details: `OpenAPI manifest at ${manifest.url} lacks a valid 'openapi: 3.x' or 'swagger: 2.0' declaration`,
+            };
+        }
+        if (!doc.paths || typeof doc.paths !== "object" || Object.keys(doc.paths).length === 0) {
+            return {
+                category: "missing_required_metadata",
+                details: `OpenAPI manifest at ${manifest.url} lacks required 'paths' object or paths is empty`,
+            };
+        }
+        return {
+            category: "invalid_schema",
+            details: `OpenAPI manifest at ${manifest.url} paths contain no valid schema-bearing operations`,
+        };
+    }
+    return {
+        category: "invalid_schema",
+        details: `Manifest at ${manifest.url} yielded no parseable schemas`,
+    };
+}
+// Database-backed distributed lock configuration (lease expiration in ms)
+export const CRAWLER_LOCK_KEY = "crawler:execution";
+export const CRAWLER_LOCK_TTL_MS = Math.max(60000, parseInt(process.env.CRAWL_LOCK_TTL_MS ?? "900000", 10));
+export const RUNNER_INSTANCE_ID = `${os.hostname()}:${process.pid}:${crypto.randomUUID().slice(0, 8)}`;
+// -- candidate discovery (GitHub + npm) -------------------------------------
+/** Discover candidate repos and tool endpoints (deduped by repo or primary URL). */
+export async function discoverCandidates(max) {
+    const candidates = [];
+    const seen = new Set();
+    // 1. Discover candidates from the official Model Context Protocol registry.
+    try {
+        const officialCandidates = await fetchOfficialRegistryCandidates(Math.min(max, 30));
+        for (const c of officialCandidates) {
+            const key = c.repo?.toLowerCase() || c.repoOrPackageUrl.toLowerCase();
+            if (!seen.has(key)) {
+                seen.add(key);
+                candidates.push(c);
+            }
+        }
+    }
+    catch (err) {
+        console.warn("[crawler] official registry discovery notice:", err);
+    }
+    // 2. Prefer GitHub code search (precise manifest path) when a token is available.
+    const byCode = await scrapeGitHub(max);
+    for (const item of byCode) {
+        const key = item.repository.full_name.toLowerCase();
+        if (!seen.has(key)) {
+            seen.add(key);
+            candidates.push({
+                source: "github",
+                repoOrPackageUrl: item.repository.html_url,
+                repo: item.repository.full_name,
+                path: item.path,
+            });
+        }
+    }
+    // 3. Discover MCP packages from npm and inspect linked GitHub repositories
+    try {
+        const npmResults = await scrapeNpm(Math.min(max, 20));
+        for (const obj of npmResults.objects) {
+            const repoUrl = obj.package.links?.repository;
+            if (repoUrl && repoUrl.includes("github.com/")) {
+                const match = repoUrl.match(/github\.com\/([^\/]+\/[^\/\.]+)/);
+                if (match && match[1]) {
+                    const repoName = match[1].replace(/\.git$/, "");
+                    const key = repoName.toLowerCase();
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        candidates.push({
+                            source: "npm",
+                            repoOrPackageUrl: repoUrl,
+                            repo: repoName,
+                        });
+                    }
+                }
+            }
+            else if (obj.package.name) {
+                const pkgUrl = `https://www.npmjs.com/package/${obj.package.name}`;
+                const key = obj.package.name.toLowerCase();
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    candidates.push({
+                        source: "npm",
+                        repoOrPackageUrl: pkgUrl,
+                    });
+                }
+            }
+        }
+    }
+    catch (err) {
+        console.warn("[crawler] npm discovery fallback notice:", err);
+    }
+    // 4. Fallback: topic-based repository search if still below quota (works unauthenticated).
+    if (candidates.length < max) {
+        const repos = await searchGitHubRepos("topic:mcp-server topic:mcp", max - candidates.length);
+        for (const r of repos) {
+            const key = r.full_name.toLowerCase();
+            if (!seen.has(key)) {
+                seen.add(key);
+                candidates.push({
+                    source: "github",
+                    repoOrPackageUrl: r.html_url,
+                    repo: r.full_name,
+                });
+            }
+        }
+    }
+    return candidates.slice(0, max);
+}
+// -- one-shot crawl cycle ---------------------------------------------------
+export async function crawlOnce(existingStore) {
+    const store = existingStore ?? (await createStore());
+    const lockAcquired = await store.acquireLock(CRAWLER_LOCK_KEY, RUNNER_INSTANCE_ID, CRAWLER_LOCK_TTL_MS);
+    if (!lockAcquired) {
+        console.warn(`[crawler] Distributed lock '${CRAWLER_LOCK_KEY}' is currently held by another runner process; skipping cycle to prevent race conditions.`);
+        return {
+            discovered: 0,
+            fetched: 0,
+            rejected: 0,
+            extracted: 0,
+            healthChecked: 0,
+            active: 0,
+            ingested: 0,
+            errors: 0,
+            rejectionsByCategory: createInitialRejectionBreakdown(),
+            rejections: [],
+            bySource: createInitialSourceYieldMap(),
+        };
+    }
+    try {
+        const candidates = await discoverCandidates(CRAWL_MAX_REPOS);
+        const result = {
+            discovered: candidates.length,
+            fetched: 0,
+            rejected: 0,
+            extracted: 0,
+            healthChecked: 0,
+            active: 0,
+            ingested: 0,
+            errors: 0,
+            rejectionsByCategory: createInitialRejectionBreakdown(),
+            rejections: [],
+            bySource: createInitialSourceYieldMap(),
+        };
+        console.log(`[crawler] Discovered ${result.discovered} candidate targets this cycle`);
+        for (const candidate of candidates) {
+            const repoOrIdentifier = candidate.repo || candidate.repoOrPackageUrl;
+            const source = candidate.source;
+            if (result.bySource && result.bySource[source]) {
+                result.bySource[source].discovered++;
+            }
+            try {
+                let manifest = null;
+                let tools = [];
+                // 2a. Registry-style manifest hint (from official registry or direct feed)
+                if (candidate.manifestHint) {
+                    const raw = typeof candidate.manifestHint === "string"
+                        ? candidate.manifestHint
+                        : JSON.stringify(candidate.manifestHint);
+                    manifest = {
+                        kind: "mcp",
+                        url: candidate.repoOrPackageUrl,
+                        raw,
+                    };
+                    const prefix = candidate.source === "official-registry" && !candidate.repo ? "mcp.registry" : undefined;
+                    tools = extractTools(candidate.repo || candidate.repoOrPackageUrl, manifest, prefix);
+                    if (tools.length > 0) {
+                        result.fetched++;
+                    }
+                }
+                // 2b. GitHub repository manifest fetch if candidate has a repo and either had no hint or hint yielded no tools
+                if (tools.length === 0 && candidate.repo) {
+                    manifest = await fetchManifest(candidate.repo, candidate.path, CRAWL_TIMEOUT_MS);
+                    if (manifest) {
+                        result.fetched++;
+                        tools = extractTools(candidate.repo, manifest);
+                    }
+                }
+                // 2c. Fallback for repository without manifest: inspect description viability and Gemini fallback
+                if (tools.length === 0 && !manifest && candidate.repo) {
+                    const info = await fetchRepoInfo(candidate.repo);
+                    if (!info || !isViableDescription(info.description)) {
+                        recordRejection(result, candidate.repo, "missing_manifest", "No fetchable mcp.json, openapi.json, or swagger.json manifest found and repository description does not meet minimum viability", source);
+                        continue;
+                    }
+                    if (!config.geminiApiKey) {
+                        recordRejection(result, candidate.repo, "missing_manifest", "No fetchable mcp.json, openapi.json, or swagger.json manifest found in repository", source);
+                        continue;
+                    }
+                    console.log(`[crawler] NO MANIFEST ${candidate.repo}: falling back to Gemini schema generation from description`);
+                    const name = info.full_name.split("/")[1] ?? info.full_name;
+                    const gen = await generateToolSchema(name, info.description);
+                    if (isViableToolSchema(gen.schema)) {
+                        const repoSlug = candidate.repo.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+                        tools.push({
+                            name,
+                            description: info.description,
+                            schema: gen.schema,
+                            connectionType: "http",
+                            endpointUrl: info.html_url,
+                            namespace: `github.${repoSlug}.${slugify(name)}`,
+                            schemaSource: `gemini-fallback:${info.full_name}`,
+                        });
+                        console.log(`[crawler] Gemini generated schema for ${candidate.repo} -> ${Object.keys(gen.schema.properties).length} props (confidence: ${gen.confidence ?? "n/a"})`);
+                    }
+                    else {
+                        recordRejection(result, candidate.repo, "invalid_schema", "Missing manifest file and Gemini fallback produced no valid, non-empty schema properties", source);
+                        continue;
+                    }
+                }
+                else if (manifest && manifest.kind === "mcp" && CRAWL_MCP_PROBE) {
+                    const configs = parseMcpServersConfig(manifest.raw);
+                    if (configs.length > 0 && CRAWL_MCP_EXEC) {
+                        console.warn("[crawler] CRAWL_MCP_EXEC=true: spawning MCP servers runs their code. " +
+                            "Run the crawler in an isolated sandbox with no host credentials.");
+                    }
+                    const probedTools = [];
+                    for (const cfg of configs) {
+                        const isStdio = !!cfg.command && !cfg.url;
+                        if (isStdio && !CRAWL_MCP_EXEC) {
+                            console.log(`[crawler] SKIP stdio probe ${repoOrIdentifier}/${cfg.name}: set CRAWL_MCP_EXEC=true to allow process spawn`);
+                            continue;
+                        }
+                        const pr = await probeMcpServer(cfg, CRAWL_MCP_TIMEOUT_MS);
+                        if (pr && pr.tools.length > 0) {
+                            const repoSlug = repoOrIdentifier.toLowerCase().replace(/[^a-z0-9.-]/g, ".");
+                            for (const t of pr.tools) {
+                                probedTools.push({
+                                    name: t.name,
+                                    description: t.description || `${cfg.name} / ${t.name}`,
+                                    schema: t.schema,
+                                    connectionType: pr.transport === "stdio" ? "stdio" : "http",
+                                    endpointUrl: pr.transport === "http" ? cfg.url : undefined,
+                                    namespace: `github.${repoSlug}.${slugify(cfg.name)}.${slugify(t.name)}`,
+                                    schemaSource: `${manifest.url}#server=${cfg.name}`,
+                                });
+                            }
+                            console.log(`[crawler] probed ${repoOrIdentifier}/${cfg.name} -> ${pr.tools.length} tools`);
+                        }
+                    }
+                    if (probedTools.length > 0) {
+                        tools = probedTools;
+                    }
+                }
+                if (tools.length === 0) {
+                    const diag = diagnoseManifestRejection(manifest);
+                    recordRejection(result, repoOrIdentifier, diag.category, diag.details, source);
+                    continue;
+                }
+                result.extracted += tools.length;
+                if (result.bySource && result.bySource[source]) {
+                    result.bySource[source].extracted += tools.length;
+                }
+                // 3. Health-check + embed + upsert each genuine tool.
+                for (const t of tools) {
+                    let healthStatus = "unknown";
+                    let lastChecked;
+                    let failureReason = null;
+                    if (t.endpointUrl) {
+                        const alive = await healthCheck(t.endpointUrl, CRAWL_TIMEOUT_MS);
+                        healthStatus = alive ? "active" : "inactive";
+                        lastChecked = new Date();
+                        failureReason = alive ? null : "Endpoint unreachable or timed out";
+                        result.healthChecked++;
+                        if (!alive) {
+                            console.log(`[crawler] health-check FAIL ${t.namespace} (${t.endpointUrl})`);
+                        }
+                    }
+                    else {
+                        // stdio / unknown transport: no HTTP endpoint to probe.
+                        result.healthChecked++;
+                    }
+                    const embedding = await embed(`${t.namespace} ${t.name} ${t.description}`, "RETRIEVAL_DOCUMENT");
+                    const toolDoc = {
+                        namespace: t.namespace,
+                        name: t.name,
+                        description: t.description,
+                        schema: t.schema,
+                        connectionType: t.connectionType,
+                        endpointUrl: t.endpointUrl,
+                        embedding,
+                        healthStatus,
+                        lastChecked,
+                        lastCheckedAt: lastChecked,
+                        failureReason,
+                        schemaSource: t.schemaSource,
+                        updatedAt: new Date(),
+                    };
+                    await store.upsert(toolDoc);
+                    result.ingested++;
+                    if (result.bySource && result.bySource[source]) {
+                        result.bySource[source].ingested++;
+                    }
+                    if (healthStatus === "active")
+                        result.active++;
+                }
+            }
+            catch (err) {
+                result.errors++;
+                recordRejection(result, repoOrIdentifier, "fetch_failure", `Unexpected exception while processing candidate: ${err instanceof Error ? err.message : String(err)}`, source);
+                console.error(`[crawler] error processing ${repoOrIdentifier}:`, err);
+            }
+            // Be a good citizen: small delay between repos.
+            await sleep(200);
+        }
+        return result;
+    }
+    finally {
+        try {
+            await store.releaseLock(CRAWLER_LOCK_KEY, RUNNER_INSTANCE_ID);
+        }
+        catch (releaseErr) {
+            console.warn("[crawler] Warning releasing distributed lock:", releaseErr);
+        }
+    }
+}
+export async function crawlLoop() {
+    console.log(`[crawler] Starting continuous crawl loop (interval=${CRAWL_INTERVAL_MS}ms)`);
+    let cycle = 0;
+    while (true) {
+        cycle++;
+        const start = Date.now();
+        console.log(`[crawler] === Cycle ${cycle} ===`);
+        let result = {
+            discovered: 0,
+            fetched: 0,
+            rejected: 0,
+            extracted: 0,
+            healthChecked: 0,
+            active: 0,
+            ingested: 0,
+            errors: 0,
+            rejectionsByCategory: createInitialRejectionBreakdown(),
+            rejections: [],
+            bySource: createInitialSourceYieldMap(),
+        };
+        try {
+            result = await crawlOnce();
+        }
+        catch (err) {
+            console.error(`[crawler] Cycle ${cycle} crashed:`, err);
+            result.errors++;
+        }
+        const elapsed = Date.now() - start;
+        console.log(`[crawler] Cycle ${cycle} done in ${elapsed}ms: ` +
+            `discovered=${result.discovered} fetched=${result.fetched} ` +
+            `rejected=${result.rejected} extracted=${result.extracted} ` +
+            `ingested=${result.ingested} active=${result.active} errors=${result.errors} ` +
+            `rejections=${JSON.stringify(result.rejectionsByCategory)} ` +
+            `bySource=${JSON.stringify(result.bySource)}`);
+        // Send alert if failure conditions detected
+        await alertOnFailure({ ...result, cycle });
+        await sleep(CRAWL_INTERVAL_MS);
+    }
+}
+/**
+ * Start bi-daily cron runner via node-cron (schedule: 0 2,14 * * *).
+ */
+export function startCrawlerCron(cronExpression = BI_DAILY_CRON_SCHEDULE) {
+    console.log(`[crawler] Scheduling bi-daily crawler cron with pattern: "${cronExpression}" (UTC)`);
+    return cron.schedule(cronExpression, async () => {
+        console.log(`[crawler] Cron trigger fired at ${new Date().toISOString()}`);
+        try {
+            const res = await crawlOnce();
+            console.log(`[crawler] Cron crawl cycle completed:`, JSON.stringify(res));
+        }
+        catch (err) {
+            console.error(`[crawler] Cron crawl cycle error:`, err);
+        }
+    }, {
+        timezone: "UTC",
+    });
+}
+// -- helpers ----------------------------------------------------------------
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+// -- CLI --------------------------------------------------------------------
+const isCliExecution = Boolean(process.argv[1] &&
+    (process.argv[1].endsWith("crawler.ts") || process.argv[1].endsWith("crawler.js")));
+if (isCliExecution) {
+    const mode = process.argv[2] ?? "once";
+    if (mode === "watch") {
+        crawlLoop().catch((err) => {
+            console.error("Fatal crawler:", err);
+            process.exit(1);
+        });
+    }
+    else if (mode === "cron") {
+        startCrawlerCron();
+        console.log(`[crawler] Running bi-daily crawler cron (${BI_DAILY_CRON_SCHEDULE} UTC). Press Ctrl+C to stop.`);
+    }
+    else {
+        crawlOnce()
+            .then((r) => {
+            console.log("[crawler] Summary:", JSON.stringify(r));
+            void alertOnFailure({ ...r, cycle: 1 });
+            process.exit(r.errors > 10 ? 2 : 0);
+        })
+            .catch((err) => {
+            console.error("Fatal crawler:", err);
+            process.exit(1);
+        });
+    }
+}
+//# sourceMappingURL=crawler.js.map

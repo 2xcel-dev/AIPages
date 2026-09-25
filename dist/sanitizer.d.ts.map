@@ -1,0 +1,1 @@
+{"version":3,"file":"sanitizer.d.ts","sourceRoot":"","sources":["../src/sanitizer.ts"],"names":[],"mappings":"AAAA;;;;;;;;;;;;;;;;;;;;GAoBG;AAEH,MAAM,WAAW,cAAc;IAC7B,EAAE,EAAE,OAAO,CAAC;IACZ,OAAO,CAAC,EAAE,MAAM,EAAE,CAAC;CACpB;AAmFD;;;;;GAKG;AACH,wBAAgB,eAAe,CAAC,OAAO,EAAE,OAAO,GAAG,cAAc,CAwBhE"}
