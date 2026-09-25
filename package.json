@@ -11,7 +11,7 @@
         "seed": "tsx scripts/seed.ts",
         "setup-index": "tsx scripts/setup-vector-index.ts",
         "ingest-tools": "tsx scripts/ingest-tools.ts",
-        "ingest:tools": "node --env-file=.env dist/scripts/ingest-tools.js",
+        "ingest:tools": "tsx scripts/ingest-tools.ts",
         "ingest-listings": "tsx scripts/ingest-listings.ts",
         "crawl": "tsx src/crawler.ts once",
         "crawl:watch": "tsx src/crawler.ts watch",
