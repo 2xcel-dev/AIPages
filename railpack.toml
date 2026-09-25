@@ -2,3 +2,5 @@
 command = "npm run build"
 outputs = ["dist"]
 
+[deploy]
+startCommand = "node dist/index.js"
