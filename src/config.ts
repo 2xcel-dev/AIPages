@@ -44,7 +44,7 @@ function parseAgentKeys(
     }
     return Object.keys(out).length > 0 ? out : null;
   } catch {
-    console.warn("[config] AGENT_KEYS is not valid JSON — ignoring.");
+    console.warn("[config] AGENT_KEYS is not valid JSON - ignoring.");
     return null;
   }
 }
@@ -68,11 +68,11 @@ geminiApiKey: process.env.GEMINI_API_KEY ?? null,
   x402PriceUsdc: optional("X402_PRICE_USDC", "0.25"),
   x402FacilitatorUrl: optional("X402_FACILITATOR_URL", "https://x402.org/facilitator"),
 
-  // GitHub scraping (optional — uses unauthenticated API if not set)
+  // GitHub scraping (optional - uses unauthenticated API if not set)
   githubToken: process.env.GITHUB_TOKEN ?? null,
 
   // ── Verification gate (caller identity + signature) ────────────────────
-  // Map of agentId → { publicKey?: base64 Ed25519 public key, secret?: HMAC key }
+  // Map of agentId -> { publicKey?: base64 Ed25519 public key, secret?: HMAC key }
   // When non-empty, /invoke requires a valid signature for a known agent.
   // When empty, verification is a dev passthrough unless VERIFY_REQUIRE_SIGNATURE.
   agentKeys: parseAgentKeys(process.env.AGENT_KEYS),
@@ -83,7 +83,7 @@ geminiApiKey: process.env.GEMINI_API_KEY ?? null,
   // Allowlist of downstream hosts (exact or "*.example.com" suffix wildcard).
   // Empty = allow any public host.
   proxyAllowedHosts: listOf(process.env.PROXY_ALLOWED_HOSTS),
-  // Permit proxying to private/reserved IPs (loopback, RFC1918, link-local) —
+  // Permit proxying to private/reserved IPs (loopback, RFC1918, link-local) -
   // OFF by default; only for trusted internal dev.
   proxyAllowPrivate: optional("PROXY_ALLOW_PRIVATE", "false") === "true",
   maxRequestBytes: parseInt(optional("MAX_REQUEST_BYTES", "1048576"), 10), // 1 MiB
