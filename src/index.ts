@@ -611,7 +611,7 @@ async function main() {
   });
   app.route("/api/invoke", ingestionRouter);
 
-  serve({ fetch: app.fetch, port: config.port }, (info) => {
+  serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
     console.log(`\n  AIPages backend running on http://localhost:${info.port}`);
     console.log(`  OpenAPI:  GET /api/openapi.json`);
     console.log(`  Health:   GET /health`);
