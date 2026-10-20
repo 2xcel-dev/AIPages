@@ -147,7 +147,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
       assert.equal(secretCap, undefined);
     });
 
-    it("indexes all 8 canonical AUS tool capabilities", () => {
+    it("indexes all canonical AUS tool capabilities", () => {
       const ausToolsAsFull: Tool[] = CANONICAL_AUS_TOOLS.map((t) => ({
         ...t,
         updatedAt: now,
@@ -164,6 +164,7 @@ describe("Task 10: Public Capabilities Directory Page (/capabilities)", () => {
         "claude-reason",
         "media-transcoder",
         "agentic-audit",
+        "markdown-extraction",
       ];
 
       for (const cap of requiredCaps) {

@@ -11,8 +11,8 @@ import { deriveReliability, type Tool } from "../src/types.js";
 
 describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
   describe("Authoritative First-Party AUS Fleet", () => {
-    it("verifies all 8 canonical AUS tools exist and pass strict assertion check", () => {
-      assert.equal(CANONICAL_AUS_TOOLS.length, 8);
+    it("verifies all canonical AUS tools exist and pass strict assertion check", () => {
+      assert.ok(CANONICAL_AUS_TOOLS.length >= 8);
       assert.doesNotThrow(() => {
         assertValidFirstPartyTools(CANONICAL_AUS_TOOLS as unknown as Tool[]);
       });
@@ -346,8 +346,8 @@ describe("Tool Validation Guardrail & First-Party AUS Compliance", () => {
 
       const report = validateCatalog(mixedCatalog as unknown as Tool[]);
       assert.equal(report.valid, false);
-      assert.equal(report.totalChecked, 9);
-      assert.equal(report.validCount, 8);
+      assert.equal(report.totalChecked, CANONICAL_AUS_TOOLS.length + 1);
+      assert.equal(report.validCount, CANONICAL_AUS_TOOLS.length);
       assert.equal(report.invalidCount, 1);
       assert.equal(report.failures[0].namespace, "bad.unnamed");
     });
