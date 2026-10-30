@@ -21,7 +21,12 @@
     "typecheck": "tsc --noEmit",
     "check:tools": "tsx scripts/validate-catalog.ts",
     "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts",
-    "scripts/validate-catalog.ts": "tsx scripts/validate-catalog.ts"
+    "scripts/validate-catalog.ts": "tsx scripts/validate-catalog.ts",
+    "loop": "tsx scripts/agency-loop.ts pipeline",
+    "loop:verify": "tsx scripts/agency-loop.ts verify",
+    "loop:sync": "tsx scripts/agency-loop.ts sync",
+    "loop:pipeline": "tsx scripts/agency-loop.ts pipeline",
+    "loop:outreach": "tsx scripts/agency-loop.ts outreach"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
