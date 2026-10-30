@@ -22,6 +22,7 @@ export declare const DISCOVERY_MANIFEST: {
         toolPage: string;
         capabilities: string;
         sitemap: string;
+        llms: string;
         openapi: string;
         ingest: string;
         scrape: string;

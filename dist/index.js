@@ -15,6 +15,7 @@ import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
+import { generateLlmsTxt } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { assertValidFirstPartyTools } from "./validation/toolValidator.js";
@@ -48,6 +49,7 @@ export const DISCOVERY_MANIFEST = {
         toolPage: "GET /tool/:slug",
         capabilities: "GET /capabilities (functional capability index)",
         sitemap: "GET /sitemap.xml (XML sitemap)",
+        llms: "GET /llms.txt (Standard Markdown manifest for LLM crawlers)",
         openapi: "GET /api/openapi.json",
         ingest: "POST /ingest (admin key required)",
         scrape: "POST /scrape (admin key required)",
@@ -393,10 +395,18 @@ app.get("/sitemap.xml", async (c) => {
 });
 // ── Public route: robots.txt crawler directives ──
 app.get("/robots.txt", (c) => {
-    const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.tech/sitemap.xml\n";
+    const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.tech/sitemap.xml\n# LLM Discovery: https://aipages.tech/llms.txt\n";
     c.header("Content-Type", "text/plain; charset=utf-8");
     c.header("Cache-Control", "public, max-age=86400");
     return c.text(robots);
+});
+// ── Public route: llms.txt standard manifest for AI crawlers & agents ──
+app.get("/llms.txt", async (c) => {
+    const allTools = await store.list();
+    const markdown = generateLlmsTxt(allTools);
+    c.header("Content-Type", "text/markdown; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
+    return c.text(markdown);
 });
 // ── Public route: Capabilities index for directory discovery ──
 app.get("/capabilities", async (c) => {
