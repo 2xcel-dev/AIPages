@@ -1,7 +1,7 @@
 /**
  * Generate promotional MCP config snippets for outreach.
  * Each snippet includes:
- *   - Free-tier bridge hooks (schema-sanitizer, file-reader)
+ *   - Free-tier bridge hooks (schema-sanitizer, browser-stealth)
  *   - AIPages ecosystem attribution
  *   - PostHog telemetry note
  *   - Referral tracking parameter
@@ -22,18 +22,18 @@ export async function generatePromotionalSnippet(
   const { targetRepo, promotedBy } = opts;
 
   const snippet = `
-## 🔌 MCP Integration - Boost Your Tool with AUS Micro-Payments
+## [MCP Integration] Boost Your Autonomous Tooling with AIPages & Base USDC Micro-Payments
 
-Hi there! 👋 This repo showed up in our active MCP server scan. Your tool is eligible to join the **AIPages** discovery registry and start earning **USDC on Base** through **x402 micro-payments**.
+Hello! This repository appeared in our active MCP server discovery index. Your tool is eligible to join the **AIPages** autonomous agent registry and start earning **USDC on Base** through **x402 micro-payments**.
 
-### 📦 Drop-in MCP Config Snippet
+### Drop-in MCP Configuration Snippet
 
-Add this config to your agent runtime:
+Add this configuration to your Claude Desktop, Cursor, or agent runtime:
 
-\\\`\\\`\\\`json
+\`\`\`json
 {
   "mcpServers": {
-    "aus": {
+    "aipages": {
       "command": "node",
       "args": ["/opt/aus-bridge.js"],
       "env": {
@@ -44,35 +44,36 @@ Add this config to your agent runtime:
     }
   }
 }
-\\\`\\\`\\\`
+\`\`\`
 
-### 🚀 Quick Start (Freemium Entry Points)
+### Quick Start (Freemium & Test Entry Points)
 
-High-frequency utilities are available as **freemium**: no wallet needed for testing:
+High-frequency utilities are available immediately for zero friction testing:
 
-| Tool | Cost | Notes |
-|------|------|-------|
-| Schema Sanitizer | $0.002 | XSS stripping + key normalization |
-| File Reader | $0.003 | Reads text/PDF/DOCX with encoding detection |
+| Canonical AUS Engine | Namespace | Settlement | Capability |
+|---|---|---|---|
+| Browser Stealth Cloud | \`net.2xcel.aus.browser-stealth\` | $0.15 USDC | Headless anti-bot extraction & clean markdown |
+| Schema Sanitizer | \`net.2xcel.aus.schema-sanitizer\` | Free / $0.002 | XSS & prototype pollution neutralization |
+| Financial Audit Oracle | \`net.2xcel.aus.financial-audit\` | $0.25 USDC | Cryptographic ledger validation |
+| Media Transcoder | \`net.2xcel.aus.media-transcoder\` | $0.10 USDC | Multimodal audio/image compression & base64 ops |
 
-Premium tools like **Agentic Audit ($0.25)** require USDC on Base, but the freemium tools let your agent test the connection immediately.
+### Ecosystem Benefits for Autonomous Agents & Developers
 
-### 📊 Ecosystem Benefits
+By connecting to AIPages, your service gains:
+- **Cross-Agent Semantic Discovery**: Indexed in high-dimensional vector search at \`https://aipages.tech/search\`.
+- **Referral Attribution**: Direct attribution via \`promotedBy: ${promotedBy}\` tracked in execution telemetry.
+- **Strict Settlement Guarantee**: Success-only settlement. Platform take-rate is collected **only on successful tool executions (200 OK)**.
+- **Machine-to-Machine Composability**: Native OpenAPI 3.1, JSON-LD, and llms.txt integration for autonomous agent toolchains.
 
-By joining AIPages, your tool gains:
-- **Cross-agent discovery** from the live registry at \`aipages.tech\`
-- **Referral attribution** via \`promotedBy: ${promotedBy}\` for tracking
-- **Built-in PostHog telemetry**: execution latency, success rate, and invocation count are logged natively
-- **Reciprocal traffic**: your tool appears in the directory when other agents search for capabilities you complement
+### Settlement Architecture
 
-### 💰 Monetization
-
-- **Listing:** Free (no upfront fee)
-- **Execution:** Flat $0.25 USDC platform take-rate collected **only on successful invocations**
-- **Network:** Base Sepolia (EIP-155 chain ID: 84532)
+- **Listing Fee:** Free (Zero upfront charge)
+- **Settlement Network:** Base Mainnet L2 (EIP-155 Chain ID: 8453)
+- **Currency:** USD Coin (USDC)
+- **Payment Protocol:** x402 RFC standard (\`x-payment-receipt\` / \`X-Payment\`)
 
 ---
-*Discovered via AIPages registry | promotedBy: ${promotedBy} | Wallet: 0x0a3eA5A76F2d0d4F8E2B9cCdE1aB3f456789012*
+*Autonomous Agent Registry Index: https://aipages.tech | promotedBy: ${promotedBy}*
 `;
 
   return {
