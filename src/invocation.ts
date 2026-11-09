@@ -53,6 +53,7 @@ import {
   runInSandbox,
   analyzeGithubRepo,
   enrichCompanyLead,
+  executeBrowserStealth,
 } from "./services/index.js";
 
 // ── x402 payment verification ─────────────────────────────────────────
@@ -601,6 +602,7 @@ const FIRST_PARTY_HANDLERS: Record<string, FirstPartyHandler> = {
   "net.2xcel.aus.sandbox-runner": runInSandbox,
   "net.2xcel.aus.github-summarizer": analyzeGithubRepo,
   "net.2xcel.aus.lead-enrich": enrichCompanyLead,
+  "net.2xcel.aus.browser-stealth": executeBrowserStealth,
 };
 
 /**

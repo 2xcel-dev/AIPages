@@ -20,6 +20,7 @@ export * from "./gasOptimizer.js";
 export * from "./sandboxRunner.js";
 export * from "./githubSummarizer.js";
 export * from "./leadEnrich.js";
+export * from "./browserStealth.js";
 // Crawling & Indexing Utilities
 export * from "./agentScraper.js";
 //# sourceMappingURL=index.js.map

@@ -672,5 +672,58 @@ export const CANONICAL_AUS_TOOLS = [
             name: "2XceL AUS Fleet",
         },
     },
+    {
+        namespace: "net.2xcel.aus.browser-stealth",
+        name: "browser_stealth",
+        description: "Agent Utility Service (AUS) Browser Stealth: Headless anti-bot cloud extraction for autonomous agents. Bypasses Cloudflare, DataDome, and CAPTCHA browser fingerprints, extracts clean DOM/Markdown, and returns structured data.",
+        schema: {
+            type: "object",
+            properties: {
+                url: {
+                    type: "string",
+                    description: "Target webpage URL to stealth scrape",
+                },
+                renderJs: {
+                    type: "boolean",
+                    default: true,
+                    description: "Wait for JavaScript SPA rendering and hydration",
+                },
+                extractMode: {
+                    type: "string",
+                    enum: ["markdown", "html", "json"],
+                    default: "markdown",
+                    description: "Extracted content format",
+                },
+                timeoutMs: {
+                    type: "number",
+                    default: 5000,
+                    description: "Maximum execution timeout in milliseconds",
+                },
+            },
+            required: ["url"],
+        },
+        connectionType: "http",
+        endpointUrl: `${AUS_BASE_URL}/tool/browser-stealth`,
+        healthStatus: "unknown",
+        lastChecked: undefined,
+        failureReason: null,
+        status: "active",
+        isFirstParty: true,
+        capabilities: ["stealth-scraping", "anti-bot-bypass", "headless-extraction", "web-scraping"],
+        pricing: {
+            model: "paid",
+            costPerCall: 0.15,
+        },
+        authentication: AUS_AUTH_SPEC,
+        rateLimit: AUS_STANDARD_RATE_LIMIT,
+        protocolDetails: AUS_PROTOCOL_DETAILS,
+        developer: {
+            address: AUS_DEVELOPER_ADDRESS,
+            listingFeePaid: true,
+            listingFeeAmount: 0,
+            isFirstParty: true,
+            name: "2XceL AUS Fleet",
+        },
+    },
 ];
 //# sourceMappingURL=ausTools.js.map

@@ -32,7 +32,7 @@ import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest } from "./egress-guard.js";
 import { trackInvocation, identifyAgent } from "./analytics.js";
 import { metrics } from "./metrics.js";
-import { sanitizeSchema, auditFinancialTransactions, attestVerification, verifyGeospatial, executeInSandbox, executeClaudeReason, inspectMedia, auditAgenticWorkflow, parseUrlToMarkdown, analyzeSearchIntent, auditContractRisk, estimateOptimalGas, runInSandbox, analyzeGithubRepo, enrichCompanyLead, } from "./services/index.js";
+import { sanitizeSchema, auditFinancialTransactions, attestVerification, verifyGeospatial, executeInSandbox, executeClaudeReason, inspectMedia, auditAgenticWorkflow, parseUrlToMarkdown, analyzeSearchIntent, auditContractRisk, estimateOptimalGas, runInSandbox, analyzeGithubRepo, enrichCompanyLead, executeBrowserStealth, } from "./services/index.js";
 // ── x402 payment verification ─────────────────────────────────────────
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { registerExactEvmScheme } from "@x402/evm/exact/server";
@@ -364,6 +364,7 @@ const FIRST_PARTY_HANDLERS = {
     "net.2xcel.aus.sandbox-runner": runInSandbox,
     "net.2xcel.aus.github-summarizer": analyzeGithubRepo,
     "net.2xcel.aus.lead-enrich": enrichCompanyLead,
+    "net.2xcel.aus.browser-stealth": executeBrowserStealth,
 };
 /**
  * Execute tool logic (via internal first-party in-process service engine OR downstream proxy),

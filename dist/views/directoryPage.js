@@ -342,6 +342,194 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       margin-bottom: 24px;
     }
 
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      letter-spacing: 0.02em;
+    }
+    .pulse-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--healthy);
+      box-shadow: 0 0 8px var(--healthy);
+    }
+    .hero-cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .btn-mcp-cta {
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      color: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3);
+    }
+    .btn-mcp-cta:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+      color: #fff;
+    }
+    .nav-mcp-btn {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .nav-mcp-btn:hover {
+      background: var(--primary);
+      color: #090d16;
+    }
+
+    /* Modal Styles */
+    .mcp-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .mcp-modal-dialog {
+      background: #0f172a;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-icon-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.15s;
+    }
+    .modal-close-btn:hover {
+      color: #fff;
+    }
+    .modal-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: #0b1120;
+    }
+    .modal-tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .modal-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .modal-body {
+      padding: 20px 24px;
+    }
+    .modal-instruction {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .modal-instruction code {
+      background: rgba(255, 255, 255, 0.08);
+      color: #38bdf8;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+    }
+    .code-container {
+      position: relative;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .code-container pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      line-height: 1.45;
+    }
+    .modal-copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+    }
+
     /* Controls & Search */
     .directory-controls {
       background: var(--card-bg);
@@ -778,17 +966,37 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
         <a href="/search">Vector Search</a>
         <a href="/api/tools">API Tools</a>
         <a href="/api/openapi.json">OpenAPI Spec</a>
+        <button type="button" class="nav-mcp-btn" onclick="openMcpModal()">Connect MCP</button>
       </div>
     </div>
   </nav>
 
   <main class="container">
     <section class="hero">
+      <div class="hero-badges">
+        <span class="hero-badge"><span class="pulse-dot"></span> 16 Canonical AUS Engines</span>
+        <span class="hero-badge">Base Mainnet L2</span>
+        <span class="hero-badge">x402 Micropayments</span>
+        <span class="hero-badge">Success-Only Settlement</span>
+      </div>
       <h1 class="hero-title">AI Agent Tool Directory</h1>
       <p class="hero-subtitle">
         Explore authoritative, schema-validated tools for autonomous software agents on Base Mainnet.
-        Each tool card displays live endpoint reliability and probe freshness.
+        Each tool card displays live endpoint reliability, JSON Schema definitions, and instant execution hooks.
       </p>
+      <div class="hero-cta-group">
+        <button type="button" class="btn btn-mcp-cta" onclick="openMcpModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Connect to Claude Desktop / Cursor (1-Click MCP)
+        </button>
+        <a href="/capabilities" class="btn btn-secondary">
+          Browse Capabilities &rarr;
+        </a>
+      </div>
     </section>
 
     <!-- Controls -->
@@ -891,6 +1099,148 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       </div>
     </div>
   </footer>
+
+  <!-- Claude Desktop & Cursor 1-Click Integration Modal -->
+  <div id="mcp-modal" class="mcp-modal-backdrop" style="display: none;" onclick="handleBackdropClick(event)">
+    <div class="mcp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="modal-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 id="modal-title" style="font-size: 1.15rem; color: #fff; font-weight: 700;">Connect AIPages to Claude Desktop or Cursor</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">1-Click setup to equip your coding agent with 16 authoritative AUS tools</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeMcpModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button type="button" class="modal-tab-btn active" data-tab="claude" onclick="switchModalTab('claude')">Claude Desktop</button>
+        <button type="button" class="modal-tab-btn" data-tab="cursor" onclick="switchModalTab('cursor')">Cursor (.cursor/mcp.json)</button>
+        <button type="button" class="modal-tab-btn" data-tab="curl" onclick="switchModalTab('curl')">cURL / HTTP</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-tab-content" id="tab-content-claude">
+          <p class="modal-instruction">Add this block to your <code>claude_desktop_config.json</code> under the <code>mcpServers</code> key:</p>
+          <div class="code-container">
+            <pre><code id="snippet-claude-config">{
+  "mcpServers": {
+    "aipages": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"],
+      "env": {
+        "AIPAGES_ENDPOINT": "https://aipages.tech/api/feed.json"
+      }
+    }
+  }
+}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy modal-copy-btn" onclick="copySnippet('snippet-claude-config', this)">Copy Config</button>
+          </div>
+        </div>
+
+        <div class="modal-tab-content" id="tab-content-cursor" style="display: none;">
+          <p class="modal-instruction">Place this configuration in your workspace root at <code>.cursor/mcp.json</code>:</p>
+          <div class="code-container">
+            <pre><code id="snippet-cursor-config">{
+  "mcpServers": {
+    "aipages-gateway": {
+      "url": "https://aipages.tech/api/feed.json"
+    }
+  }
+}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy modal-copy-btn" onclick="copySnippet('snippet-cursor-config', this)">Copy Config</button>
+          </div>
+        </div>
+
+        <div class="modal-tab-content" id="tab-content-curl" style="display: none;">
+          <p class="modal-instruction">Execute any canonical tool directly with automatic in-process dispatch:</p>
+          <div class="code-container">
+            <pre><code id="snippet-curl-config">curl -X POST "https://aipages.tech/tool/schema-sanitizer" \
+  -H "Content-Type: application/json" \
+  -H "X-Agent-ID: my-agent" \
+  -d '{
+    "data": { "raw": "&lt;b&gt;Sanitized Payload&lt;/b&gt;", "token": "secret" },
+    "rules": { "stripHtml": true, "maskFields": ["token"] }
+  }'</code></pre>
+            <button type="button" class="btn btn-sm btn-copy modal-copy-btn" onclick="copySnippet('snippet-curl-config', this)">Copy cURL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openMcpModal() {
+      var modal = document.getElementById('mcp-modal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeMcpModal() {
+      var modal = document.getElementById('mcp-modal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target && e.target.id === 'mcp-modal') {
+        closeMcpModal();
+      }
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeMcpModal();
+      }
+    });
+
+    function switchModalTab(tabId) {
+      var tabBtns = document.querySelectorAll('.modal-tab-btn');
+      tabBtns.forEach(function(btn) {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      var contents = ['claude', 'cursor', 'curl'];
+      contents.forEach(function(id) {
+        var el = document.getElementById('tab-content-' + id);
+        if (el) {
+          el.style.display = (id === tabId) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function copySnippet(elementId, btn) {
+      var el = document.getElementById(elementId);
+      if (!el) return;
+      var text = el.innerText || el.textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        var original = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.background = '#10b981';
+        btn.style.color = '#fff';
+        setTimeout(function() {
+          btn.innerText = original;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
 </body>
 </html>`;
 }

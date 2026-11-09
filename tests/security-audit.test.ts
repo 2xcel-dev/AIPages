@@ -18,6 +18,7 @@ import { sanitizeSchema } from "../src/services/schemaSanitizer.js";
 import { verifyGeospatial } from "../src/services/geospatialVerifier.js";
 import { auditFinancialTransactions } from "../src/services/financialAudit.js";
 import { inspectMedia } from "../src/services/mediaTranscoder.js";
+import { executeBrowserStealth } from "../src/services/browserStealth.js";
 import { sanitizePayload } from "../src/sanitizer.js";
 
 describe("Hardened Security & Service Layer Tests", () => {
@@ -169,6 +170,32 @@ describe("Hardened Security & Service Layer Tests", () => {
       const res = inspectMedia({ base64_data: validBase64, mime_type: "text/plain" });
       assert.equal(res.success, true);
       assert.equal(res.media_analysis?.is_valid_binary, true);
+    });
+  });
+
+  describe("Browser Stealth Engine (Anti-Bot & SSRF Hardening)", () => {
+    it("blocks SSRF attempts targeting private or loopback networks", async () => {
+      const res = await executeBrowserStealth({ url: "http://127.0.0.1:8080/internal-admin" });
+      assert.equal(res.success, false);
+      assert.match(res.error || "", /SSRF blocked/i);
+    });
+
+    it("rejects non-http protocols (e.g. file:// or ftp://)", async () => {
+      const res = await executeBrowserStealth({ url: "file:///etc/passwd" });
+      assert.equal(res.success, false);
+      assert.match(res.error || "", /only HTTP and HTTPS are permitted/i);
+    });
+
+    it("successfully returns stealth-extracted markdown for valid public URL", async () => {
+      const res = await executeBrowserStealth({
+        url: "https://example.com/products/agent-kit",
+        extractMode: "markdown",
+      });
+      assert.equal(res.success, true);
+      assert.equal(res.utility, "browser-stealth");
+      assert.equal(res.anti_bot_bypassed, true);
+      assert.ok(res.content.includes("https://example.com/products/agent-kit"));
+      assert.ok(res.token_count > 0);
     });
   });
 

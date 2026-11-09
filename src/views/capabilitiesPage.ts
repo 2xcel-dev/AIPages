@@ -85,6 +85,9 @@ export const CAPABILITY_DESCRIPTIONS: Record<string, string> = {
   "firmographics": "Company attributes including employee headcount, funding history, and headquarters location.",
   "crm-automation": "Programmatic payload sync and customer relationship management pipeline automation.",
   "contact-intelligence": "Department leadership identification, email pattern verification, and professional contacts.",
+  "stealth-scraping": "Headless cloud scraping with TLS fingerprint rotation and anti-bot mitigation.",
+  "anti-bot-bypass": "Autonomous bypass strategies for Cloudflare, DataDome, and anti-scraping fingerprinting.",
+  "headless-extraction": "Dynamic single-page application rendering and token-optimized DOM extraction.",
 };
 
 /**

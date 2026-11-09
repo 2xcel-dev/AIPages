@@ -18,5 +18,6 @@ export * from "./gasOptimizer.js";
 export * from "./sandboxRunner.js";
 export * from "./githubSummarizer.js";
 export * from "./leadEnrich.js";
+export * from "./browserStealth.js";
 export * from "./agentScraper.js";
 //# sourceMappingURL=index.d.ts.map
