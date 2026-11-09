@@ -1,9 +1,8 @@
 /**
  * AUS Schema Sanitizer Service
  * Ported faithfully from agent-utility-services (Engine: schema-sanitizer)
- *
- * Enterprise input sanitization, XSS/HTML tag stripping, key normalization,
- * and sensitive field masking for structured JSON data.
+ * Hardened with prototype pollution defense, recursion depth bounding,
+ * circular reference cycle detection, and array support.
  */
 export interface SchemaSanitizerRequest {
     data: Record<string, unknown>;
@@ -22,6 +21,7 @@ export interface SchemaSanitizerResult {
         sanitized_keys: string[];
     };
     data: Record<string, unknown>;
+    error?: string;
 }
 export declare function sanitizeSchema(req: SchemaSanitizerRequest): SchemaSanitizerResult;
 //# sourceMappingURL=schemaSanitizer.d.ts.map

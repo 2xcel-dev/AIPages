@@ -473,16 +473,22 @@ async function main() {
         total = await store.count();
     }
     console.log(`[db] Tools in store: ${total}`);
-    // Protect POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware
+    // Intercept POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware when an on-chain receipt is supplied
     app.use("/api/invoke/:namespace", async (c, next) => {
         if (c.req.method === "POST") {
-            return x402PaymentMiddleware(c, next);
+            const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+            if (paymentHeader) {
+                return x402PaymentMiddleware(c, next);
+            }
         }
         await next();
     });
     app.use("/api/invoke/:namespace/*", async (c, next) => {
         if (c.req.method === "POST") {
-            return x402PaymentMiddleware(c, next);
+            const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+            if (paymentHeader) {
+                return x402PaymentMiddleware(c, next);
+            }
         }
         await next();
     });

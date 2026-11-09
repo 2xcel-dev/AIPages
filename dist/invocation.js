@@ -31,6 +31,7 @@ import { sanitizePayload } from "./sanitizer.js";
 import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest } from "./egress-guard.js";
 import { trackInvocation, identifyAgent } from "./analytics.js";
+import { sanitizeSchema, auditFinancialTransactions, attestVerification, verifyGeospatial, executeInSandbox, executeClaudeReason, inspectMedia, auditAgenticWorkflow, parseUrlToMarkdown, analyzeSearchIntent, auditContractRisk, estimateOptimalGas, runInSandbox, analyzeGithubRepo, enrichCompanyLead, } from "./services/index.js";
 // ── x402 payment verification ─────────────────────────────────────────
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { registerExactEvmScheme } from "@x402/evm/exact/server";
@@ -344,49 +345,98 @@ ingress.use("/:namespace/*", async (c) => {
     // ── 6–8. Egress guard + proxy + collect ──────────────────────────────────
     return executeAndLog(c, tool, agentId, t0, feeUsd, bodyJson, paymentCtx, promotedBy);
 });
+const FIRST_PARTY_HANDLERS = {
+    "net.2xcel.aus.schema-sanitizer": sanitizeSchema,
+    "net.2xcel.aus.financial-audit": auditFinancialTransactions,
+    "net.2xcel.aus.verification-oracle": attestVerification,
+    "net.2xcel.aus.geospatial-verifier": verifyGeospatial,
+    "net.2xcel.aus.sandbox-execution": executeInSandbox,
+    "net.2xcel.aus.claude-reason": executeClaudeReason,
+    "net.2xcel.aus.media-transcoder": inspectMedia,
+    "net.2xcel.aus.agentic-audit": auditAgenticWorkflow,
+    "net.2xcel.aus.parse-markdown": parseUrlToMarkdown,
+    "net.2xcel.aus.serp-intent": analyzeSearchIntent,
+    "net.2xcel.aus.rugcheck": auditContractRisk,
+    "net.2xcel.aus.gas-optimizer": estimateOptimalGas,
+    "net.2xcel.aus.sandbox-runner": runInSandbox,
+    "net.2xcel.aus.github-summarizer": analyzeGithubRepo,
+    "net.2xcel.aus.lead-enrich": enrichCompanyLead,
+};
 /**
- * Build the downstream URL, run the egress guard, proxy the (already
- * size-checked + schema-validated) request, enforce the response cap, and
- * collect the take-rate only on successful delivery.
+ * Execute tool logic (via internal first-party in-process service engine OR downstream proxy),
+ * enforce egress guard for remote endpoints, and collect the take-rate only on successful delivery.
  */
 async function executeAndLog(c, tool, agentId, t0, feeUsdc, bodyJson, paymentCtx, promotedBy) {
     const rawBody = c.get(K_BODY);
     const contentType = c.get(K_CT);
-    // Path AFTER /api/invoke/:namespace — appended to the tool's endpointUrl.
-    const req = new URL(c.req.url, "http://localhost");
-    const prefix = `/api/invoke/${tool.namespace}`;
-    const idx = req.pathname.indexOf(prefix);
-    const subpath = idx >= 0 ? req.pathname.slice(idx + prefix.length) : "";
-    const toolPath = subpath + req.search;
-    if (!tool.endpointUrl) {
-        await logInvocation(tool, agentId, "failed", Date.now() - t0, 502, feeUsdc, "not_collected", `Tool ${tool.namespace} has no endpointUrl — cannot proxy.`);
-        return c.json({ error: "Tool has no endpointUrl", status: "failed" }, 502);
-    }
-    const fullUrl = tool.endpointUrl.replace(/\/+$/, "") + toolPath;
-    // ── 6. Egress guard (SSRF + allowlist) BEFORE any bytes leave ────────────
-    const decision = await guardTargetUrl(fullUrl, { namespace: tool.namespace });
-    if (!decision.ok || !decision.target) {
-        const latency = Date.now() - t0;
-        const feeStatus = feeUsdc > 0 ? "not_collected" : "none";
-        await logInvocation(tool, agentId, "egress_blocked", latency, 502, 0, feeStatus, decision.reason);
-        return c.json({ error: "Target blocked by egress guard", reason: decision.reason, status: "failed" }, 502);
-    }
-    // ── 7. Proxy (pinned to the validated IP) with response-size cap ─────────
-    let statusCode = 0;
+    let statusCode = 200;
     let status = "success";
     let errorMsg;
-    try {
-        const res = await proxyToTool(decision.target, c.req.method, contentType, rawBody, c);
-        statusCode = res.status;
-        if (res.status >= 400) {
+    let executionResult = null;
+    // ── Branch A: First-Party Internal Service Dispatch ─────────────────────
+    const internalHandler = FIRST_PARTY_HANDLERS[tool.namespace];
+    if (internalHandler) {
+        try {
+            const res = await internalHandler(bodyJson || {});
+            executionResult = res;
+            // Inspect if service returned an explicit failure flag
+            if (typeof res === "object" && res !== null && "success" in res && res.success === false) {
+                statusCode = 400;
+                status = "failed";
+                errorMsg = res.error || "Service reported execution failure.";
+            }
+            else {
+                statusCode = 200;
+                status = "success";
+            }
+        }
+        catch (err) {
+            statusCode = 500;
             status = "failed";
-            errorMsg = `Tool returned HTTP ${res.status}`;
+            errorMsg = err?.message || String(err);
         }
     }
-    catch (err) {
-        statusCode = 502;
-        status = "failed";
-        errorMsg = err?.message ?? String(err);
+    else {
+        // ── Branch B: External Proxy to Downstream Tool ────────────────────────
+        const req = new URL(c.req.url, "http://localhost");
+        const prefix = `/api/invoke/${tool.namespace}`;
+        const idx = req.pathname.indexOf(prefix);
+        const subpath = idx >= 0 ? req.pathname.slice(idx + prefix.length) : "";
+        const toolPath = subpath + req.search;
+        if (!tool.endpointUrl) {
+            await logInvocation(tool, agentId, "failed", Date.now() - t0, 502, feeUsdc, "not_collected", `Tool ${tool.namespace} has no endpointUrl — cannot proxy.`);
+            return c.json({ error: "Tool has no endpointUrl", status: "failed" }, 502);
+        }
+        const fullUrl = tool.endpointUrl.replace(/\/+$/, "") + toolPath;
+        // Egress guard (SSRF + allowlist) BEFORE any bytes leave
+        const decision = await guardTargetUrl(fullUrl, { namespace: tool.namespace });
+        if (!decision.ok || !decision.target) {
+            const latency = Date.now() - t0;
+            const feeStatus = feeUsdc > 0 ? "not_collected" : "none";
+            await logInvocation(tool, agentId, "egress_blocked", latency, 502, 0, feeStatus, decision.reason);
+            return c.json({ error: "Target blocked by egress guard", reason: decision.reason, status: "failed" }, 502);
+        }
+        // Proxy with response-size cap
+        try {
+            const res = await proxyToTool(decision.target, c.req.method, contentType, rawBody, c);
+            statusCode = res.status;
+            if (res.status >= 400) {
+                status = "failed";
+                errorMsg = `Tool returned HTTP ${res.status}`;
+            }
+            const text = await res.text().catch(() => "");
+            try {
+                executionResult = JSON.parse(text);
+            }
+            catch {
+                executionResult = text;
+            }
+        }
+        catch (err) {
+            statusCode = 502;
+            status = "failed";
+            errorMsg = err?.message ?? String(err);
+        }
     }
     const latencyMs = Date.now() - t0;
     // Collect the take-rate only on successful (2xx) delivery.
@@ -421,6 +471,7 @@ async function executeAndLog(c, tool, agentId, t0, feeUsdc, bodyJson, paymentCtx
         status,
         latencyMs,
         statusCode,
+        result: executionResult,
         error: errorMsg ?? null,
         fee: {
             amountUsdc: feeStatus === "collected" ? feeUsdc : 0,

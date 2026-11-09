@@ -7,12 +7,13 @@ export interface VerificationOracleResult {
     success: boolean;
     utility: "verification-oracle";
     request_id: string;
-    attestation: {
+    attestation?: {
         algorithm: string;
         computed_hash: string;
         matches_expected: boolean | null;
         verified_at: string;
     };
+    error?: string;
 }
 export declare function attestVerification(req: VerificationOracleRequest): VerificationOracleResult;
 //# sourceMappingURL=verificationOracle.d.ts.map

@@ -89,19 +89,29 @@ const COMPILED_RULES: Rule[] = [...ALL_RULES, ...extraRules()];
 
 // ── public API ─────────────────────────────────────────────────────────────
 
-/** Recursively collect every string value in a JSON structure. */
-function collectStrings(node: unknown, out: string[]): void {
+/** Recursively collect every string value in a JSON structure with recursion and cycle guards. */
+function collectStrings(
+  node: unknown,
+  out: string[],
+  depth = 0,
+  seen: WeakSet<object> = new WeakSet(),
+): void {
+  if (depth > 20) return;
   if (typeof node === "string") {
     out.push(node);
     return;
   }
   if (Array.isArray(node)) {
-    for (const item of node) collectStrings(item, out);
+    if (seen.has(node)) return;
+    seen.add(node);
+    for (const item of node) collectStrings(item, out, depth + 1, seen);
     return;
   }
   if (node && typeof node === "object") {
+    if (seen.has(node)) return;
+    seen.add(node);
     for (const value of Object.values(node as Record<string, unknown>)) {
-      collectStrings(value, out);
+      collectStrings(value, out, depth + 1, seen);
     }
   }
 }

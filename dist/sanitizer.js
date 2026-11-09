@@ -71,20 +71,28 @@ function extraRules() {
 }
 const COMPILED_RULES = [...ALL_RULES, ...extraRules()];
 // ── public API ─────────────────────────────────────────────────────────────
-/** Recursively collect every string value in a JSON structure. */
-function collectStrings(node, out) {
+/** Recursively collect every string value in a JSON structure with recursion and cycle guards. */
+function collectStrings(node, out, depth = 0, seen = new WeakSet()) {
+    if (depth > 20)
+        return;
     if (typeof node === "string") {
         out.push(node);
         return;
     }
     if (Array.isArray(node)) {
+        if (seen.has(node))
+            return;
+        seen.add(node);
         for (const item of node)
-            collectStrings(item, out);
+            collectStrings(item, out, depth + 1, seen);
         return;
     }
     if (node && typeof node === "object") {
+        if (seen.has(node))
+            return;
+        seen.add(node);
         for (const value of Object.values(node)) {
-            collectStrings(value, out);
+            collectStrings(value, out, depth + 1, seen);
         }
     }
 }

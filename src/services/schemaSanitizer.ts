@@ -1,9 +1,8 @@
 /**
  * AUS Schema Sanitizer Service
  * Ported faithfully from agent-utility-services (Engine: schema-sanitizer)
- *
- * Enterprise input sanitization, XSS/HTML tag stripping, key normalization,
- * and sensitive field masking for structured JSON data.
+ * Hardened with prototype pollution defense, recursion depth bounding,
+ * circular reference cycle detection, and array support.
  */
 
 export interface SchemaSanitizerRequest {
@@ -24,43 +23,112 @@ export interface SchemaSanitizerResult {
     sanitized_keys: string[];
   };
   data: Record<string, unknown>;
+  error?: string;
 }
+
+const MAX_RECURSION_DEPTH = 20;
+const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 export function sanitizeSchema(req: SchemaSanitizerRequest): SchemaSanitizerResult {
   const payload = req.data || {};
-  const maskFields = new Set((req.rules?.maskFields || []).map((f) => f.toLowerCase()));
-  const stripHtml = req.rules?.stripHtml !== false;
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-  const cleanObject = (obj: Record<string, unknown>): Record<string, unknown> => {
-    const cleaned: Record<string, unknown> = {};
+  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) {
+    return {
+      success: false,
+      utility: "schema-sanitizer",
+      request_id: requestId,
+      sanitized_at: new Date().toISOString(),
+      analysis: {
+        original_keys_count: 0,
+        sanitized_keys: [],
+      },
+      data: {},
+      error: "Invalid input: 'data' must be a valid non-null JSON object.",
+    };
+  }
+
+  const maskFields = new Set((req.rules?.maskFields || []).map((f) => f.toLowerCase().trim()));
+  const stripHtml = req.rules?.stripHtml !== false;
+  const seenObjects = new WeakSet<object>();
+
+  const cleanValue = (val: unknown, depth: number): unknown => {
+    if (depth > MAX_RECURSION_DEPTH) {
+      return "[Max Depth Reached]";
+    }
+
+    if (typeof val === "string") {
+      return stripHtml ? val.replace(/<[^>]*>/gm, "").trim() : val.trim();
+    }
+
+    if (Array.isArray(val)) {
+      return val.map((item) => cleanValue(item, depth + 1));
+    }
+
+    if (typeof val === "object" && val !== null) {
+      if (seenObjects.has(val)) {
+        return "[Circular Reference]";
+      }
+      seenObjects.add(val);
+      return cleanObject(val as Record<string, unknown>, depth + 1);
+    }
+
+    return val;
+  };
+
+  const cleanObject = (obj: Record<string, unknown>, depth = 0): Record<string, unknown> => {
+    if (depth > MAX_RECURSION_DEPTH) {
+      return {};
+    }
+
+    const cleaned: Record<string, unknown> = Object.create(null);
+
     for (const [key, val] of Object.entries(obj)) {
+      if (DANGEROUS_KEYS.has(key)) {
+        continue; // Block prototype pollution vectors
+      }
+
       const sanitizedKey = key.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
+      if (!sanitizedKey || DANGEROUS_KEYS.has(sanitizedKey)) {
+        continue;
+      }
 
       if (maskFields.has(sanitizedKey)) {
         cleaned[sanitizedKey] = "********";
-      } else if (typeof val === "string") {
-        cleaned[sanitizedKey] = stripHtml ? val.replace(/<[^>]*>?/gm, "").trim() : val.trim();
-      } else if (typeof val === "object" && val !== null && !Array.isArray(val)) {
-        cleaned[sanitizedKey] = cleanObject(val as Record<string, unknown>);
       } else {
-        cleaned[sanitizedKey] = val;
+        cleaned[sanitizedKey] = cleanValue(val, depth);
       }
     }
     return cleaned;
   };
 
-  const sanitized = cleanObject(payload);
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  try {
+    const sanitized = cleanObject(payload);
 
-  return {
-    success: true,
-    utility: "schema-sanitizer",
-    request_id: requestId,
-    sanitized_at: new Date().toISOString(),
-    analysis: {
-      original_keys_count: Object.keys(payload).length,
-      sanitized_keys: Object.keys(sanitized),
-    },
-    data: sanitized,
-  };
+    return {
+      success: true,
+      utility: "schema-sanitizer",
+      request_id: requestId,
+      sanitized_at: new Date().toISOString(),
+      analysis: {
+        original_keys_count: Object.keys(payload).length,
+        sanitized_keys: Object.keys(sanitized),
+      },
+      data: { ...sanitized },
+    };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      success: false,
+      utility: "schema-sanitizer",
+      request_id: requestId,
+      sanitized_at: new Date().toISOString(),
+      analysis: {
+        original_keys_count: 0,
+        sanitized_keys: [],
+      },
+      data: {},
+      error: `Sanitization error: ${message}`,
+    };
+  }
 }

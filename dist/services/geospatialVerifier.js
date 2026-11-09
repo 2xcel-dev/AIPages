@@ -1,13 +1,49 @@
 /**
  * AUS Geospatial Verifier Service
  * Ported faithfully from agent-utility-services (Engine: geospatial-verifier)
- *
- * Haversine coordinate distance computation, geofencing boundary verification,
- * and proximity validation.
+ * Hardened with coordinate boundary verification, null/type checking,
+ * and robust Haversine distance bounds.
  */
+function isValidCoordinate(coord) {
+    if (!coord || typeof coord !== "object")
+        return false;
+    const c = coord;
+    const lat = Number(c.lat);
+    const lng = Number(c.lng);
+    return (Number.isFinite(lat) &&
+        Number.isFinite(lng) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180);
+}
 export function verifyGeospatial(req) {
-    const { origin, destination, max_radius_km } = req;
     const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    if (!isValidCoordinate(req?.origin)) {
+        return {
+            success: false,
+            utility: "geospatial-verifier",
+            request_id: requestId,
+            error: "Invalid or missing 'origin' coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.",
+        };
+    }
+    if (!isValidCoordinate(req?.destination)) {
+        return {
+            success: false,
+            utility: "geospatial-verifier",
+            request_id: requestId,
+            error: "Invalid or missing 'destination' coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.",
+        };
+    }
+    const { origin, destination, max_radius_km } = req;
+    if (max_radius_km !== undefined && (!Number.isFinite(max_radius_km) || max_radius_km < 0)) {
+        return {
+            success: false,
+            utility: "geospatial-verifier",
+            request_id: requestId,
+            error: "Invalid 'max_radius_km'. Must be a non-negative finite number.",
+        };
+    }
     const toRad = (v) => (v * Math.PI) / 180;
     const R = 6371; // Earth radius in km
     const dLat = toRad(destination.lat - origin.lat);

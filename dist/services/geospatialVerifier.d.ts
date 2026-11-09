@@ -1,9 +1,8 @@
 /**
  * AUS Geospatial Verifier Service
  * Ported faithfully from agent-utility-services (Engine: geospatial-verifier)
- *
- * Haversine coordinate distance computation, geofencing boundary verification,
- * and proximity validation.
+ * Hardened with coordinate boundary verification, null/type checking,
+ * and robust Haversine distance bounds.
  */
 export interface GeoCoordinate {
     lat: number;
@@ -18,12 +17,13 @@ export interface GeospatialVerifierResult {
     success: boolean;
     utility: "geospatial-verifier";
     request_id: string;
-    calculation: {
+    calculation?: {
         distance_km: number;
         distance_miles: number;
         geofence_threshold_km: number | null;
         within_geofence: boolean | null;
     };
+    error?: string;
 }
 export declare function verifyGeospatial(req: GeospatialVerifierRequest): GeospatialVerifierResult;
 //# sourceMappingURL=geospatialVerifier.d.ts.map

@@ -8,13 +8,14 @@ export interface MediaTranscoderResult {
     success: boolean;
     utility: "media-transcoder";
     request_id: string;
-    media_analysis: {
+    media_analysis?: {
         mime_type: string;
         byte_size: number;
         kilobytes: number;
         content_sha256: string;
         is_valid_binary: boolean;
     };
+    error?: string;
 }
 export declare function inspectMedia(req: MediaTranscoderRequest): MediaTranscoderResult;
 //# sourceMappingURL=mediaTranscoder.d.ts.map
