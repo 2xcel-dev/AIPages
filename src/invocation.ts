@@ -36,6 +36,7 @@ import { sanitizePayload } from "./sanitizer.js";
 import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest, type PinnedTarget } from "./egress-guard.js";
 import { trackInvocation, identifyAgent } from "./analytics.js";
+import { metrics } from "./metrics.js";
 import {
   sanitizeSchema,
   auditFinancialTransactions,
@@ -205,6 +206,14 @@ async function logInvocation(
     list.push(record);
     if (list.length > 10_000) list.shift();
   }
+
+  // Prometheus metric recording
+  metrics.recordInvocation(
+    tool.namespace,
+    status,
+    latencyMs,
+    feeStatus === "collected" ? feeUsdc : 0,
+  );
 
   // PostHog analytics (no-op if POSTHOG_API_KEY is not set)
   trackInvocation({

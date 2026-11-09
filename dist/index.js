@@ -7,7 +7,8 @@ import { embed } from "./embedding.js";
 import { ingestManifests, scrapeGitHub, scrapeNpm } from "./scraper.js";
 import { openapi } from "./openapi.js";
 import { setStore, default as ingestionRouter } from "./invocation.js";
-import { setRateLimitStore, MongoRateStore, startRateLimitCleanup } from "./rate-limit.js";
+import { setRateLimitStore, MongoRateStore, startRateLimitCleanup, tokenBucket } from "./rate-limit.js";
+import { metrics } from "./metrics.js";
 import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
 import { deriveReliability } from "./types.js";
 import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402.js";
@@ -27,6 +28,10 @@ const app = new Hono();
 let store;
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
+app.use("*", async (c, next) => {
+    await next();
+    metrics.recordHttpRequest(c.req.method, c.req.path, c.res.status);
+});
 // ── Public routes ───────────────────────────────────────────
 export const DISCOVERY_MANIFEST = {
     name: "AIPages",
@@ -51,6 +56,7 @@ export const DISCOVERY_MANIFEST = {
         sitemap: "GET /sitemap.xml (XML sitemap)",
         llms: "GET /llms.txt (Standard Markdown manifest for LLM crawlers)",
         openapi: "GET /api/openapi.json",
+        metrics: "GET /metrics (Prometheus line metrics)",
         ingest: "POST /ingest (admin key required)",
         scrape: "POST /scrape (admin key required)",
         scrapeAgents: "POST /api/scrape-agents",
@@ -84,10 +90,27 @@ app.get("/", async (c) => {
 });
 app.get("/health", async (c) => {
     const ok = await store.ping();
+    const total = await store.count().catch(() => 0);
+    const mem = process.memoryUsage();
     return c.json({
         status: ok ? "healthy" : "degraded",
         store: ok ? "connected" : "disconnected",
+        uptimeSeconds: Math.floor(process.uptime()),
+        toolsTotal: total,
+        firstPartyEnginesOnline: 15,
+        timestamp: new Date().toISOString(),
+        memory: {
+            heapUsedMb: Number((mem.heapUsed / 1024 / 1024).toFixed(2)),
+            heapTotalMb: Number((mem.heapTotal / 1024 / 1024).toFixed(2)),
+            rssMb: Number((mem.rss / 1024 / 1024).toFixed(2)),
+        },
     });
+});
+app.get("/metrics", async (c) => {
+    const total = await store.count().catch(() => 0);
+    const body = metrics.formatPrometheus(total);
+    c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+    return c.text(body);
 });
 app.get("/api/openapi.json", (c) => c.json(openapi));
 // ── Admin routes (key-gated) ────────────────────────────────
@@ -137,6 +160,15 @@ app.post("/scrape", async (c) => {
 });
 // ── Public route: semantic search (free, ungated) ──────────
 app.get("/search", async (c) => {
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const limitRes = tokenBucket(`search:${ip}`, 60, 60_000);
+    c.header("RateLimit-Limit", "60");
+    c.header("RateLimit-Remaining", String(limitRes.remaining));
+    c.header("RateLimit-Reset", String(Math.ceil(limitRes.resetAt / 1000)));
+    if (!limitRes.allowed) {
+        c.header("Retry-After", String(limitRes.retryAfterSec || 1));
+        return c.json({ error: "Rate limit exceeded. Search is limited to 60 queries per minute per IP." }, 429);
+    }
     const query = c.req.query("q");
     if (!query)
         return c.json({ error: "Missing query parameter: q" }, 400);
@@ -152,6 +184,15 @@ app.get("/search", async (c) => {
 });
 // ── Public route: self-serve tool submission (free) ─────────
 app.post("/api/tools/submit", async (c) => {
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const limitRes = tokenBucket(`submit:${ip}`, 15, 60_000);
+    c.header("RateLimit-Limit", "15");
+    c.header("RateLimit-Remaining", String(limitRes.remaining));
+    c.header("RateLimit-Reset", String(Math.ceil(limitRes.resetAt / 1000)));
+    if (!limitRes.allowed) {
+        c.header("Retry-After", String(limitRes.retryAfterSec || 1));
+        return c.json({ error: "Rate limit exceeded. Tool submission is limited to 15 requests per minute per IP." }, 429);
+    }
     const body = await c.req.json().catch(() => null);
     if (!body) {
         return c.json({ error: "Invalid JSON body" }, 400);
@@ -385,6 +426,28 @@ async function handleToolDetail(c) {
 }
 app.get("/tool/:slug", handleToolDetail);
 app.get("/tools/:slug", handleToolDetail);
+// ── Direct Tool Invocation Handlers (/tool/:slug & /tools/:slug) ───────
+async function handleDirectToolInvoke(c) {
+    const slug = c.req.param("slug");
+    if (!slug) {
+        return c.json({ error: "Missing tool identifier parameter" }, 400);
+    }
+    const tool = await findToolBySlug(store, slug);
+    if (!tool) {
+        return c.json({ error: `Tool with identifier '${slug}' not found.` }, 404);
+    }
+    // Internal route dispatch to /api/invoke/:namespace
+    const invokeUrl = new URL(`/api/invoke/${tool.namespace}`, c.req.url);
+    const forwardReq = new Request(invokeUrl.toString(), {
+        method: "POST",
+        headers: c.req.raw.headers,
+        body: c.req.raw.body,
+        duplex: "half",
+    });
+    return app.fetch(forwardReq);
+}
+app.post("/tool/:slug", handleDirectToolInvoke);
+app.post("/tools/:slug", handleDirectToolInvoke);
 // ── Public route: XML sitemap for search engines & crawler discovery ──
 app.get("/sitemap.xml", async (c) => {
     const allTools = await store.list();

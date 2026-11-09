@@ -31,6 +31,7 @@ import { sanitizePayload } from "./sanitizer.js";
 import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest } from "./egress-guard.js";
 import { trackInvocation, identifyAgent } from "./analytics.js";
+import { metrics } from "./metrics.js";
 import { sanitizeSchema, auditFinancialTransactions, attestVerification, verifyGeospatial, executeInSandbox, executeClaudeReason, inspectMedia, auditAgenticWorkflow, parseUrlToMarkdown, analyzeSearchIntent, auditContractRisk, estimateOptimalGas, runInSandbox, analyzeGithubRepo, enrichCompanyLead, } from "./services/index.js";
 // ── x402 payment verification ─────────────────────────────────────────
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
@@ -125,6 +126,8 @@ async function logInvocation(tool, agentId, status, latencyMs, statusCode, feeUs
         if (list.length > 10_000)
             list.shift();
     }
+    // Prometheus metric recording
+    metrics.recordInvocation(tool.namespace, status, latencyMs, feeStatus === "collected" ? feeUsdc : 0);
     // PostHog analytics (no-op if POSTHOG_API_KEY is not set)
     trackInvocation({
         agentId,
