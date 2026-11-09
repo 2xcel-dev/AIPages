@@ -202,6 +202,17 @@ describe("/tools/:slug — Responsive Tool Detail & Reliability Page", () => {
       assert.ok(html.includes("STDIO"));
       assert.ok(html.includes("Free"));
     });
+
+    it("renders interactive live test console with request payload and execution controls", () => {
+      const html = renderToolPage(sampleHealthyTool);
+
+      assert.ok(html.includes("Interactive Test Console"), "Should render Interactive Test Console header");
+      assert.ok(html.includes("playground-card"), "Should render playground card container");
+      assert.ok(html.includes('id="playground-payload"'), "Should render payload editor textarea");
+      assert.ok(html.includes('id="btn-execute-playground"'), "Should render execute button");
+      assert.ok(html.includes('id="playground-response"'), "Should render response console");
+      assert.ok(html.includes("executePlaygroundTool"), "Should include playground execution function call");
+    });
   });
 
   describe("HTTP Route Integration (/tools/:slug)", () => {

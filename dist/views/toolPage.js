@@ -1101,6 +1101,213 @@ ${jsonLdScript}
       border-color: var(--healthy) !important;
       color: var(--healthy) !important;
     }
+
+    /* Interactive Test Playground */
+    .playground-card {
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.05), transparent 40%), var(--card-bg);
+    }
+    .playground-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 14px;
+    }
+    @media (max-width: 900px) {
+      .playground-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .playground-panel {
+      background: var(--card-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .playground-panel-header {
+      background: rgba(15, 23, 42, 0.7);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .playground-panel-header .panel-badge {
+      font-size: 0.72rem;
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--primary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 700;
+    }
+    .playground-editor-wrapper {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .playground-textarea {
+      width: 100%;
+      min-height: 220px;
+      background: #070a12;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      padding: 12px;
+      resize: vertical;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .playground-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .playground-auth-group {
+      padding: 0 12px 12px;
+    }
+    .playground-input-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .playground-input {
+      width: 100%;
+      background: #070a12;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .playground-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+    .playground-free-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      margin: 0 12px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      color: #34d399;
+    }
+    .playground-actions {
+      padding: 0 12px 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-execute {
+      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+      color: #030712;
+      font-weight: 700;
+      font-size: 0.86rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+    }
+    .btn-execute:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
+    }
+    .btn-execute:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-ghost:hover {
+      border-color: var(--border-light);
+      color: #fff;
+    }
+    .playground-status-pill {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .playground-status-pill.status-200 {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .playground-status-pill.status-402 {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .playground-status-pill.status-err {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+    .playground-status-pill.status-loading {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .playground-timing {
+      font-size: 0.76rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .playground-response-wrapper {
+      padding: 12px;
+      flex: 1;
+      display: flex;
+    }
+    .playground-response-wrapper pre {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 260px;
+      max-height: 480px;
+      box-sizing: border-box;
+      background: #070a12;
+      border: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -1125,7 +1332,7 @@ ${jsonLdScript}
       <div class="hero-top">
         <h1 class="tool-title">${escapedName}</h1>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          ${isFirstParty ? `<span class="badge badge-first-party">★ First-Party AUS Tool</span>` : ""}
+          ${isFirstParty ? `<span class="badge badge-first-party"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First-Party AUS Tool</span>` : ""}
           ${statusBadgeHtml}
         </div>
       </div>
@@ -1331,6 +1538,83 @@ Content-Type: application/json</code></pre>
     `
         : ""}
 
+    <!-- Interactive Live Test Console -->
+    <section class="card full-width playground-card" id="test-console" aria-label="Interactive Test Console">
+      <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Interactive Test Console
+          </h2>
+          <span class="badge badge-healthy" style="font-size: 0.72rem; padding: 2px 8px;">
+            <span class="pulse-dot"></span> In-Browser Dispatch
+          </span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" class="btn-ghost" onclick="resetPlaygroundPayload()">Reset Sample</button>
+          <button type="button" class="btn-ghost" onclick="formatPlaygroundPayload()">Format JSON</button>
+        </div>
+      </div>
+
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+        Test this tool directly from your browser. Dispatches live request to <code>POST /tool/${escapedNamespace}</code>.
+      </p>
+
+      <div class="playground-grid">
+        <!-- Request Editor Column -->
+        <div class="playground-panel">
+          <div class="playground-panel-header">
+            <span>Request Payload (JSON)</span>
+            <span class="panel-badge">POST</span>
+          </div>
+          <div class="playground-editor-wrapper">
+            <textarea id="playground-payload" class="playground-textarea" spellcheck="false" rows="10">${escapeHtml(requestExample.bodyJson)}</textarea>
+          </div>
+
+          ${requestExample.isX402
+        ? `
+          <div class="playground-auth-group">
+            <label for="playground-payment-header" class="playground-input-label">
+              x-payment-receipt Header <span style="color: var(--text-dim); font-size: 0.72rem;">(Base USDC tx receipt)</span>
+            </label>
+            <input type="text" id="playground-payment-header" class="playground-input" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
+          </div>
+          `
+        : `
+          <div class="playground-free-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Public Endpoint: Zero authentication required for test execution.</span>
+          </div>
+          `}
+
+          <div class="playground-actions">
+            <button type="button" id="btn-execute-playground" class="btn-execute" onclick="executePlaygroundTool('${escapedNamespace}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span class="btn-label">Execute Tool</span>
+            </button>
+            <span id="playground-status-pill" class="playground-status-pill" style="display: none;"></span>
+          </div>
+        </div>
+
+        <!-- Response Column -->
+        <div class="playground-panel">
+          <div class="playground-panel-header">
+            <span>Response Output</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span id="playground-time" class="playground-timing" style="display: none;">0ms</span>
+              <button type="button" class="btn-ghost" onclick="copyPlaygroundResponse(this)">Copy Response</button>
+            </div>
+          </div>
+          <div class="playground-response-wrapper">
+            <pre><code id="playground-response">// Response payload will appear here after execution...
+// Click 'Execute Tool' on the left to dispatch request.</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Integration & Request Example Section -->
     <section class="card full-width integration-card" aria-label="Integration & Request Examples" id="integration-examples">
       <div class="card-header">
@@ -1343,7 +1627,7 @@ Content-Type: application/json</code></pre>
         </h2>
         <div style="display: flex; gap: 8px; align-items: center;">
           <span class="badge ${requestExample.isX402 ? "badge-paid" : "badge-free"}">
-            ${requestExample.isX402 ? "💳 x402 Payment Required" : "🔓 Free Endpoint"}
+            ${requestExample.isX402 ? "x402 Payment Required" : "Free Endpoint"}
           </span>
           <button type="button" class="btn btn-sm btn-copy" onclick="copyActiveExample(this)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -1552,6 +1836,135 @@ Content-Type: application/json</code></pre>
         navigator.clipboard.writeText(text).then(updateUi).catch(function() {
           fallbackCopy(text, updateUi);
         });
+      } else {
+        fallbackCopy(text, updateUi);
+      }
+    }
+
+    var initialSamplePayload = ${JSON.stringify(requestExample.bodyJson)};
+
+    function resetPlaygroundPayload() {
+      var el = document.getElementById('playground-payload');
+      if (el) el.value = initialSamplePayload;
+    }
+
+    function formatPlaygroundPayload() {
+      var el = document.getElementById('playground-payload');
+      if (!el) return;
+      try {
+        var parsed = JSON.parse(el.value);
+        el.value = JSON.stringify(parsed, null, 2);
+      } catch (err) {
+        alert('Invalid JSON: ' + (err.message || 'Syntax error'));
+      }
+    }
+
+    async function executePlaygroundTool(namespace) {
+      var btn = document.getElementById('btn-execute-playground');
+      var pill = document.getElementById('playground-status-pill');
+      var timingEl = document.getElementById('playground-time');
+      var respEl = document.getElementById('playground-response');
+      var payloadEl = document.getElementById('playground-payload');
+      var paymentHeaderEl = document.getElementById('playground-payment-header');
+
+      var rawBody = payloadEl ? payloadEl.value.trim() : '{}';
+      var bodyData;
+      try {
+        bodyData = rawBody ? JSON.parse(rawBody) : {};
+      } catch (err) {
+        if (respEl) respEl.textContent = '// JSON Parse Error in Request Payload:\\n' + (err.message || 'Syntax error');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        var label = btn.querySelector('.btn-label');
+        if (label) label.textContent = 'Executing...';
+      }
+
+      if (pill) {
+        pill.style.display = 'inline-flex';
+        pill.className = 'playground-status-pill status-loading';
+        pill.textContent = 'Dispatching...';
+      }
+
+      var headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (paymentHeaderEl && paymentHeaderEl.value.trim()) {
+        headers['x-payment-receipt'] = paymentHeaderEl.value.trim();
+        headers['X-Payment'] = paymentHeaderEl.value.trim();
+      }
+
+      var startTime = performance.now();
+
+      try {
+        var response = await fetch('/tool/' + encodeURIComponent(namespace), {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(bodyData)
+        });
+
+        var duration = Math.round(performance.now() - startTime);
+        if (timingEl) {
+          timingEl.style.display = 'inline-block';
+          timingEl.textContent = duration + 'ms';
+        }
+
+        var statusText = response.status + ' ' + (response.statusText || '');
+        if (pill) {
+          pill.textContent = statusText;
+          if (response.status >= 200 && response.status < 300) {
+            pill.className = 'playground-status-pill status-200';
+          } else if (response.status === 402) {
+            pill.className = 'playground-status-pill status-402';
+          } else {
+            pill.className = 'playground-status-pill status-err';
+          }
+        }
+
+        var contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          var data = await response.json();
+          if (respEl) respEl.textContent = JSON.stringify(data, null, 2);
+        } else {
+          var text = await response.text();
+          if (respEl) respEl.textContent = text;
+        }
+      } catch (err) {
+        var durationErr = Math.round(performance.now() - startTime);
+        if (timingEl) {
+          timingEl.style.display = 'inline-block';
+          timingEl.textContent = durationErr + 'ms';
+        }
+        if (pill) {
+          pill.textContent = 'Network Error';
+          pill.className = 'playground-status-pill status-err';
+        }
+        if (respEl) {
+          respEl.textContent = '// Failed to dispatch request:\\n' + (err.message || 'Network error');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          var labelReset = btn.querySelector('.btn-label');
+          if (labelReset) labelReset.textContent = 'Execute Tool';
+        }
+      }
+    }
+
+    function copyPlaygroundResponse(btn) {
+      var codeEl = document.getElementById('playground-response');
+      if (!codeEl) return;
+      var text = codeEl.innerText || codeEl.textContent;
+      var orig = btn.textContent;
+      var updateUi = function() {
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(updateUi).catch(function() { fallbackCopy(text, updateUi); });
       } else {
         fallbackCopy(text, updateUi);
       }
