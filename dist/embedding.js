@@ -34,19 +34,23 @@ function getAI() {
 export async function embed(text, taskType) {
     const apiKey = config.geminiApiKey;
     if (apiKey) {
-        const response = await getAI().models.embedContent({
-            model: config.geminiEmbeddingModel,
-            contents: [{ parts: [{ text }] }],
-            config: { taskType },
-        });
-        // response.embeddings is an array, one entry per input content.
-        const values = response.embeddings?.[0]?.values;
-        if (!values || values.length === 0) {
-            throw new Error(`Gemini embedContent returned an empty embedding for model ${config.geminiEmbeddingModel}`);
+        try {
+            const response = await getAI().models.embedContent({
+                model: config.geminiEmbeddingModel,
+                contents: [{ parts: [{ text }] }],
+                config: { taskType },
+            });
+            // response.embeddings is an array, one entry per input content.
+            const values = response.embeddings?.[0]?.values;
+            if (values && values.length > 0) {
+                return values;
+            }
         }
-        return values;
+        catch (err) {
+            console.warn(`[embedding] Gemini embedContent call failed (${err?.status || err?.message}). Falling back to deterministic pseudo-embedding.`);
+        }
     }
-    // Dev fallback — no API key, no network.
+    // Dev fallback — no API key, network error, or quota limit.
     return pseudoEmbed(text, config.embeddingDimensions);
 }
 // ── dev fallback ──────────────────────────────────────────────────────────────

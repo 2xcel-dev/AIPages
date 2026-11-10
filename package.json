@@ -12,6 +12,7 @@
     "setup-index": "tsx scripts/setup-vector-index.ts",
     "ingest-tools": "tsx scripts/ingest-tools.ts",
     "ingest:tools": "tsx scripts/ingest-tools.ts",
+    "tools:ingest": "tsx scripts/ingest-gemini-tools.ts",
     "ingest-listings": "tsx scripts/ingest-listings.ts",
     "crawl": "tsx src/crawler.ts once",
     "crawl:watch": "tsx src/crawler.ts watch",

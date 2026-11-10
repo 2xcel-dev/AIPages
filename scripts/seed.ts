@@ -12,6 +12,9 @@ import { embed } from "../src/embedding.js";
 import type { Tool } from "../src/types.js";
 import { CANONICAL_AUS_TOOLS } from "../src/data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "../src/validation/toolValidator.js";
+import fs from "fs";
+import path from "path";
+import { normalizeScrapedTool, type RawScrapedTool } from "./ingest-gemini-tools.js";
 
 const SAMPLE_THIRD_PARTY_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
   {
@@ -92,7 +95,12 @@ const SAMPLE_THIRD_PARTY_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
   },
 ];
 
-const ALL_SEED_TOOLS = [...CANONICAL_AUS_TOOLS, ...SAMPLE_THIRD_PARTY_TOOLS];
+const GEMINI_TOOLS_PATH = path.resolve(process.cwd(), "data/geminiScrapedTools.json");
+const SCRAPED_GEMINI_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = fs.existsSync(GEMINI_TOOLS_PATH)
+  ? (JSON.parse(fs.readFileSync(GEMINI_TOOLS_PATH, "utf-8")) as RawScrapedTool[]).map(normalizeScrapedTool)
+  : [];
+
+const ALL_SEED_TOOLS = [...CANONICAL_AUS_TOOLS, ...SAMPLE_THIRD_PARTY_TOOLS, ...SCRAPED_GEMINI_TOOLS];
 
 async function main() {
   console.log("🛡️  Validating tools before seeding…");

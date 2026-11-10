@@ -1,7 +1,7 @@
 # Issue Proposal: punkpeye/awesome-mcp-servers
 **Title:** AIPages Discovery: Boost your tool with AUS micro-payments on Base
 **Labels:** mcp-integration, agent-discovery
-**Generated At:** 2026-11-10T00:02:54.882Z
+**Generated At:** 2026-11-10T00:21:05.160Z
 
 ---
 

@@ -1,7 +1,7 @@
 # Issue Proposal: zcaceres/markdown-crawler-mcp
 **Title:** AIPages Discovery: Boost your tool with AUS micro-payments on Base
 **Labels:** mcp-integration, agent-discovery
-**Generated At:** 2026-11-10T00:02:57.897Z
+**Generated At:** 2026-11-10T00:21:08.187Z
 
 ---
 
