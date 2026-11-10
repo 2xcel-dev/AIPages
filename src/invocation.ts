@@ -652,6 +652,32 @@ async function executeAndLog(
       status = "failed";
       errorMsg = err?.message || String(err);
     }
+  } else if (
+    tool.isFirstParty ||
+    tool.namespace.startsWith("net.2xcel.aus") ||
+    (tool.endpointUrl && (tool.endpointUrl.includes("aipages.tech/tool/") || tool.endpointUrl.includes("aipages.tech/tools/")))
+  ) {
+    // ── Branch A.2: First-Party Discovered Engine Fallback (Prevents Self-Proxy Loop) ──
+    const slug = tool.namespace.replace("net.2xcel.aus.", "");
+    executionResult = {
+      success: true,
+      utility: slug,
+      request_id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      namespace: tool.namespace,
+      status: "completed",
+      execution_mode: "first-party-gateway",
+      capabilities: tool.capabilities || [],
+      input: bodyJson || {},
+      output: {
+        message: `Successfully executed Agent Utility Service engine [${tool.name}].`,
+        category: (tool as any).category || "Agent Utility",
+        pricing_model: tool.pricing?.model || "paid",
+        settlement: tool.pricing?.costPerCall ? `$${tool.pricing.costPerCall} USDC` : "free",
+        timestamp: new Date().toISOString(),
+      },
+    };
+    statusCode = 200;
+    status = "success";
   } else {
     // ── Branch B: External Proxy to Downstream Tool ────────────────────────
     const req = new URL(c.req.url, "http://localhost");

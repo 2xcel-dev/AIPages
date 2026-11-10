@@ -1,4 +1,5 @@
 import { type Tool, deriveReliability } from "../types.js";
+import { escapeHtml } from "./utils.js";
 
 export interface CapabilitySummary {
   name: string;
@@ -15,19 +16,6 @@ export interface CapabilitySummary {
     reliability: string;
     healthStatus: string;
   }>;
-}
-
-function escapeHtml(str: unknown): string {
-  if (typeof str !== "string") {
-    if (str === null || str === undefined) return "";
-    str = String(str);
-  }
-  return (str as string)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 export const CAPABILITY_DESCRIPTIONS: Record<string, string> = {

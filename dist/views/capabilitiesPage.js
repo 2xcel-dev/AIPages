@@ -1,17 +1,5 @@
 import { deriveReliability } from "../types.js";
-function escapeHtml(str) {
-    if (typeof str !== "string") {
-        if (str === null || str === undefined)
-            return "";
-        str = String(str);
-    }
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "./utils.js";
 export const CAPABILITY_DESCRIPTIONS = {
     "schema-sanitization": "Input sanitization, HTML/XSS stripping, and structured JSON schema normalization for autonomous workflows.",
     "data-cleaning": "Automated data normalization, whitespace stripping, and structured payload sanitization.",

@@ -1,17 +1,5 @@
 import { deriveReliability } from "../types.js";
-function escapeHtml(str) {
-    if (typeof str !== "string") {
-        if (str === null || str === undefined)
-            return "";
-        str = String(str);
-    }
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "./utils.js";
 function formatTimestamp(date) {
     if (!date)
         return "None recorded";

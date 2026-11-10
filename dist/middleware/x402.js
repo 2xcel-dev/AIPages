@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { createPublicClient, http, parseAbiItem, decodeEventLog, parseUnits, } from "viem";
+import { createPublicClient, fallback, http, parseAbiItem, decodeEventLog, parseUnits, } from "viem";
 import { base } from "viem/chains";
 import { config } from "../config.js";
 export const USDC_CONTRACT_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -9,9 +9,15 @@ export const MIN_AMOUNT_USDC = "0.01";
 export const USDC_DECIMALS = 6;
 export const MIN_AMOUNT_UNITS = parseUnits(MIN_AMOUNT_USDC, USDC_DECIMALS);
 const transferEventAbi = parseAbiItem("event Transfer(address indexed from, address indexed to, uint256 value)");
+const baseRpcEndpoints = [
+    process.env.BASE_RPC_URL,
+    "https://mainnet.base.org",
+    "https://base.llamarpc.com",
+    "https://1rpc.io/base",
+].filter(Boolean);
 const publicClient = createPublicClient({
     chain: base,
-    transport: http("https://mainnet.base.org"),
+    transport: fallback(baseRpcEndpoints.map((url) => http(url, { timeout: 8000, retryCount: 2 }))),
 });
 export class FileBackedReplayStore {
     filePath;
@@ -92,6 +98,7 @@ export class MongoReplayStore {
 }
 const defaultStorePath = path.join(process.cwd(), ".data", "consumed-tx-hashes.json");
 let activeReplayStore = new FileBackedReplayStore(defaultStorePath);
+const inFlightHashes = new Set();
 export function setReplayStore(store) {
     activeReplayStore = store;
 }
@@ -141,78 +148,84 @@ async function handleX402(c, next) {
     if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
         return returnPaymentChallenge(c, "Invalid transaction hash format. Expected 0x-prefixed 64-character hex string.");
     }
-    // 1. Replay Protection: reject if hash has already been consumed
+    // 1. Replay Protection: reject if hash has already been consumed or is actively processing
     const normalizedHash = txHash.toLowerCase();
-    if (await activeReplayStore.has(normalizedHash)) {
+    if (inFlightHashes.has(normalizedHash) || (await activeReplayStore.has(normalizedHash))) {
         c.header("X-Payment-Required", "true");
         return c.json({
             error: "Payment Error",
             message: "Transaction hash has already been used (replay protection).",
         }, 402);
     }
+    inFlightHashes.add(normalizedHash);
     let receipt;
     try {
-        receipt = await fetchReceipt(txHash);
-    }
-    catch (err) {
-        console.warn("[x402] Failed to fetch transaction receipt on Base:", err?.message || err);
-        return returnPaymentChallenge(c, "Unable to verify transaction receipt on Base mainnet. Transaction may be unconfirmed or invalid.", err?.message);
-    }
-    // 2. Transaction Status Check
-    if (!receipt || receipt.status !== "success") {
-        return returnPaymentChallenge(c, "Transaction on Base has not succeeded or receipt status is not success.", receipt ? { status: receipt.status, blockNumber: receipt.blockNumber?.toString() } : undefined);
-    }
-    // 3. Log Filtering & Decoding for ERC-20 USDC Transfer
-    const configuredRecipient = config.x402WalletAddress || process.env.EVM_WALLET_ADDRESS || EXPECTED_RECIPIENT;
-    let validTransferFound = false;
-    let transferDetails = null;
-    for (const log of receipt.logs ?? []) {
-        if (log.address.toLowerCase() !== USDC_CONTRACT_BASE.toLowerCase()) {
-            continue;
-        }
         try {
-            const decoded = decodeEventLog({
-                abi: [transferEventAbi],
-                data: log.data,
-                topics: log.topics,
-            });
-            if (decoded.eventName === "Transfer" && decoded.args) {
-                const { from, to, value } = decoded.args;
-                const recipientMatches = to.toLowerCase() === EXPECTED_RECIPIENT.toLowerCase() ||
-                    to.toLowerCase() === configuredRecipient.toLowerCase();
-                if (recipientMatches && value >= MIN_AMOUNT_UNITS) {
-                    validTransferFound = true;
-                    transferDetails = {
-                        from,
-                        to,
-                        value: value.toString(),
-                    };
-                    break;
+            receipt = await fetchReceipt(txHash);
+        }
+        catch (err) {
+            console.warn("[x402] Failed to fetch transaction receipt on Base:", err?.message || err);
+            return returnPaymentChallenge(c, "Unable to verify transaction receipt on Base mainnet. Transaction may be unconfirmed or invalid.", err?.message);
+        }
+        // 2. Transaction Status Check
+        if (!receipt || receipt.status !== "success") {
+            return returnPaymentChallenge(c, "Transaction on Base has not succeeded or receipt status is not success.", receipt ? { status: receipt.status, blockNumber: receipt.blockNumber?.toString() } : undefined);
+        }
+        // 3. Log Filtering & Decoding for ERC-20 USDC Transfer
+        const configuredRecipient = config.x402WalletAddress || process.env.EVM_WALLET_ADDRESS || EXPECTED_RECIPIENT;
+        let validTransferFound = false;
+        let transferDetails = null;
+        for (const log of receipt.logs ?? []) {
+            if (log.address.toLowerCase() !== USDC_CONTRACT_BASE.toLowerCase()) {
+                continue;
+            }
+            try {
+                const decoded = decodeEventLog({
+                    abi: [transferEventAbi],
+                    data: log.data,
+                    topics: log.topics,
+                });
+                if (decoded.eventName === "Transfer" && decoded.args) {
+                    const { from, to, value } = decoded.args;
+                    const recipientMatches = to.toLowerCase() === EXPECTED_RECIPIENT.toLowerCase() ||
+                        to.toLowerCase() === configuredRecipient.toLowerCase();
+                    if (recipientMatches && value >= MIN_AMOUNT_UNITS) {
+                        validTransferFound = true;
+                        transferDetails = {
+                            from,
+                            to,
+                            value: value.toString(),
+                        };
+                        break;
+                    }
                 }
             }
+            catch {
+                // Continue inspecting subsequent logs
+                continue;
+            }
         }
-        catch {
-            // Continue inspecting subsequent logs
-            continue;
+        if (!validTransferFound) {
+            return returnPaymentChallenge(c, `No valid ERC-20 USDC transfer to ${EXPECTED_RECIPIENT} of at least ${MIN_AMOUNT_USDC} USDC found in transaction logs.`);
         }
+        // Record transaction hash in replay protection store upon successful verification
+        await activeReplayStore.add(normalizedHash, {
+            from: transferDetails?.from,
+            to: transferDetails?.to,
+            value: transferDetails?.value,
+            blockNumber: receipt.blockNumber?.toString(),
+        });
+        // Mark payment verified on context for downstream route handlers
+        c.set("x402.verified", true);
+        c.set("x402.txHash", txHash);
+        if (transferDetails) {
+            c.set("x402.transfer", transferDetails);
+        }
+        console.log(`[x402] Verified Base USDC transfer: ${txHash} from ${transferDetails?.from} to ${transferDetails?.to} (amount: ${transferDetails?.value}, block: ${receipt.blockNumber})`);
     }
-    if (!validTransferFound) {
-        return returnPaymentChallenge(c, `No valid ERC-20 USDC transfer to ${EXPECTED_RECIPIENT} of at least ${MIN_AMOUNT_USDC} USDC found in transaction logs.`);
+    finally {
+        inFlightHashes.delete(normalizedHash);
     }
-    // Record transaction hash in replay protection store upon successful verification
-    await activeReplayStore.add(normalizedHash, {
-        from: transferDetails?.from,
-        to: transferDetails?.to,
-        value: transferDetails?.value,
-        blockNumber: receipt.blockNumber?.toString(),
-    });
-    // Mark payment verified on context for downstream route handlers
-    c.set("x402.verified", true);
-    c.set("x402.txHash", txHash);
-    if (transferDetails) {
-        c.set("x402.transfer", transferDetails);
-    }
-    console.log(`[x402] Verified Base USDC transfer: ${txHash} from ${transferDetails?.from} to ${transferDetails?.to} (amount: ${transferDetails?.value}, block: ${receipt.blockNumber})`);
     await next();
 }
 // Export typed Hono middleware handler

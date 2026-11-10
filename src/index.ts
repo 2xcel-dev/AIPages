@@ -576,7 +576,7 @@ async function handleDirectToolInvoke(c: any) {
     headers: forwardHeaders,
     body: c.req.raw.body,
     duplex: "half",
-  } as any);
+  } as RequestInit & { duplex: string });
 
   return app.fetch(forwardReq);
 }
