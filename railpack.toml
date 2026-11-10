@@ -1,6 +1,6 @@
 [build]
 command = "npm run build"
-outputs = ["dist"]
+outputs = ["dist", "data"]
 
 [deploy]
 startCommand = "node dist/index.js"

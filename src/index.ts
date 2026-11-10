@@ -40,6 +40,7 @@ import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
 import { CANONICAL_AUS_TOOLS, normalizeScrapedTool, type RawScrapedTool } from "./data/ausTools.js";
+import { DISCOVERED_GEMINI_TOOLS } from "./data/discoveredTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
 import { handleGetTools, formatToolRecord } from "./api/tools.js";
 import { handleSyndicationFeed } from "./api/syndication.js";
@@ -892,8 +893,9 @@ export async function syncCanonicalAusTools(store: ToolStore): Promise<number> {
   // Pre-release guardrail: assert first-party AUS tools pass strict validation
   assertValidFirstPartyTools(CANONICAL_AUS_TOOLS as unknown as Tool[]);
 
-  // Check which canonical AUS tools are missing from the store and upsert them
-  for (const raw of CANONICAL_AUS_TOOLS) {
+  // Check which canonical AUS tools and discovered tools are missing from the store and upsert them
+  const allFleetTools = [...CANONICAL_AUS_TOOLS, ...DISCOVERED_GEMINI_TOOLS];
+  for (const raw of allFleetTools) {
     const existing = await store.getByNamespace(raw.namespace);
     if (!existing) {
       const text = `${raw.namespace} ${raw.name} ${raw.description} ${(raw.capabilities ?? []).join(" ")}`;
@@ -902,27 +904,6 @@ export async function syncCanonicalAusTools(store: ToolStore): Promise<number> {
       await store.upsert(tool);
       synced++;
     }
-  }
-
-  // Also check if geminiScrapedTools.json exists and ensure those tools are present
-  try {
-    const geminiPath = path.resolve(process.cwd(), "data/geminiScrapedTools.json");
-    if (fs.existsSync(geminiPath)) {
-      const rawScraped = JSON.parse(fs.readFileSync(geminiPath, "utf-8")) as RawScrapedTool[];
-      for (const item of rawScraped) {
-        const existing = await store.getByNamespace(item.namespace);
-        if (!existing) {
-          const toolRecord = normalizeScrapedTool(item);
-          const text = `${toolRecord.namespace} ${toolRecord.name} ${toolRecord.description} ${(toolRecord.capabilities ?? []).join(" ")}`;
-          const embedding = await embed(text);
-          const tool: Tool = { ...toolRecord, embedding, updatedAt: new Date() };
-          await store.upsert(tool);
-          synced++;
-        }
-      }
-    }
-  } catch (err: any) {
-    console.warn("[db] Note: Scraped tools sync skipped:", err?.message);
   }
 
   return synced;

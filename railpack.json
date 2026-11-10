@@ -6,7 +6,8 @@
         "npm run build"
       ],
       "deployOutputs": [
-        "dist"
+        "dist",
+        "data"
       ]
     }
   },

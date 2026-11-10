@@ -1,21 +1,3 @@
-/**
- * AIPages Backend: main application entry point.
- *
- * Hono API with route groups:
- *   - Public:  GET /              health + pricing manifest
- *   - Public:  GET /health        store connectivity
- *   - Admin:   POST /ingest       bulk ingest (admin key)
- *   - Admin:   POST /scrape       trigger GitHub+npm scrape (admin key)
- *   - Public:  GET /search        semantic vector search (free, ungated)
- *   - Public:  POST /api/tools/submit  self-serve tool submission (free)
- *   - Public:  GET /api/tools/:namespace  full tool detail (schema + pricing)
- *   - Public:  GET /api/openapi.json  OpenAPI 3.1 spec
- *   - Paid:    POST /api/invoke/:namespace  tool invocation proxy (flat $0.25 platform take-rate, collected on success only)
- *
- * Run:  npm run dev   (tsx watch)
- *       npm run start (compiled)
- */
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
@@ -38,7 +20,8 @@ import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
-import { CANONICAL_AUS_TOOLS, normalizeScrapedTool } from "./data/ausTools.js";
+import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
+import { DISCOVERED_GEMINI_TOOLS } from "./data/discoveredTools.js";
 import { assertValidFirstPartyTools } from "./validation/toolValidator.js";
 import { handleGetTools, formatToolRecord } from "./api/tools.js";
 import { handleSyndicationFeed } from "./api/syndication.js";
@@ -744,8 +727,9 @@ export async function syncCanonicalAusTools(store) {
     let synced = 0;
     // Pre-release guardrail: assert first-party AUS tools pass strict validation
     assertValidFirstPartyTools(CANONICAL_AUS_TOOLS);
-    // Check which canonical AUS tools are missing from the store and upsert them
-    for (const raw of CANONICAL_AUS_TOOLS) {
+    // Check which canonical AUS tools and discovered tools are missing from the store and upsert them
+    const allFleetTools = [...CANONICAL_AUS_TOOLS, ...DISCOVERED_GEMINI_TOOLS];
+    for (const raw of allFleetTools) {
         const existing = await store.getByNamespace(raw.namespace);
         if (!existing) {
             const text = `${raw.namespace} ${raw.name} ${raw.description} ${(raw.capabilities ?? []).join(" ")}`;
@@ -754,27 +738,6 @@ export async function syncCanonicalAusTools(store) {
             await store.upsert(tool);
             synced++;
         }
-    }
-    // Also check if geminiScrapedTools.json exists and ensure those tools are present
-    try {
-        const geminiPath = path.resolve(process.cwd(), "data/geminiScrapedTools.json");
-        if (fs.existsSync(geminiPath)) {
-            const rawScraped = JSON.parse(fs.readFileSync(geminiPath, "utf-8"));
-            for (const item of rawScraped) {
-                const existing = await store.getByNamespace(item.namespace);
-                if (!existing) {
-                    const toolRecord = normalizeScrapedTool(item);
-                    const text = `${toolRecord.namespace} ${toolRecord.name} ${toolRecord.description} ${(toolRecord.capabilities ?? []).join(" ")}`;
-                    const embedding = await embed(text);
-                    const tool = { ...toolRecord, embedding, updatedAt: new Date() };
-                    await store.upsert(tool);
-                    synced++;
-                }
-            }
-        }
-    }
-    catch (err) {
-        console.warn("[db] Note: Scraped tools sync skipped:", err?.message);
     }
     return synced;
 }
