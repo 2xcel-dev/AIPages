@@ -1,6 +1,8 @@
+import { Hono } from "hono";
 import { type ToolStore } from "./db.js";
 import { formatToolRecord } from "./api/tools.js";
 export { formatToolRecord };
+export declare const app: Hono<import("hono/types").BlankEnv, import("hono/types").BlankSchema, "/">;
 export declare const DISCOVERY_MANIFEST: {
     name: string;
     version: string;
@@ -39,4 +41,8 @@ export declare const DISCOVERY_MANIFEST: {
     openapi: string;
 };
 export declare function handleDirectoryRequest(c: any, baseUrl?: string, targetStore?: ToolStore): Promise<any>;
+export declare function initApp(): Promise<{
+    store: ToolStore;
+    app: Hono;
+}>;
 //# sourceMappingURL=index.d.ts.map

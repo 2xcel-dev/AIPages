@@ -181,6 +181,9 @@ export function startRateLimitCleanup(intervalMs = 60_000) {
             }
         }
     }, intervalMs);
+    if (timer.unref) {
+        timer.unref();
+    }
     return () => clearInterval(timer);
 }
 // ── private in-memory structures (fallback only) ─────────────────────────────

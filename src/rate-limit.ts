@@ -244,6 +244,9 @@ export function startRateLimitCleanup(intervalMs = 60_000): () => void {
       }
     }
   }, intervalMs);
+  if (timer.unref) {
+    timer.unref();
+  }
   return () => clearInterval(timer);
 }
 

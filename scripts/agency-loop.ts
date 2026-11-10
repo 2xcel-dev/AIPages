@@ -154,6 +154,38 @@ export async function stepOutreach(): Promise<void> {
 }
 
 /**
+ * Step 6: Execute search engine and crawler syndication
+ */
+export async function stepSeo(): Promise<void> {
+  header("STAGE 6: Autonomous Search Engine & LLM Crawler Dispatch");
+  try {
+    const { runSeoSyndication } = await import("./seo-ping.js");
+    await runSeoSyndication();
+    success("Search engine and crawler syndication dispatched.");
+  } catch (err: any) {
+    warn(`SEO syndication warning: ${err.message}`);
+  }
+}
+
+/**
+ * Step 7: Revenue gate and settlement verification
+ */
+export async function stepRevenue(): Promise<void> {
+  header("STAGE 7: Base Mainnet x402 Revenue Settlement Verification");
+  try {
+    const { runRevenueGateVerification } = await import("./verify-revenue-gate.js");
+    const result = await runRevenueGateVerification();
+    if (result.passed) {
+      success("Base Mainnet x402 revenue gateway verified operational.");
+    } else {
+      fail("Revenue gateway checks failed.");
+    }
+  } catch (err: any) {
+    fail(`Revenue verification error: ${err.message}`);
+  }
+}
+
+/**
  * CLI Entrypoint Router
  */
 async function main() {
@@ -186,19 +218,33 @@ async function main() {
       await stepOutreach();
       break;
 
+    case "seo":
+      await stepSeo();
+      break;
+
+    case "revenue":
+      await stepRevenue();
+      break;
+
     case "pipeline":
     case "all":
       await stepVerifyCatalog();
       await stepSeed();
       await stepBuild();
       await stepTest();
+      await stepOutreach();
+      await stepSeo();
+      await stepRevenue();
       console.log(`\n${ANSI.bold}${ANSI.green}✨ COMPLETE AGENCY LOOP EXECUTED SUCCESSFULLY! Ready for release.${ANSI.reset}\n`);
+      process.exit(0);
       break;
 
     default:
-      console.log(`Unknown command "${mode}". Available: verify, sync, test, build, outreach, pipeline`);
+      console.log(`Unknown command "${mode}". Available: verify, sync, test, build, outreach, seo, revenue, pipeline`);
       process.exit(1);
   }
+
+  process.exit(0);
 }
 
 main().catch((err) => {

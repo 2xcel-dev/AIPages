@@ -15,6 +15,8 @@
  * Run:  npm run dev   (tsx watch)
  *       npm run start (compiled)
  */
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -41,7 +43,7 @@ import { assertValidFirstPartyTools, validateToolRecord } from "./validation/too
 import { handleGetTools, formatToolRecord } from "./api/tools.js";
 import { handleSyndicationFeed } from "./api/syndication.js";
 export { formatToolRecord };
-const app = new Hono();
+export const app = new Hono();
 
 // ── Globals ─────────────────────────────────────────────────
 let store: ToolStore;
@@ -595,6 +597,13 @@ app.get("/robots.txt", (c) => {
   return c.text(robots);
 });
 
+// ── Public route: IndexNow & Search Engine Verification Key ──
+app.get("/:key([a-f0-9]{32}).txt", (c) => {
+  const key = c.req.param("key") || "";
+  c.header("Content-Type", "text/plain; charset=utf-8");
+  return c.text(key);
+});
+
 // ── Public route: llms.txt standard manifest for AI crawlers & agents ──
 
 app.get("/llms.txt", async (c) => {
@@ -643,70 +652,76 @@ app.get("/api/x402-test", x402PaymentMiddleware, (c) => {
 // ── Agent Scraper Route ──────────────────────────────────────
 app.route("/", agentScraperRouter);
 
-// ── Start ──────────────────────────────────────────────────
+// ── App Initialization & Startup ──────────────────────────
+
+export async function initApp(): Promise<{ store: ToolStore; app: Hono }> {
+  if (!store) {
+    store = await createStore();
+    let total = await store.count();
+
+    // Wire the invocation gateway (needs the store + MongoDB client for metering).
+    const mongoClient = (store instanceof Object && "getClient" in store)
+      ? (store as any).getClient()
+      : null;
+    setStore(store, mongoClient);
+
+    // Initialize persistent rate limiting when MongoDB is available.
+    if (mongoClient) {
+      try {
+        const db = mongoClient.db("aipages");
+        const rateColl = db.collection("rate_limits");
+        const mongoStore = new MongoRateStore(rateColl);
+        await mongoStore.ensureTtlIndex(3600); // 1-hour TTL
+        setRateLimitStore(mongoStore);
+        console.log("[rate-limit] MongoDB-backed rate limiting enabled");
+
+        const replayColl = db.collection("consumed_tx_hashes");
+        const mongoReplay = new MongoReplayStore(replayColl);
+        await mongoReplay.ensureIndexes();
+        setReplayStore(mongoReplay);
+        console.log("[replay-cache] MongoDB-backed persistent replay protection enabled");
+      } catch (err: any) {
+        console.warn("[replay-cache] Failed to init persistent stores, using fallback:", err?.message);
+      }
+    }
+    startRateLimitCleanup();
+
+    // Auto-seed in dev mode (in-memory store with no Mongo URI)
+    if (total === 0 && !config.MONGODB_URI) {
+      console.log("[db] Empty store - auto-seeding sample tools (dev mode)...");
+      await seedDevTools(store);
+      total = await store.count();
+    }
+
+    console.log(`[db] Tools in store: ${total}`);
+
+    // Intercept POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware
+    app.use("/api/invoke/:namespace", async (c, next) => {
+      if (c.req.method === "POST") {
+        const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+        if (paymentHeader) {
+          return x402PaymentMiddleware(c, next);
+        }
+      }
+      await next();
+    });
+    app.use("/api/invoke/:namespace/*", async (c, next) => {
+      if (c.req.method === "POST") {
+        const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+        if (paymentHeader) {
+          return x402PaymentMiddleware(c, next);
+        }
+      }
+      await next();
+    });
+    app.route("/api/invoke", ingestionRouter);
+  }
+
+  return { store, app };
+}
 
 async function main() {
-  store = await createStore();
-  let total = await store.count();
-
-  // Wire the invocation gateway (needs the store + MongoDB client for metering).
-  const mongoClient = (store instanceof Object && "getClient" in store)
-    ? (store as any).getClient()
-    : null;
-  setStore(store, mongoClient);
-
-  // Initialize persistent rate limiting when MongoDB is available.
-  // In dev mode (in-memory store), falls back to in-memory token bucket
-  // which is sufficient for single-instance development.
-  if (mongoClient) {
-    try {
-      const db = mongoClient.db("aipages");
-      const rateColl = db.collection("rate_limits");
-      const mongoStore = new MongoRateStore(rateColl);
-      await mongoStore.ensureTtlIndex(3600); // 1-hour TTL
-      setRateLimitStore(mongoStore);
-      console.log("[rate-limit] MongoDB-backed rate limiting enabled");
-
-      const replayColl = db.collection("consumed_tx_hashes");
-      const mongoReplay = new MongoReplayStore(replayColl);
-      await mongoReplay.ensureIndexes();
-      setReplayStore(mongoReplay);
-      console.log("[replay-cache] MongoDB-backed persistent replay protection enabled");
-    } catch (err: any) {
-      console.warn("[replay-cache] Failed to init persistent stores, using fallback:", err?.message);
-    }
-  }
-  startRateLimitCleanup();
-
-  // Auto-seed in dev mode (in-memory store with no Mongo URI)
-  if (total === 0 && !config.MONGODB_URI) {
-    console.log("[db] Empty store - auto-seeding sample tools (dev mode)...");
-    await seedDevTools(store);
-    total = await store.count();
-  }
-
-  console.log(`[db] Tools in store: ${total}`);
-
-  // Intercept POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware when an on-chain receipt is supplied
-  app.use("/api/invoke/:namespace", async (c, next) => {
-    if (c.req.method === "POST") {
-      const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
-      if (paymentHeader) {
-        return x402PaymentMiddleware(c, next);
-      }
-    }
-    await next();
-  });
-  app.use("/api/invoke/:namespace/*", async (c, next) => {
-    if (c.req.method === "POST") {
-      const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
-      if (paymentHeader) {
-        return x402PaymentMiddleware(c, next);
-      }
-    }
-    await next();
-  });
-  app.route("/api/invoke", ingestionRouter);
+  await initApp();
 
   serve({ fetch: app.fetch, port: config.port, hostname: "0.0.0.0" }, (info) => {
     console.log(`\n  AIPages backend running on http://localhost:${info.port}`);
@@ -872,11 +887,12 @@ async function seedDevTools(store: ToolStore): Promise<void> {
   }
 }
 
-const isTestRun =
-  process.env.NODE_ENV === "test" ||
-  process.argv.some((arg) => arg.includes("test"));
+const isMainModule =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url).replace(/\.ts$/, ".js") ===
+    path.resolve(process.argv[1]).replace(/\.ts$/, ".js");
 
-if (!isTestRun) {
+if (isMainModule) {
   main().catch((err) => {
     console.error("Fatal:", err);
     shutdownAnalytics();

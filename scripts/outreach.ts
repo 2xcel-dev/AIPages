@@ -6,21 +6,23 @@ import { runHealthCheckJob, type HealthCheckJobSummary } from "./health-check-jo
 
 // notify.ts lives in dist/ (same level as scripts/ when compiled), so we load
 // it dynamically at runtime to avoid TypeScript path resolution errors.
-function loadNotifyPath(): string {
-  // When compiled, scripts/outreach.ts -> dist/scripts/outreach.js
-  // and notify.ts -> dist/notify.js
-  // So from dist/scripts/, the path to dist/notify.js is "../notify.js"
-  return "../notify.js";
-}
-
 async function loadNotify(): Promise<{ alertOnFailure: (result: {
   discovered: number;
   ingested: number;
   errors: number;
   cycle?: number;
 }) => Promise<void> }> {
-  const mod = await import(/* @vite-ignore */ loadNotifyPath());
-  return { alertOnFailure: mod.alertOnFailure };
+  try {
+    const mod = await import("../src/notify.js");
+    return { alertOnFailure: mod.alertOnFailure };
+  } catch {
+    try {
+      const mod = await import("../notify.js");
+      return { alertOnFailure: mod.alertOnFailure };
+    } catch {
+      return { alertOnFailure: async () => {} };
+    }
+  }
 }
 
 /**
@@ -64,11 +66,11 @@ export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?:
           promotedBy: "aus-agent-alpha",
         });
 
-        // 3. Send GitHub issue with snippet
-        await sendOutreachIssue({
+        // 3. Send GitHub issue with snippet (or write proposal if dry-run)
+        const dispatchResult = await sendOutreachIssue({
           owner: repo.owner.login,
           repo: repo.name,
-          title: "AI Agent Discovery: Boost your tool with AUS micro-payments",
+          title: "AIPages Discovery: Boost your tool with AUS micro-payments on Base",
           body: snippet.body,
           labels: ["mcp-integration", "agent-discovery"],
         });
@@ -76,8 +78,8 @@ export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?:
         // 4. Log attribution
         await store.upsert({
           namespace: `outreach.${repo.name}.${repo.owner.login}`,
-          name: `AUS Outreach: ${repo.name}`,
-          description: `MCP config snippet pushed to ${repo.full_name} | promotedBy: aus-agent-alpha`,
+          name: `AIPages Outreach: ${repo.name}`,
+          description: `MCP config snippet staged for ${repo.full_name} | promotedBy: aus-agent-alpha`,
           connectionType: "http",
           endpointUrl: repo.html_url,
           healthStatus: "active",
@@ -86,7 +88,7 @@ export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?:
           schemaSource: repo.html_url,
           updatedAt: new Date(),
           developer: {
-            address: "0x0a3eA5A76F2d0d4F8E2B9cCdE1aB3f456789012",
+            address: process.env.X402_WALLET_ADDRESS || "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C",
             listingFeePaid: false,
             listingFeeAmount: 0,
           },
@@ -95,7 +97,7 @@ export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?:
         } as any);
 
         sent++;
-        console.log(`[outreach] ✅ ${repo.full_name} — snippet sent + logged`);
+        console.log(`[outreach] [PROPOSAL] ${repo.full_name} - snippet processed (${dispatchResult.live ? "live" : "dry-run"})`);
       } catch (err) {
         console.error(`[outreach] ❌ ${repo.full_name}: ${(err as Error).message}`);
       }
@@ -126,33 +128,40 @@ export async function runOutreachCycle(cycle: number): Promise<{ healthSummary?:
 }
 
 // CLI entry point
-const mode = process.argv[2] ?? "once";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
-if (mode === "health" || mode === "health-check") {
-  console.log(`[outreach] Running focused health-check job...`);
-  runHealthCheckJob()
-    .then((summary) => {
-      console.log(`\n=== Health-Check Job Summary ===`);
-      console.log(`Total eligible endpoints: ${summary.totalEligible}`);
-      console.log(`Active (healthy):         ${summary.active}`);
-      console.log(`Inactive (unhealthy):     ${summary.inactive}`);
-      console.log(`Duration:                 ${summary.durationMs}ms`);
-      for (const r of summary.results) {
-        const flag = r.healthStatus === "active" ? "✅ ACTIVE" : "❌ INACTIVE";
-        const reason = r.failureReason ? ` (Reason: ${r.failureReason})` : "";
-        console.log(`  - [${flag}] ${r.namespace} -> ${r.endpointUrl} [${r.latencyMs}ms]${reason}`);
-      }
-      process.exit(0);
-    })
-    .catch((err) => {
-      console.error("[outreach] Health-check job failed:", err);
-      process.exit(1);
-    });
-} else if (mode === "watch") {
-  console.log(`[outreach] Starting 24/7 loop (interval: ${INTERVAL_MS / 3600000}h)`);
-  let cycle = 0;
-  runOutreachCycle(++cycle).catch(() => {}); // initial run
-  setInterval(() => runOutreachCycle(++cycle).catch(() => {}), INTERVAL_MS);
-} else {
-  runOutreachCycle(1).then(() => process.exit(0));
+const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isMainModule) {
+  const mode = process.argv[2] ?? "once";
+
+  if (mode === "health" || mode === "health-check") {
+    console.log(`[outreach] Running focused health-check job...`);
+    runHealthCheckJob()
+      .then((summary) => {
+        console.log(`\n=== Health-Check Job Summary ===`);
+        console.log(`Total eligible endpoints: ${summary.totalEligible}`);
+        console.log(`Active (healthy):         ${summary.active}`);
+        console.log(`Inactive (unhealthy):     ${summary.inactive}`);
+        console.log(`Duration:                 ${summary.durationMs}ms`);
+        for (const r of summary.results) {
+          const flag = r.healthStatus === "active" ? "✅ ACTIVE" : "❌ INACTIVE";
+          const reason = r.failureReason ? ` (Reason: ${r.failureReason})` : "";
+          console.log(`  - [${flag}] ${r.namespace} -> ${r.endpointUrl} [${r.latencyMs}ms]${reason}`);
+        }
+        process.exit(0);
+      })
+      .catch((err) => {
+        console.error("[outreach] Health-check job failed:", err);
+        process.exit(1);
+      });
+  } else if (mode === "watch") {
+    console.log(`[outreach] Starting 24/7 loop (interval: ${INTERVAL_MS / 3600000}h)`);
+    let cycle = 0;
+    runOutreachCycle(++cycle).catch(() => {}); // initial run
+    setInterval(() => runOutreachCycle(++cycle).catch(() => {}), INTERVAL_MS);
+  } else {
+    runOutreachCycle(1).then(() => process.exit(0));
+  }
 }
