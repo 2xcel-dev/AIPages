@@ -24,69 +24,9 @@ import {
   AUS_STANDARD_RATE_LIMIT,
   AUS_AUTH_SPEC,
   AUS_PROTOCOL_DETAILS,
+  type RawScrapedTool,
+  normalizeScrapedTool,
 } from "../src/data/ausTools.js";
-
-export interface RawScrapedTool {
-  name: string;
-  namespace: string;
-  category?: string;
-  description: string;
-  pricingModel?: "free" | "freemium" | "paid";
-  costPerCall?: number;
-  capabilities?: string[];
-  connectionType?: string;
-  endpointUrl?: string;
-  schema?: Record<string, unknown>;
-}
-
-export function normalizeScrapedTool(raw: RawScrapedTool): Omit<Tool, "embedding" | "updatedAt"> {
-  const isFirstParty = raw.namespace.startsWith("net.2xcel.aus");
-  const slug = raw.namespace.replace("net.2xcel.aus.", "").replace(/-/g, "_");
-  const connectionType = (raw.connectionType || "http").toLowerCase() as ConnectionType;
-
-  const endpointUrl =
-    raw.endpointUrl ||
-    (isFirstParty
-      ? `${AUS_BASE_URL}/tool/${raw.namespace.replace("net.2xcel.aus.", "")}`
-      : undefined);
-
-  return {
-    namespace: raw.namespace,
-    name: slug,
-    description: raw.description,
-    schema: raw.schema || {
-      type: "object",
-      properties: {
-        query: { type: "string", description: "Operational query or input payload" },
-        parameters: { type: "object", description: "Dynamic execution parameters" },
-      },
-    },
-    connectionType,
-    endpointUrl,
-    healthStatus: "unknown",
-    lastChecked: undefined,
-    failureReason: null,
-    status: "active",
-    isFirstParty,
-    capabilities: raw.capabilities || [],
-    pricing: {
-      model: raw.pricingModel || "paid",
-      costPerCall: typeof raw.costPerCall === "number" ? raw.costPerCall : 0.001,
-    },
-    authentication: isFirstParty ? AUS_AUTH_SPEC : undefined,
-    rateLimit: isFirstParty ? AUS_STANDARD_RATE_LIMIT : undefined,
-    protocolDetails: isFirstParty ? AUS_PROTOCOL_DETAILS : undefined,
-    developer: isFirstParty
-      ? {
-          address: AUS_DEVELOPER_ADDRESS,
-          listingFeePaid: true,
-          listingFeeAmount: 0,
-          isFirstParty: true,
-          name: "2XceL AUS Fleet",
-        }
-      : undefined,
-  };
-}
 
 export async function ingestToolsFromFile(filePath: string): Promise<{
   total: number;

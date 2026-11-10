@@ -10,11 +10,14 @@ import "dotenv/config";
 import { createStore } from "../src/db.js";
 import { embed } from "../src/embedding.js";
 import type { Tool } from "../src/types.js";
-import { CANONICAL_AUS_TOOLS } from "../src/data/ausTools.js";
+import {
+  CANONICAL_AUS_TOOLS,
+  normalizeScrapedTool,
+  type RawScrapedTool,
+} from "../src/data/ausTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "../src/validation/toolValidator.js";
 import fs from "fs";
 import path from "path";
-import { normalizeScrapedTool, type RawScrapedTool } from "./ingest-gemini-tools.js";
 
 const SAMPLE_THIRD_PARTY_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
   {

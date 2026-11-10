@@ -45,4 +45,5 @@ export declare function initApp(): Promise<{
     store: ToolStore;
     app: Hono;
 }>;
+export declare function syncCanonicalAusTools(store: ToolStore): Promise<number>;
 //# sourceMappingURL=index.d.ts.map

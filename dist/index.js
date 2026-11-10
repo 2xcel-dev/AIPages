@@ -15,6 +15,7 @@
  * Run:  npm run dev   (tsx watch)
  *       npm run start (compiled)
  */
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
@@ -37,7 +38,7 @@ import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
-import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
+import { CANONICAL_AUS_TOOLS, normalizeScrapedTool } from "./data/ausTools.js";
 import { assertValidFirstPartyTools } from "./validation/toolValidator.js";
 import { handleGetTools, formatToolRecord } from "./api/tools.js";
 import { handleSyndicationFeed } from "./api/syndication.js";
@@ -557,10 +558,16 @@ export async function initApp() {
             }
         }
         startRateLimitCleanup();
-        // Auto-seed in dev mode (in-memory store with no Mongo URI)
-        if (total === 0 && !config.MONGODB_URI) {
-            console.log("[db] Empty store - auto-seeding sample tools (dev mode)...");
+        // Auto-seed in dev mode or fresh store if empty
+        if (total === 0) {
+            console.log("[db] Empty store - auto-seeding sample tools...");
             await seedDevTools(store);
+            total = await store.count();
+        }
+        // Always ensure all canonical first-party AUS tools and discovered tools exist in store
+        const ausSynced = await syncCanonicalAusTools(store);
+        if (ausSynced > 0) {
+            console.log(`[db] Synced ${ausSynced} first-party/discovered tools into store.`);
             total = await store.count();
         }
         console.log(`[db] Tools in store: ${total}`);
@@ -733,6 +740,44 @@ const DEV_SEED_TOOLS = [
         capabilities: ["payment-processing", "billing-automation"],
     },
 ];
+export async function syncCanonicalAusTools(store) {
+    let synced = 0;
+    // Pre-release guardrail: assert first-party AUS tools pass strict validation
+    assertValidFirstPartyTools(CANONICAL_AUS_TOOLS);
+    // Check which canonical AUS tools are missing from the store and upsert them
+    for (const raw of CANONICAL_AUS_TOOLS) {
+        const existing = await store.getByNamespace(raw.namespace);
+        if (!existing) {
+            const text = `${raw.namespace} ${raw.name} ${raw.description} ${(raw.capabilities ?? []).join(" ")}`;
+            const embedding = await embed(text);
+            const tool = { ...raw, embedding, updatedAt: new Date() };
+            await store.upsert(tool);
+            synced++;
+        }
+    }
+    // Also check if geminiScrapedTools.json exists and ensure those tools are present
+    try {
+        const geminiPath = path.resolve(process.cwd(), "data/geminiScrapedTools.json");
+        if (fs.existsSync(geminiPath)) {
+            const rawScraped = JSON.parse(fs.readFileSync(geminiPath, "utf-8"));
+            for (const item of rawScraped) {
+                const existing = await store.getByNamespace(item.namespace);
+                if (!existing) {
+                    const toolRecord = normalizeScrapedTool(item);
+                    const text = `${toolRecord.namespace} ${toolRecord.name} ${toolRecord.description} ${(toolRecord.capabilities ?? []).join(" ")}`;
+                    const embedding = await embed(text);
+                    const tool = { ...toolRecord, embedding, updatedAt: new Date() };
+                    await store.upsert(tool);
+                    synced++;
+                }
+            }
+        }
+    }
+    catch (err) {
+        console.warn("[db] Note: Scraped tools sync skipped:", err?.message);
+    }
+    return synced;
+}
 async function seedDevTools(store) {
     // Pre-release guardrail: assert first-party AUS tools pass strict validation
     assertValidFirstPartyTools(CANONICAL_AUS_TOOLS);
