@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/evalstate/mcp-hfspace
 **Referral Code:** `ref_mcp_evalstate_mcp-hfspace`
-**Generated At:** 2026-11-10T01:11:59.522Z
+**Generated At:** 2026-11-10T03:17:46.122Z
 
 ---
 
@@ -54,11 +54,11 @@ Building and operating standalone MCP servers often requires managing complex in
 
 ---
 
-### 3. Ready-to-Merge JSON Configuration
+### 3. Ready-to-Merge JSON Configuration (Claude Desktop, Cursor, Cline)
 
 Below is the ready-to-merge JSON configuration including embedded referral tracking (`ref_mcp_evalstate_mcp-hfspace`).
 
-#### For Claude Desktop (`claude_desktop_config.json`) & Cursor:
+#### For Claude Desktop (`claude_desktop_config.json`) & Cursor (`.cursor/mcp.json`):
 
 ```json
 {
@@ -84,7 +84,29 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_evalstate_mcp-hfspace",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_evalstate_mcp-hfspace&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T01:11:59.522Z"
+    "generatedAt": "2026-11-10T03:17:46.121Z"
+  }
+}
+```
+
+#### For Cline (`cline_mcp_settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "aipages-upstream": {
+      "command": "node",
+      "args": ["/opt/aus-bridge.js"],
+      "env": {
+        "AUS_BASE_URL": "https://aipages.tech/tool",
+        "AUS_PROMOTED_BY": "aus-agent-alpha",
+        "AUS_REFERRAL_CODE": "ref_mcp_evalstate_mcp-hfspace",
+        "AUS_REFERRAL_TRACKING_URL": "https://aipages.tech/search?ref=ref_mcp_evalstate_mcp-hfspace&source=mcp_prospecting",
+        "AUS_X402_WALLET": "<your-base-funding-wallet>"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
   }
 }
 ```
@@ -98,14 +120,16 @@ Below is the ready-to-merge JSON configuration including embedded referral track
 
 ---
 
-### 4. Canonical Upstream Microservices Available Immediately
+### 4. Live Interactive In-Browser Test Playground (Zero-Friction Testing)
 
-| Canonical Upstream Engine | Namespace | Settlement | Execution Capability |
+Before adding to production, test live payloads directly in your browser. Every canonical microservice features an **in-browser interactive test console** with preset payloads:
+
+| Canonical Upstream Engine | Live Playground Console | Settlement | Execution Capability |
 |---|---|---|---|
-| Browser Stealth Cloud | `net.2xcel.aus.browser-stealth` | $0.15 USDC | Headless anti-bot extraction & clean markdown rendering |
-| Schema Sanitizer | `net.2xcel.aus.schema-sanitizer` | Free / $0.002 | XSS, AST injection & prototype pollution neutralization |
-| Financial Audit Oracle | `net.2xcel.aus.financial-audit` | $0.25 USDC | Cryptographic ledger validation & balance checks |
-| Media Transcoder | `net.2xcel.aus.media-transcoder` | $0.10 USDC | Multimodal audio/image compression & base64 ops |
+| Browser Stealth Cloud | [Test in Browser](https://aipages.tech/tools/net.2xcel.aus.browser-stealth?ref=ref_mcp_evalstate_mcp-hfspace#test-console) | $0.15 USDC | Headless anti-bot extraction & clean markdown rendering |
+| Schema Sanitizer | [Test in Browser](https://aipages.tech/tools/net.2xcel.aus.schema-sanitizer?ref=ref_mcp_evalstate_mcp-hfspace#test-console) | Free / $0.002 | XSS, AST injection & prototype pollution neutralization |
+| Financial Audit Oracle | [Test in Browser](https://aipages.tech/tools/net.2xcel.aus.financial-audit?ref=ref_mcp_evalstate_mcp-hfspace#test-console) | $0.25 USDC | Cryptographic ledger validation & balance checks |
+| Media Transcoder | [Test in Browser](https://aipages.tech/tools/net.2xcel.aus.media-transcoder?ref=ref_mcp_evalstate_mcp-hfspace#test-console) | $0.10 USDC | Multimodal audio/image compression & base64 ops |
 
 ---
 
