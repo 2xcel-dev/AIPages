@@ -19,6 +19,7 @@ const CORE_URLS = [
   `${BASE_URL}/api/tools`,
   `${BASE_URL}/api/openapi.json`,
   ...CANONICAL_AUS_TOOLS.map((t) => `${BASE_URL}/tool/${encodeURIComponent(t.namespace)}`),
+  ...CANONICAL_AUS_TOOLS.map((t) => `${BASE_URL}/tools/${encodeURIComponent(t.namespace)}`),
 ];
 
 async function pingUrl(serviceName: string, pingUrl: string): Promise<void> {

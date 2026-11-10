@@ -1,6 +1,6 @@
 {
   "name": "aipages-backend",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
   "type": "module",
   "license": "MIT",
@@ -19,6 +19,9 @@
     "crawl:cron": "tsx src/crawler.ts cron",
     "health-check": "tsx scripts/outreach.ts health",
     "outreach": "tsx scripts/outreach.ts once",
+    "outreach:mcp": "tsx scripts/mcp-outreach.ts once",
+    "outreach:mcp:watch": "tsx scripts/mcp-outreach.ts watch",
+    "prospecting:loop": "tsx scripts/mcp-outreach.ts once",
     "typecheck": "tsc --noEmit",
     "check:tools": "tsx scripts/validate-catalog.ts",
     "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts",

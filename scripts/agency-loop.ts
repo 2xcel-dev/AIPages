@@ -127,6 +127,9 @@ export async function stepBuild(): Promise<void> {
   header("STAGE 4: Production TypeScript Build Verification");
   console.log("Compiling TypeScript to dist/...");
   try {
+    if (fs.existsSync("dist")) {
+      fs.rmSync("dist", { recursive: true, force: true });
+    }
     execSync("npm run build", { stdio: "inherit" });
     success("Compiled dist/ verified with zero TypeScript diagnostic errors.");
   } catch (err: any) {
@@ -145,9 +148,9 @@ export async function stepOutreach(): Promise<void> {
   }
 
   try {
-    const { runOutreachCycle } = await import("./outreach.js");
-    const result = await runOutreachCycle(1);
-    success(`Outreach cycle finished. Sent: ${result.sent} issue proposals.`);
+    const { runMcpProspectingLoop } = await import("./mcp-outreach.js");
+    const result = await runMcpProspectingLoop({ cycle: 1 });
+    success(`Outreach cycle finished. Detected ${result.detectedCount} repos, generated ${result.proposalsGenerated} targeted proposals with ready-to-merge JSON.`);
   } catch (err: any) {
     warn(`Outreach cycle warning: ${err.message}`);
   }

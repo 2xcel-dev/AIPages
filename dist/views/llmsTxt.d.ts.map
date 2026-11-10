@@ -1,1 +1,1 @@
-{"version":3,"file":"llmsTxt.d.ts","sourceRoot":"","sources":["../../src/views/llmsTxt.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,aAAa,CAAC;AAExC;;;;;GAKG;AACH,wBAAgB,eAAe,CAC7B,KAAK,EAAE,IAAI,EAAE,EACb,OAAO,GAAE,MAA+B,GACvC,MAAM,CAmER"}
+{"version":3,"file":"llmsTxt.d.ts","sourceRoot":"","sources":["../../src/views/llmsTxt.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAE,MAAM,aAAa,CAAC;AAExC;;;;;GAKG;AACH,wBAAgB,eAAe,CAC7B,KAAK,EAAE,IAAI,EAAE,EACb,OAAO,GAAE,MAA+B,GACvC,MAAM,CA4ER"}

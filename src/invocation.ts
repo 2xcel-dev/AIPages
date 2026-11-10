@@ -443,7 +443,11 @@ ingress.use("/:namespace/*", async (c) => {
 
   const onchainVerified = Boolean((c as any).get("x402.verified"));
 
-  if (premium && !DEV_WALLET && !onchainVerified) {
+  const isPlaygroundTest =
+    Boolean(tool.isFirstParty) &&
+    (c.req.header("x-playground-test") === "true" || c.req.query("test") === "true");
+
+  if (premium && !DEV_WALLET && !onchainVerified && !isPlaygroundTest) {
     const paymentHeader = c.req.header("x-payment");
     const authHeader = c.req.header("authorization");
 
@@ -698,12 +702,15 @@ async function executeAndLog(
   }
 
   const latencyMs = Date.now() - t0;
+  const isPlaygroundTest =
+    Boolean(tool.isFirstParty) &&
+    (c.req.header("x-playground-test") === "true" || c.req.query("test") === "true");
 
   // Collect the take-rate only on successful (2xx) delivery.
-  let feeStatus: FeeStatus = feeUsdc > 0 ? "not_collected" : "none";
+  let feeStatus: FeeStatus = feeUsdc > 0 && !isPlaygroundTest ? "not_collected" : "none";
   let settlementError: string | undefined;
 
-  if (feeUsdc > 0 && status === "success") {
+  if (feeUsdc > 0 && status === "success" && !isPlaygroundTest) {
     if ((c as any).get("x402.verified")) {
       feeStatus = "collected";
     } else if (paymentCtx && x402Server) {
@@ -751,7 +758,9 @@ async function executeAndLog(
         amountUsdc: feeStatus === "collected" ? feeUsdc : 0,
         status: feeStatus,
         note:
-          feeStatus === "collected"
+          isPlaygroundTest
+            ? "Playground test execution (0 friction preview). Production calls settle microtransactions in Base USDC via x402."
+            : feeStatus === "collected"
             ? "Platform take-rate settled on-chain via x402 facilitator."
             : feeStatus === "not_collected"
               ? settlementError

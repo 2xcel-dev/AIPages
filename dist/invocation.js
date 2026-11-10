@@ -273,7 +273,9 @@ ingress.use("/:namespace/*", async (c) => {
     // Payment context — set when payment is verified, used for settlement
     let paymentCtx;
     const onchainVerified = Boolean(c.get("x402.verified"));
-    if (premium && !DEV_WALLET && !onchainVerified) {
+    const isPlaygroundTest = Boolean(tool.isFirstParty) &&
+        (c.req.header("x-playground-test") === "true" || c.req.query("test") === "true");
+    if (premium && !DEV_WALLET && !onchainVerified && !isPlaygroundTest) {
         const paymentHeader = c.req.header("x-payment");
         const authHeader = c.req.header("authorization");
         if (!paymentHeader && !authHeader) {
@@ -443,10 +445,12 @@ async function executeAndLog(c, tool, agentId, t0, feeUsdc, bodyJson, paymentCtx
         }
     }
     const latencyMs = Date.now() - t0;
+    const isPlaygroundTest = Boolean(tool.isFirstParty) &&
+        (c.req.header("x-playground-test") === "true" || c.req.query("test") === "true");
     // Collect the take-rate only on successful (2xx) delivery.
-    let feeStatus = feeUsdc > 0 ? "not_collected" : "none";
+    let feeStatus = feeUsdc > 0 && !isPlaygroundTest ? "not_collected" : "none";
     let settlementError;
-    if (feeUsdc > 0 && status === "success") {
+    if (feeUsdc > 0 && status === "success" && !isPlaygroundTest) {
         if (c.get("x402.verified")) {
             feeStatus = "collected";
         }
@@ -480,13 +484,15 @@ async function executeAndLog(c, tool, agentId, t0, feeUsdc, bodyJson, paymentCtx
         fee: {
             amountUsdc: feeStatus === "collected" ? feeUsdc : 0,
             status: feeStatus,
-            note: feeStatus === "collected"
-                ? "Platform take-rate settled on-chain via x402 facilitator."
-                : feeStatus === "not_collected"
-                    ? settlementError
-                        ? `Payment verified but settlement failed: ${settlementError}`
-                        : "Fee not collected — tool did not deliver a successful response."
-                    : "Free tool — no platform fee.",
+            note: isPlaygroundTest
+                ? "Playground test execution (0 friction preview). Production calls settle microtransactions in Base USDC via x402."
+                : feeStatus === "collected"
+                    ? "Platform take-rate settled on-chain via x402 facilitator."
+                    : feeStatus === "not_collected"
+                        ? settlementError
+                            ? `Payment verified but settlement failed: ${settlementError}`
+                            : "Fee not collected — tool did not deliver a successful response."
+                        : "Free tool — no platform fee.",
         },
         invokedAt: new Date().toISOString(),
     }, statusCode >= 400 ? statusCode : 200);

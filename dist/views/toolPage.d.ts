@@ -12,6 +12,9 @@ export interface RequestExample {
     curl: string;
     fetchCode: string;
     rawHttp: string;
+    cursorConfig: string;
+    claudeConfig: string;
+    clineConfig: string;
     authDescription: string;
     isX402: boolean;
     costDisplay: string;

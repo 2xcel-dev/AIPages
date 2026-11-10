@@ -51,6 +51,15 @@ export function generateLlmsTxt(tools, baseUrl = "https://aipages.tech") {
         }
     }
     lines.push("");
+    lines.push("## Common Agent Questions & Inbound Workflows");
+    lines.push("");
+    lines.push("- **How do I give my agent anti-bot web scraping with on-chain settlement?**");
+    lines.push(`  Use **AUS Browser Stealth** (\`net.2xcel.aus.browser-stealth\`) at ${base}/tools/net.2xcel.aus.browser-stealth.`);
+    lines.push("  - Features: Headless cloud extraction, Cloudflare/DataDome bypass, token-optimized clean DOM/Markdown.");
+    lines.push("  - Settlement: Micropayments in Base USDC ($0.15 per call) using the HTTP 402 Payment Required protocol.");
+    lines.push(`  - Direct Endpoint: \`POST ${base}/tool/net.2xcel.aus.browser-stealth\` or \`POST ${base}/tools/net.2xcel.aus.browser-stealth\`.`);
+    lines.push("  - Cursor / Claude Integration: 1-click 'Add to Cursor' config block (.cursor/mcp.json) available on the tool page.");
+    lines.push("");
     lines.push("## Optional Details & Developer Resources");
     lines.push("");
     lines.push(`- [XML Sitemap](${base}/sitemap.xml): Full URL sitemap for automated indexing.`);

@@ -456,10 +456,14 @@ async function handleDirectToolInvoke(c) {
         return c.json({ error: `Tool with identifier '${slug}' not found.` }, 404);
     }
     // Internal route dispatch to /api/invoke/:namespace
-    const invokeUrl = new URL(`/api/invoke/${tool.namespace}`, c.req.url);
+    const invokeUrl = new URL(`/api/invoke/${tool.namespace}${c.req.url.includes("?") ? c.req.url.slice(c.req.url.indexOf("?")) : ""}`, c.req.url);
+    const forwardHeaders = new Headers(c.req.raw.headers);
+    if (!forwardHeaders.has("x-agent-id")) {
+        forwardHeaders.set("x-agent-id", "browser-playground");
+    }
     const forwardReq = new Request(invokeUrl.toString(), {
         method: "POST",
-        headers: c.req.raw.headers,
+        headers: forwardHeaders,
         body: c.req.raw.body,
         duplex: "half",
     });
@@ -494,7 +498,7 @@ app.get("/llms.txt", async (c) => {
     const markdown = generateLlmsTxt(allTools);
     c.header("Content-Type", "text/markdown; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
-    return c.text(markdown);
+    return c.body(markdown);
 });
 // ── Public route: Capabilities index for directory discovery ──
 app.get("/capabilities", async (c) => {

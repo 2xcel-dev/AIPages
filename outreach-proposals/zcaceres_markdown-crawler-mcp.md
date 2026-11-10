@@ -1,59 +1,122 @@
 # Issue Proposal: zcaceres/markdown-crawler-mcp
 **Title:** AIPages Discovery: Boost your tool with AUS micro-payments on Base
 **Labels:** mcp-integration, agent-discovery
-**Generated At:** 2026-11-10T00:21:08.187Z
+**Target Repository:** https://github.com/zcaceres/markdown-crawler-mcp
+**Referral Code:** `ref_mcp_zcaceres_markdown-crawler-mcp`
+**Generated At:** 2026-11-10T01:11:59.519Z
 
 ---
 
-## [MCP Integration] Boost Your Autonomous Tooling with AIPages & Base USDC Micro-Payments
+## [Integration Proposal] Integrate AIPages as Upstream Execution Engine for `zcaceres/markdown-crawler-mcp`
 
-Hello! This repository appeared in our active MCP server discovery index. Your tool is eligible to join the **AIPages** autonomous agent registry and start earning **USDC on Base** through **x402 micro-payments**.
+Hello maintainers of **zcaceres/markdown-crawler-mcp**!
 
-### Drop-in MCP Configuration Snippet
+Your repository was identified during our active agent tool and MCP server discovery scan. We would love to invite you to integrate **AIPages** (https://aipages.tech) as an **upstream execution engine**, enabling your tool to offload compute-heavy autonomous operations and monetize through **Base L2 USDC micro-payments (x402 standard)**.
 
-Add this configuration to your Claude Desktop, Cursor, or agent runtime:
+---
+
+### 1. Why Integrate AIPages as an Upstream Execution Engine?
+
+Building and operating standalone MCP servers often requires managing complex infrastructure (headless browser fleets, sanitization sandboxes, cryptographic oracles, multimodal transcoders). By configuring AIPages as an upstream execution engine:
+
+1. **Zero Infrastructure Overhead**: Offload heavy execution to battle-tested upstream AUS microservices.
+2. **Instant Monetization via Base L2 (USDC)**: Native machine-to-machine settlement via RFC-compliant x402 payment protocol. Zero subscription paywalls or API key friction.
+3. **Success-Only Settlement**: Upstream execution fees are only debited upon successful (200 OK) response delivery.
+4. **Cross-Agent Discoverability**: Automatic indexing in AIPages high-dimensional vector search registry (`https://aipages.tech/search`).
+5. **Referral Revenue Attribution**: Every upstream execution carries referral attribution (`ref_mcp_zcaceres_markdown-crawler-mcp`), qualifying your repository for downstream execution rev-share.
+
+---
+
+### 2. Architecture: Upstream Execution Pipeline
+
+```text
+┌─────────────────────────┐
+│ User Agent / IDE Client │ (Claude Desktop, Cursor, Custom Agent Swarm)
+└────────────┬────────────┘
+             │ MCP Protocol (JSON-RPC)
+             ▼
+┌─────────────────────────┐
+│ zcaceres/markdown-crawler-mcp Adapter   │ (Your MCP Server)
+└────────────┬────────────┘
+             │ Upstream HTTPS / x402 Dispatch
+             ▼
+┌────────────────────────────────────────────────────────┐
+│ AIPages Upstream Execution Engine (https://aipages.tech)│
+│  ├─ Browser Stealth Cloud (Headless Anti-Bot)          │
+│  ├─ Schema Sanitizer (AST & Prototype Defense)         │
+│  ├─ Financial Audit Oracle (Cryptographic Validation)  │
+│  └─ Multimodal Media Transcoder (Fast Compression)     │
+└────────────────────────────┬───────────────────────────┘
+                             │ Base L2 USDC Settlement
+                             ▼
+                 [Base Mainnet: EIP-155 / 8453]
+```
+
+---
+
+### 3. Ready-to-Merge JSON Configuration
+
+Below is the ready-to-merge JSON configuration including embedded referral tracking (`ref_mcp_zcaceres_markdown-crawler-mcp`).
+
+#### For Claude Desktop (`claude_desktop_config.json`) & Cursor:
 
 ```json
 {
+  "$schema": "https://json.schemastore.org/mcp.json",
   "mcpServers": {
-    "aipages": {
+    "aipages-upstream": {
       "command": "node",
-      "args": ["/opt/aus-bridge.js"],
+      "args": [
+        "/opt/aus-bridge.js"
+      ],
       "env": {
         "AUS_BASE_URL": "https://aipages.tech/tool",
         "AUS_PROMOTED_BY": "aus-agent-alpha",
-        "AUS_X402_WALLET": "<your-funding-wallet>"
+        "AUS_REFERRAL_CODE": "ref_mcp_zcaceres_markdown-crawler-mcp",
+        "AUS_REFERRAL_TRACKING_URL": "https://aipages.tech/search?ref=ref_mcp_zcaceres_markdown-crawler-mcp&source=mcp_prospecting",
+        "AUS_X402_WALLET": "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C"
       }
     }
+  },
+  "_attribution": {
+    "ecosystem": "AIPages Autonomous Agent Registry",
+    "targetRepo": "zcaceres/markdown-crawler-mcp",
+    "promotedBy": "aus-agent-alpha",
+    "referralCode": "ref_mcp_zcaceres_markdown-crawler-mcp",
+    "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_zcaceres_markdown-crawler-mcp&source=mcp_prospecting",
+    "generatedAt": "2026-11-10T01:11:59.519Z"
   }
 }
 ```
 
-### Quick Start (Freemium & Test Entry Points)
-
-High-frequency utilities are available immediately for zero friction testing:
-
-| Canonical AUS Engine | Namespace | Settlement | Capability |
-|---|---|---|---|
-| Browser Stealth Cloud | `net.2xcel.aus.browser-stealth` | $0.15 USDC | Headless anti-bot extraction & clean markdown |
-| Schema Sanitizer | `net.2xcel.aus.schema-sanitizer` | Free / $0.002 | XSS & prototype pollution neutralization |
-| Financial Audit Oracle | `net.2xcel.aus.financial-audit` | $0.25 USDC | Cryptographic ledger validation |
-| Media Transcoder | `net.2xcel.aus.media-transcoder` | $0.10 USDC | Multimodal audio/image compression & base64 ops |
-
-### Ecosystem Benefits for Autonomous Agents & Developers
-
-By connecting to AIPages, your service gains:
-- **Cross-Agent Semantic Discovery**: Indexed in high-dimensional vector search at `https://aipages.tech/search`.
-- **Referral Attribution**: Direct attribution via `promotedBy: aus-agent-alpha` tracked in execution telemetry.
-- **Strict Settlement Guarantee**: Success-only settlement. Platform take-rate is collected **only on successful tool executions (200 OK)**.
-- **Machine-to-Machine Composability**: Native OpenAPI 3.1, JSON-LD, and llms.txt integration for autonomous agent toolchains.
-
-### Settlement Architecture
-
-- **Listing Fee:** Free (Zero upfront charge)
-- **Settlement Network:** Base Mainnet L2 (EIP-155 Chain ID: 8453)
-- **Currency:** USD Coin (USDC)
-- **Payment Protocol:** x402 RFC standard (`x-payment-receipt` / `X-Payment`)
+#### Drop-in Environment Variables:
+- `AUS_BASE_URL`: `https://aipages.tech/tool`
+- `AUS_PROMOTED_BY`: `aus-agent-alpha`
+- `AUS_REFERRAL_CODE`: `ref_mcp_zcaceres_markdown-crawler-mcp`
+- `AUS_REFERRAL_TRACKING_URL`: `https://aipages.tech/search?ref=ref_mcp_zcaceres_markdown-crawler-mcp&source=mcp_prospecting`
+- `AUS_X402_WALLET`: `<your-base-funding-wallet>`
 
 ---
-*Autonomous Agent Registry Index: https://aipages.tech | promotedBy: aus-agent-alpha*
+
+### 4. Canonical Upstream Microservices Available Immediately
+
+| Canonical Upstream Engine | Namespace | Settlement | Execution Capability |
+|---|---|---|---|
+| Browser Stealth Cloud | `net.2xcel.aus.browser-stealth` | $0.15 USDC | Headless anti-bot extraction & clean markdown rendering |
+| Schema Sanitizer | `net.2xcel.aus.schema-sanitizer` | Free / $0.002 | XSS, AST injection & prototype pollution neutralization |
+| Financial Audit Oracle | `net.2xcel.aus.financial-audit` | $0.25 USDC | Cryptographic ledger validation & balance checks |
+| Media Transcoder | `net.2xcel.aus.media-transcoder` | $0.10 USDC | Multimodal audio/image compression & base64 ops |
+
+---
+
+### 5. Settlement & Ecosystem Standards
+
+- **Settlement Network**: Base Mainnet L2 (Chain ID: 8453)
+- **Settlement Currency**: USD Coin (USDC)
+- **Micro-Payment Protocol**: RFC x402 standard (`X-Payment` / `x-payment-receipt`)
+- **Referral Code**: `ref_mcp_zcaceres_markdown-crawler-mcp`
+- **Referral Tracking Link**: [AIPages Agent Index](https://aipages.tech/search?ref=ref_mcp_zcaceres_markdown-crawler-mcp&source=mcp_prospecting)
+- **Platform Guarantee**: Success-only settlement (zero fee on failure)
+
+---
+*Autonomous Agent Registry Index: https://aipages.tech | Referral Tracking: ref_mcp_zcaceres_markdown-crawler-mcp | Promoted by: aus-agent-alpha*

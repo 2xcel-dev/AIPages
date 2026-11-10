@@ -258,12 +258,26 @@ describe("Copyable Request Examples on Tool Detail Pages (/tools/:slug)", () => 
       assert.ok(html.includes('class="btn btn-sm btn-copy"'));
       assert.ok(html.includes("Copy cURL"));
 
-      // Code tabs for cURL, JavaScript, and HTTP
+      // Code tabs for cURL, Cursor, Claude, Cline, JavaScript, and HTTP
       assert.ok(html.includes('data-tab="curl"'));
+      assert.ok(html.includes('data-tab="cursor"'));
+      assert.ok(html.includes('data-tab="claude"'));
+      assert.ok(html.includes('data-tab="cline"'));
       assert.ok(html.includes('data-tab="javascript"'));
       assert.ok(html.includes('data-tab="http"'));
+      assert.ok(html.includes('id="snippet-cursor"'));
+      assert.ok(html.includes('id="snippet-claude"'));
+      assert.ok(html.includes('id="snippet-cline"'));
       assert.ok(html.includes('id="snippet-javascript"'));
       assert.ok(html.includes('id="snippet-http"'));
+
+      // 1-Click Copy Agent Buttons in Hero
+      assert.ok(html.includes("btn-claude"));
+      assert.ok(html.includes("btn-cursor"));
+      assert.ok(html.includes("btn-cline"));
+      assert.ok(html.includes("copyClientConfig('claude', this)"));
+      assert.ok(html.includes("copyClientConfig('cursor', this)"));
+      assert.ok(html.includes("copyClientConfig('cline', this)"));
 
       // Metadata card quick proxy snippet also enhanced with copy button
       assert.ok(html.includes('id="proxy-snippet"'));

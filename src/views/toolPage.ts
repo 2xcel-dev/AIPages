@@ -205,6 +205,9 @@ export interface RequestExample {
   curl: string;
   fetchCode: string;
   rawHttp: string;
+  cursorConfig: string;
+  claudeConfig: string;
+  clineConfig: string;
   authDescription: string;
   isX402: boolean;
   costDisplay: string;
@@ -295,6 +298,39 @@ if (!response.ok) {
 const data = await response.json();
 console.log("Tool execution result:", data);`;
 
+  // Generate AI Agent Client Configurations (Cursor, Claude Desktop, Cline)
+  const toolServerName = (tool.name || "tool").replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
+  const mcpServerEntry = {
+    command: "npx",
+    args: ["-y", "@aipages/mcp-gateway", tool.namespace],
+    env: {
+      AIPAGES_BASE_URL: "https://aipages.tech",
+      ...(isX402 ? { BASE_USDC_PAYMENT_KEY: "<YOUR_BASE_WALLET_KEY_OR_PAYMENT_RECEIPT>" } : {}),
+    },
+  };
+
+  const cursorConfig = JSON.stringify({
+    mcpServers: {
+      [`aus-${toolServerName}`]: mcpServerEntry,
+    },
+  }, null, 2);
+
+  const claudeConfig = JSON.stringify({
+    mcpServers: {
+      [`aus-${toolServerName}`]: mcpServerEntry,
+    },
+  }, null, 2);
+
+  const clineConfig = JSON.stringify({
+    mcpServers: {
+      [`aus-${toolServerName}`]: {
+        ...mcpServerEntry,
+        disabled: false,
+        autoApprove: [],
+      },
+    },
+  }, null, 2);
+
   return {
     endpoint,
     method,
@@ -304,6 +340,9 @@ console.log("Tool execution result:", data);`;
     curl,
     fetchCode,
     rawHttp,
+    cursorConfig,
+    claudeConfig,
+    clineConfig,
     authDescription,
     isX402,
     costDisplay,
@@ -1356,6 +1395,293 @@ ${jsonLdScript}
       background: #070a12;
       border: 1px solid var(--border);
     }
+
+    /* Hero 1-Click Agent Action Buttons */
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-agent {
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+      padding: 9px 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      outline: none;
+    }
+    .btn-agent:hover {
+      transform: translateY(-1px);
+    }
+    .btn-agent:active {
+      transform: translateY(0);
+    }
+
+    .btn-claude {
+      background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+      color: #ffffff;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+    }
+    .btn-claude:hover {
+      background: linear-gradient(135deg, #92400e 0%, #b45309 100%);
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+    }
+
+    .btn-cursor {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      color: #ffffff;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    }
+    .btn-cursor:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-cline {
+      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+      color: #ffffff;
+      border: 1px solid rgba(20, 184, 166, 0.4);
+      box-shadow: 0 2px 8px rgba(20, 184, 166, 0.25);
+    }
+    .btn-cline:hover {
+      background: linear-gradient(135deg, #115e59 0%, #0f766e 100%);
+      box-shadow: 0 4px 14px rgba(20, 184, 166, 0.4);
+    }
+
+    .btn-test-now {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: var(--radius-sm);
+      padding: 9px 15px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-test-now:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: #38bdf8;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* Playground Mode Selector & Presets */
+    .mode-toggle-group {
+      display: inline-flex;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .mode-toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .mode-toggle-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .mode-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .sandbox-dot {
+      background: #34d399;
+      box-shadow: 0 0 6px rgba(52, 211, 153, 0.6);
+    }
+    .prod-dot {
+      background: #a855f7;
+      box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+    }
+    .playground-presets {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px 12px;
+      flex-wrap: wrap;
+    }
+    .presets-label {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .preset-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preset-pill:hover {
+      background: rgba(56, 189, 248, 0.1);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Cursor Modal */
+    .cursor-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .cursor-modal-card {
+      background: #0b1120;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.2);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 620px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .cursor-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.85);
+    }
+    .cursor-icon-box {
+      width: 36px;
+      height: 36px;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+    }
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color 0.15s ease;
+    }
+    .btn-close-modal:hover {
+      color: #fff;
+    }
+    .cursor-modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 70vh;
+    }
+
+    /* Agent Integration Modal & Tabs */
+    .agent-modal-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0 16px;
+      gap: 6px;
+    }
+    .agent-modal-tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .agent-modal-tab-btn:hover {
+      color: #fff;
+    }
+    .agent-modal-tab-btn.tab-claude.active {
+      color: #f59e0b;
+      border-bottom-color: #f59e0b;
+    }
+    .agent-modal-tab-btn.tab-cursor.active {
+      color: #818cf8;
+      border-bottom-color: #818cf8;
+    }
+    .agent-modal-tab-btn.tab-cline.active {
+      color: #2dd4bf;
+      border-bottom-color: #2dd4bf;
+    }
+    .client-path-tag {
+      font-size: 0.76rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: #e2e8f0;
+      display: inline-block;
+      margin-top: 4px;
+    }
+    .agent-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10000;
+    }
   </style>
 </head>
 <body>
@@ -1388,7 +1714,208 @@ ${jsonLdScript}
         <span class="namespace-tag">${escapedNamespace}</span>
       </div>
       <p class="tool-description">${escapedDescription}</p>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-agent btn-claude" onclick="copyClientConfig('claude', this)" title="1-Click copy Claude Desktop MCP config">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
+          <span class="btn-text">Add to Claude</span>
+        </button>
+        <button type="button" class="btn btn-agent btn-cursor" onclick="copyClientConfig('cursor', this)" title="1-Click copy Cursor .cursor/mcp.json config">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span class="btn-text">Add to Cursor</span>
+        </button>
+        <button type="button" class="btn btn-agent btn-cline" onclick="copyClientConfig('cline', this)" title="1-Click copy Cline cline_mcp_settings.json config">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
+          <span class="btn-text">Add to Cline</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Setup Guide</span>
+        </button>
+        <a href="#test-console" class="btn btn-test-now" style="cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Try Live Playground (Free) &darr;</span>
+        </a>
+      </div>
     </div>
+
+    <!-- Interactive Live Test Console (SURFACED FRONT-AND-CENTER) -->
+    <section class="card full-width playground-card" id="test-console" aria-label="Interactive Test Console">
+      <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Interactive Test Console
+          </h2>
+          <span class="badge badge-healthy" style="font-size: 0.72rem; padding: 2px 8px;">
+            <span class="pulse-dot"></span> Test Live Before Paying (0-Friction)
+          </span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <div class="mode-toggle-group" role="radiogroup" aria-label="Playground Mode">
+            <button type="button" class="mode-toggle-btn active" id="btn-mode-sandbox" onclick="setPlaygroundMode('sandbox')">
+              <span class="mode-dot sandbox-dot"></span> 0-Friction Test Mode
+            </button>
+            <button type="button" class="mode-toggle-btn" id="btn-mode-production" onclick="setPlaygroundMode('production')">
+              <span class="mode-dot prod-dot"></span> Base x402 Settlement
+            </button>
+          </div>
+          <button type="button" class="btn-ghost" onclick="resetPlaygroundPayload()">Reset Sample</button>
+          <button type="button" class="btn-ghost" onclick="formatPlaygroundPayload()">Format JSON</button>
+        </div>
+      </div>
+
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px;">
+        Test this tool directly from your browser with zero friction before deploying or paying. Dispatches live request to <code>POST /tool/${escapedNamespace}</code>.
+      </p>
+
+      <div class="playground-presets">
+        <span class="presets-label">Preset Payloads:</span>
+        <button type="button" class="preset-pill" onclick="loadPresetPayload('hackernews')">Hacker News (Markdown)</button>
+        <button type="button" class="preset-pill" onclick="loadPresetPayload('example')">Example Domain</button>
+        <button type="button" class="preset-pill" onclick="loadPresetPayload('jsonmode')">JSON Mode (SPA)</button>
+      </div>
+
+      <div class="playground-grid">
+        <!-- Request Editor Column -->
+        <div class="playground-panel">
+          <div class="playground-panel-header">
+            <span>Request Payload (JSON)</span>
+            <span class="panel-badge">POST</span>
+          </div>
+          <div class="playground-editor-wrapper">
+            <textarea id="playground-payload" class="playground-textarea" spellcheck="false" rows="10">${escapeHtml(requestExample.bodyJson)}</textarea>
+          </div>
+
+          ${
+            requestExample.isX402
+              ? `
+          <div class="playground-auth-group" id="playground-auth-group">
+            <label for="playground-payment-header" class="playground-input-label">
+              x-payment-receipt Header <span style="color: var(--text-dim); font-size: 0.72rem;">(Base USDC tx receipt)</span>
+            </label>
+            <input type="text" id="playground-payment-header" class="playground-input" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
+            <div id="playground-mode-hint" style="font-size: 0.76rem; color: #34d399; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+              <span>⚡</span> <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>
+            </div>
+          </div>
+          `
+              : `
+          <div class="playground-free-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Public Endpoint: Zero authentication required for test execution.</span>
+          </div>
+          `
+          }
+
+          <div class="playground-actions">
+            <button type="button" id="btn-execute-playground" class="btn-execute" onclick="executePlaygroundTool('${escapedNamespace}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span class="btn-label">Run 0-Friction Test</span>
+            </button>
+            <span id="playground-status-pill" class="playground-status-pill" style="display: none;"></span>
+          </div>
+        </div>
+
+        <!-- Response Column -->
+        <div class="playground-panel">
+          <div class="playground-panel-header">
+            <span>Response Output</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span id="playground-time" class="playground-timing" style="display: none;">0ms</span>
+              <button type="button" class="btn-ghost" onclick="copyPlaygroundResponse(this)">Copy Response</button>
+            </div>
+          </div>
+          <div class="playground-response-wrapper">
+            <pre><code id="playground-response">// Response payload will appear here after execution...
+// Click 'Run 0-Friction Test' on the left to dispatch request.</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Integration & Request Example Section -->
+    <section class="card full-width integration-card" aria-label="Integration & Request Examples" id="integration-examples">
+      <div class="card-header">
+        <h2 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          Integration &amp; Request Example
+        </h2>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="badge ${requestExample.isX402 ? "badge-paid" : "badge-free"}">
+            ${requestExample.isX402 ? "x402 Payment Required" : "Free Endpoint"}
+          </span>
+          <button type="button" class="btn btn-sm btn-copy" onclick="copyActiveExample(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="copy-label">Copy cURL</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-notice-box ${requestExample.isX402 ? "auth-x402" : "auth-free"}">
+        <div class="auth-notice-header">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <strong>Authentication &amp; Payment Protocol:</strong>
+        </div>
+        <div class="auth-notice-desc">
+          ${escapeHtml(requestExample.authDescription)}
+        </div>
+        ${
+          requestExample.isX402
+            ? `
+        <div class="auth-notice-meta">
+          <span><strong>Cost:</strong> ${escapeHtml(requestExample.costDisplay)}</span>
+          <span><strong>Network:</strong> Base Mainnet (Chain ID 8453)</span>
+          <span><strong>Header:</strong> <code>x-payment-receipt: &lt;BASE_USDC_PAYMENT_RECEIPT&gt;</code></span>
+          ${requestExample.recipientAddress ? `<span><strong>Recipient:</strong> <code>${escapeHtml(requestExample.recipientAddress)}</code></span>` : ""}
+        </div>
+        `
+            : `
+        <div class="auth-notice-meta">
+          <span><strong>Cost:</strong> Free</span>
+          <span><strong>Access:</strong> Public</span>
+        </div>
+        `
+        }
+      </div>
+
+      <div class="code-tabs-wrapper">
+        <div class="code-tabs-nav" role="tablist">
+          <button type="button" class="code-tab-btn active" role="tab" aria-selected="true" data-tab="curl" onclick="switchExampleTab('curl')">cURL</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="cursor" onclick="switchExampleTab('cursor')">Cursor (.cursor/mcp.json)</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="claude" onclick="switchExampleTab('claude')">Claude Desktop</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="cline" onclick="switchExampleTab('cline')">Cline</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="javascript" onclick="switchExampleTab('javascript')">JavaScript (fetch)</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="http" onclick="switchExampleTab('http')">Raw HTTP</button>
+        </div>
+        <div class="code-tab-panel active" id="panel-curl">
+          <pre><code id="snippet-curl">${escapeHtml(requestExample.curl)}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-cursor" style="display: none;">
+          <pre><code id="snippet-cursor">${escapeHtml(requestExample.cursorConfig || "")}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-claude" style="display: none;">
+          <pre><code id="snippet-claude">${escapeHtml(requestExample.claudeConfig || "")}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-cline" style="display: none;">
+          <pre><code id="snippet-cline">${escapeHtml(requestExample.clineConfig || "")}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-javascript" style="display: none;">
+          <pre><code id="snippet-javascript">${escapeHtml(requestExample.fetchCode)}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-http" style="display: none;">
+          <pre><code id="snippet-http">${escapeHtml(requestExample.rawHttp)}</code></pre>
+        </div>
+      </div>
+    </section>
 
     <div class="grid-layout">
       <!-- Reliability Section -->
@@ -1604,155 +2131,6 @@ Content-Type: application/json</code></pre>
         : ""
     }
 
-    <!-- Interactive Live Test Console -->
-    <section class="card full-width playground-card" id="test-console" aria-label="Interactive Test Console">
-      <div class="card-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <h2 class="card-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            Interactive Test Console
-          </h2>
-          <span class="badge badge-healthy" style="font-size: 0.72rem; padding: 2px 8px;">
-            <span class="pulse-dot"></span> In-Browser Dispatch
-          </span>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button type="button" class="btn-ghost" onclick="resetPlaygroundPayload()">Reset Sample</button>
-          <button type="button" class="btn-ghost" onclick="formatPlaygroundPayload()">Format JSON</button>
-        </div>
-      </div>
-
-      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
-        Test this tool directly from your browser. Dispatches live request to <code>POST /tool/${escapedNamespace}</code>.
-      </p>
-
-      <div class="playground-grid">
-        <!-- Request Editor Column -->
-        <div class="playground-panel">
-          <div class="playground-panel-header">
-            <span>Request Payload (JSON)</span>
-            <span class="panel-badge">POST</span>
-          </div>
-          <div class="playground-editor-wrapper">
-            <textarea id="playground-payload" class="playground-textarea" spellcheck="false" rows="10">${escapeHtml(requestExample.bodyJson)}</textarea>
-          </div>
-
-          ${
-            requestExample.isX402
-              ? `
-          <div class="playground-auth-group">
-            <label for="playground-payment-header" class="playground-input-label">
-              x-payment-receipt Header <span style="color: var(--text-dim); font-size: 0.72rem;">(Base USDC tx receipt)</span>
-            </label>
-            <input type="text" id="playground-payment-header" class="playground-input" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
-          </div>
-          `
-              : `
-          <div class="playground-free-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Public Endpoint: Zero authentication required for test execution.</span>
-          </div>
-          `
-          }
-
-          <div class="playground-actions">
-            <button type="button" id="btn-execute-playground" class="btn-execute" onclick="executePlaygroundTool('${escapedNamespace}')">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span class="btn-label">Execute Tool</span>
-            </button>
-            <span id="playground-status-pill" class="playground-status-pill" style="display: none;"></span>
-          </div>
-        </div>
-
-        <!-- Response Column -->
-        <div class="playground-panel">
-          <div class="playground-panel-header">
-            <span>Response Output</span>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <span id="playground-time" class="playground-timing" style="display: none;">0ms</span>
-              <button type="button" class="btn-ghost" onclick="copyPlaygroundResponse(this)">Copy Response</button>
-            </div>
-          </div>
-          <div class="playground-response-wrapper">
-            <pre><code id="playground-response">// Response payload will appear here after execution...
-// Click 'Execute Tool' on the left to dispatch request.</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Integration & Request Example Section -->
-    <section class="card full-width integration-card" aria-label="Integration & Request Examples" id="integration-examples">
-      <div class="card-header">
-        <h2 class="card-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 17 10 11 4 5"/>
-            <line x1="12" y1="19" x2="20" y2="19"/>
-          </svg>
-          Integration &amp; Request Example
-        </h2>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <span class="badge ${requestExample.isX402 ? "badge-paid" : "badge-free"}">
-            ${requestExample.isX402 ? "x402 Payment Required" : "Free Endpoint"}
-          </span>
-          <button type="button" class="btn btn-sm btn-copy" onclick="copyActiveExample(this)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            <span class="copy-label">Copy cURL</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="auth-notice-box ${requestExample.isX402 ? "auth-x402" : "auth-free"}">
-        <div class="auth-notice-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <strong>Authentication &amp; Payment Protocol:</strong>
-        </div>
-        <div class="auth-notice-desc">
-          ${escapeHtml(requestExample.authDescription)}
-        </div>
-        ${
-          requestExample.isX402
-            ? `
-        <div class="auth-notice-meta">
-          <span><strong>Cost:</strong> ${escapeHtml(requestExample.costDisplay)}</span>
-          <span><strong>Network:</strong> Base Mainnet (Chain ID 8453)</span>
-          <span><strong>Header:</strong> <code>x-payment-receipt: &lt;BASE_USDC_PAYMENT_RECEIPT&gt;</code></span>
-          ${requestExample.recipientAddress ? `<span><strong>Recipient:</strong> <code>${escapeHtml(requestExample.recipientAddress)}</code></span>` : ""}
-        </div>
-        `
-            : `
-        <div class="auth-notice-meta">
-          <span><strong>Cost:</strong> Free</span>
-          <span><strong>Access:</strong> Public</span>
-        </div>
-        `
-        }
-      </div>
-
-      <div class="code-tabs-wrapper">
-        <div class="code-tabs-nav" role="tablist">
-          <button type="button" class="code-tab-btn active" role="tab" aria-selected="true" data-tab="curl" onclick="switchExampleTab('curl')">cURL</button>
-          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="javascript" onclick="switchExampleTab('javascript')">JavaScript (fetch)</button>
-          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="http" onclick="switchExampleTab('http')">Raw HTTP</button>
-        </div>
-        <div class="code-tab-panel active" id="panel-curl">
-          <pre><code id="snippet-curl">${escapeHtml(requestExample.curl)}</code></pre>
-        </div>
-        <div class="code-tab-panel" id="panel-javascript" style="display: none;">
-          <pre><code id="snippet-javascript">${escapeHtml(requestExample.fetchCode)}</code></pre>
-        </div>
-        <div class="code-tab-panel" id="panel-http" style="display: none;">
-          <pre><code id="snippet-http">${escapeHtml(requestExample.rawHttp)}</code></pre>
-        </div>
-      </div>
-    </section>
-
     <!-- Related Tools Section -->
     <section class="card full-width" aria-label="Related Tools by Shared Capabilities">
       <div class="card-header">
@@ -1816,6 +2194,111 @@ Content-Type: application/json</code></pre>
     </section>
   </main>
 
+  <!-- 1-Click Agent Config Modal (Cursor, Claude Desktop, Cline) -->
+  <div id="cursor-modal" class="cursor-modal-backdrop" style="display: none;" onclick="handleModalBackdropClick(event)">
+    <div class="cursor-modal-card" role="dialog" aria-modal="true" aria-labelledby="agent-modal-title">
+      <div class="cursor-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="cursor-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div>
+            <h3 id="agent-modal-title" style="margin: 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Connect ${escapedName} to Your Agent</h3>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Ready-to-use Agent MCP Configuration with Base USDC Settlement</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" onclick="closeAgentModal()" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="agent-modal-tabs">
+        <button type="button" class="agent-modal-tab-btn tab-cursor active" id="agent-modal-tab-cursor" onclick="switchAgentModalTab('cursor')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Cursor (.cursor/mcp.json)</span>
+        </button>
+        <button type="button" class="agent-modal-tab-btn tab-claude" id="agent-modal-tab-claude" onclick="switchAgentModalTab('claude')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
+          <span>Claude Desktop</span>
+        </button>
+        <button type="button" class="agent-modal-tab-btn tab-cline" id="agent-modal-tab-cline" onclick="switchAgentModalTab('cline')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
+          <span>Cline</span>
+        </button>
+      </div>
+
+      <div class="cursor-modal-body">
+        <!-- Cursor Tab Panel -->
+        <div id="agent-modal-panel-cursor">
+          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+            Paste this configuration into your project root at <code>.cursor/mcp.json</code> to give your Cursor agent autonomous access to <strong>${escapedName}</strong> with on-chain settlement:
+          </p>
+          <div style="position: relative;">
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="cursor-modal-snippet">${escapeHtml(requestExample.cursorConfig || "")}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('cursor', this)" style="position: absolute; top: 10px; right: 10px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="copy-label">Copy Config</span>
+            </button>
+          </div>
+          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+            <div><strong style="color: #e2e8f0;">Step 1:</strong> In your workspace root, create or edit <code>.cursor/mcp.json</code>.</div>
+            <div><strong style="color: #e2e8f0;">Step 2:</strong> Paste the JSON configuration block above.</div>
+            <div><strong style="color: #e2e8f0;">Step 3:</strong> Save the file. Cursor will automatically detect the tool for stealth scraping and Base USDC settlement.</div>
+          </div>
+        </div>
+
+        <!-- Claude Desktop Tab Panel -->
+        <div id="agent-modal-panel-claude" style="display: none;">
+          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+            Add this MCP configuration block to your Claude Desktop config file:
+            <span class="client-path-tag">macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</span>
+            <span class="client-path-tag">Windows: %APPDATA%\\Claude\\claude_desktop_config.json</span>
+          </p>
+          <div style="position: relative;">
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="claude-modal-snippet">${escapeHtml(requestExample.claudeConfig || "")}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('claude', this)" style="position: absolute; top: 10px; right: 10px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="copy-label">Copy Config</span>
+            </button>
+          </div>
+          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+            <div><strong style="color: #e2e8f0;">Step 1:</strong> Open Claude Desktop &gt; Settings &gt; Developer &gt; Edit Config.</div>
+            <div><strong style="color: #e2e8f0;">Step 2:</strong> Paste the <code>mcpServers</code> configuration block above into <code>claude_desktop_config.json</code>.</div>
+            <div><strong style="color: #e2e8f0;">Step 3:</strong> Restart Claude Desktop. The hammer icon confirms active agent connectivity.</div>
+          </div>
+        </div>
+
+        <!-- Cline Tab Panel -->
+        <div id="agent-modal-panel-cline" style="display: none;">
+          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+            Add this MCP configuration block to your Cline MCP settings:
+            <span class="client-path-tag">cline_mcp_settings.json</span>
+          </p>
+          <div style="position: relative;">
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="cline-modal-snippet">${escapeHtml(requestExample.clineConfig || "")}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('cline', this)" style="position: absolute; top: 10px; right: 10px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="copy-label">Copy Config</span>
+            </button>
+          </div>
+          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+            <div><strong style="color: #e2e8f0;">Step 1:</strong> Open VS Code or Cursor Cline extension tab.</div>
+            <div><strong style="color: #e2e8f0;">Step 2:</strong> Click the MCP Server icon and select "Configure MCP Servers" (or edit <code>cline_mcp_settings.json</code>).</div>
+            <div><strong style="color: #e2e8f0;">Step 3:</strong> Paste the JSON block. Cline connects with auto-approval and payment receipt ready.</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: rgba(15, 23, 42, 0.5);">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="closeAgentModal()">Close</button>
+        <button type="button" class="btn btn-sm btn-cursor" id="btn-modal-primary-copy" onclick="copyActiveAgentModalSnippet(this)">
+          <span class="copy-label">Copy to Clipboard</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div class="container footer-inner">
       <div>AIPages: Autonomous AI Agent Registry &amp; Vector Index. Base Mainnet.</div>
@@ -1829,6 +2312,24 @@ Content-Type: application/json</code></pre>
 
   <script>
     var activeExampleTab = 'curl';
+    var activeAgentModalTab = 'cursor';
+
+    var clientConfigs = {
+      cursor: ${JSON.stringify(requestExample.cursorConfig || "")},
+      claude: ${JSON.stringify(requestExample.claudeConfig || "")},
+      cline: ${JSON.stringify(requestExample.clineConfig || "")}
+    };
+    var clientDestinations = {
+      cursor: '.cursor/mcp.json',
+      claude: 'claude_desktop_config.json',
+      cline: 'cline_mcp_settings.json'
+    };
+    var clientNames = {
+      cursor: 'Cursor',
+      claude: 'Claude Desktop',
+      cline: 'Cline'
+    };
+
     function switchExampleTab(tab) {
       activeExampleTab = tab;
       document.querySelectorAll('.code-tab-btn').forEach(function(b) {
@@ -1836,13 +2337,16 @@ Content-Type: application/json</code></pre>
         b.classList.toggle('active', isTarget);
         b.setAttribute('aria-selected', isTarget ? 'true' : 'false');
       });
-      ['curl', 'javascript', 'http'].forEach(function(t) {
+      ['curl', 'cursor', 'claude', 'cline', 'javascript', 'http'].forEach(function(t) {
         var panel = document.getElementById('panel-' + t);
         if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
       });
       var copyLabel = document.querySelector('.btn-copy .copy-label');
       if (copyLabel) {
         if (tab === 'curl') copyLabel.textContent = 'Copy cURL';
+        else if (tab === 'cursor') copyLabel.textContent = 'Copy Cursor Config';
+        else if (tab === 'claude') copyLabel.textContent = 'Copy Claude Config';
+        else if (tab === 'cline') copyLabel.textContent = 'Copy Cline Config';
         else if (tab === 'javascript') copyLabel.textContent = 'Copy JavaScript';
         else copyLabel.textContent = 'Copy HTTP';
       }
@@ -1862,6 +2366,52 @@ Content-Type: application/json</code></pre>
         console.error('Copy failed:', e);
       }
       document.body.removeChild(ta);
+    }
+
+    function showAgentToast(msg) {
+      var existing = document.getElementById('agent-live-toast');
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+      var toast = document.createElement('div');
+      toast.id = 'agent-live-toast';
+      toast.className = 'agent-toast';
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>' + msg + '</span>';
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.35s ease';
+        setTimeout(function() {
+          if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 350);
+      }, 3000);
+    }
+
+    function copyClientConfig(client, btn) {
+      var config = clientConfigs[client];
+      if (!config) return;
+      var span = btn.querySelector('.btn-text') || btn.querySelector('span:last-child') || btn;
+      var origText = span.textContent;
+      var clientName = clientNames[client] || client;
+      var dest = clientDestinations[client] || 'config';
+
+      var updateUi = function() {
+        span.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        showAgentToast('Copied ' + clientName + ' config! Paste into ' + dest);
+        setTimeout(function() {
+          span.textContent = origText;
+          btn.classList.remove('btn-copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(config).then(updateUi).catch(function() {
+          fallbackCopy(config, updateUi);
+        });
+      } else {
+        fallbackCopy(config, updateUi);
+      }
     }
 
     function copyActiveExample(btn) {
@@ -1914,7 +2464,132 @@ Content-Type: application/json</code></pre>
       }
     }
 
+    /* Agent Modal Handlers */
+    function openAgentModal(client) {
+      var modal = document.getElementById('cursor-modal');
+      if (modal) modal.style.display = 'flex';
+      if (client) switchAgentModalTab(client);
+    }
+
+    function openCursorModal() {
+      openAgentModal('cursor');
+    }
+
+    function closeAgentModal() {
+      var modal = document.getElementById('cursor-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function closeCursorModal() {
+      closeAgentModal();
+    }
+
+    function handleModalBackdropClick(e) {
+      if (e.target && e.target.id === 'cursor-modal') {
+        closeAgentModal();
+      }
+    }
+
+    function switchAgentModalTab(client) {
+      activeAgentModalTab = client;
+      ['claude', 'cursor', 'cline'].forEach(function(c) {
+        var tabBtn = document.getElementById('agent-modal-tab-' + c);
+        var panel = document.getElementById('agent-modal-panel-' + c);
+        var isActive = (c === client);
+        if (tabBtn) tabBtn.classList.toggle('active', isActive);
+        if (panel) panel.style.display = isActive ? 'block' : 'none';
+      });
+    }
+
+    function copyAgentModalSnippet(client, btn) {
+      var config = clientConfigs[client] || (document.getElementById(client + '-modal-snippet') ? document.getElementById(client + '-modal-snippet').innerText : '');
+      if (!config) return;
+      var label = btn.querySelector('.copy-label') || btn;
+      var orig = label.textContent;
+
+      var updateUi = function() {
+        label.textContent = 'Copied to Clipboard!';
+        btn.classList.add('btn-copied');
+        showAgentToast('Copied ' + (clientNames[client] || client) + ' MCP config!');
+        setTimeout(function() {
+          label.textContent = orig;
+          btn.classList.remove('btn-copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(config).then(updateUi).catch(function() {
+          fallbackCopy(config, updateUi);
+        });
+      } else {
+        fallbackCopy(config, updateUi);
+      }
+    }
+
+    function copyCursorModalSnippet(btn) {
+      copyAgentModalSnippet(activeAgentModalTab || 'cursor', btn);
+    }
+
+    function copyActiveAgentModalSnippet(btn) {
+      copyAgentModalSnippet(activeAgentModalTab || 'cursor', btn);
+    }
+
+    /* Playground State & Presets */
     var initialSamplePayload = ${JSON.stringify(requestExample.bodyJson)};
+    var currentPlaygroundMode = 'sandbox';
+
+    function setPlaygroundMode(mode) {
+      currentPlaygroundMode = mode;
+      var btnSandbox = document.getElementById('btn-mode-sandbox');
+      var btnProd = document.getElementById('btn-mode-production');
+      var hintEl = document.getElementById('playground-mode-hint');
+      var execBtn = document.getElementById('btn-execute-playground');
+      var execLabel = execBtn ? execBtn.querySelector('.btn-label') : null;
+
+      if (btnSandbox) btnSandbox.classList.toggle('active', mode === 'sandbox');
+      if (btnProd) btnProd.classList.toggle('active', mode === 'production');
+
+      if (mode === 'sandbox') {
+        if (execLabel) execLabel.textContent = 'Run 0-Friction Test';
+        if (hintEl) {
+          hintEl.innerHTML = '<span>⚡</span> <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>';
+          hintEl.style.color = '#34d399';
+        }
+      } else {
+        if (execLabel) execLabel.textContent = 'Execute Tool (x402)';
+        if (hintEl) {
+          hintEl.innerHTML = '<span>💎</span> <span><strong>Base x402 Settlement Mode:</strong> Microtransactions settle in Base USDC via HTTP 402.</span>';
+          hintEl.style.color = '#c084fc';
+        }
+      }
+    }
+
+    function loadPresetPayload(preset) {
+      var el = document.getElementById('playground-payload');
+      if (!el) return;
+      if (preset === 'hackernews') {
+        el.value = JSON.stringify({
+          url: "https://news.ycombinator.com",
+          renderJs: true,
+          extractMode: "markdown",
+          timeoutMs: 5000
+        }, null, 2);
+      } else if (preset === 'example') {
+        el.value = JSON.stringify({
+          url: "https://example.com/data",
+          renderJs: true,
+          extractMode: "markdown",
+          timeoutMs: 5000
+        }, null, 2);
+      } else if (preset === 'jsonmode') {
+        el.value = JSON.stringify({
+          url: "https://store.example.com/products",
+          renderJs: true,
+          extractMode: "json",
+          timeoutMs: 8000
+        }, null, 2);
+      }
+    }
 
     function resetPlaygroundPayload() {
       var el = document.getElementById('playground-payload');
@@ -1952,7 +2627,9 @@ Content-Type: application/json</code></pre>
       if (btn) {
         btn.disabled = true;
         var label = btn.querySelector('.btn-label');
-        if (label) label.textContent = 'Executing...';
+        if (label) {
+          label.textContent = currentPlaygroundMode === 'sandbox' ? 'Executing 0-Friction Test...' : 'Executing (x402)...';
+        }
       }
 
       if (pill) {
@@ -1965,9 +2642,15 @@ Content-Type: application/json</code></pre>
         'Content-Type': 'application/json'
       };
 
-      if (paymentHeaderEl && paymentHeaderEl.value.trim()) {
-        headers['x-payment-receipt'] = paymentHeaderEl.value.trim();
-        headers['X-Payment'] = paymentHeaderEl.value.trim();
+      if (currentPlaygroundMode === 'sandbox') {
+        headers['x-playground-test'] = 'true';
+        headers['x-agent-id'] = 'browser-playground';
+      } else {
+        headers['x-agent-id'] = 'browser-agent';
+        if (paymentHeaderEl && paymentHeaderEl.value.trim()) {
+          headers['x-payment-receipt'] = paymentHeaderEl.value.trim();
+          headers['X-Payment'] = paymentHeaderEl.value.trim();
+        }
       }
 
       var startTime = performance.now();
@@ -1987,12 +2670,14 @@ Content-Type: application/json</code></pre>
 
         var statusText = response.status + ' ' + (response.statusText || '');
         if (pill) {
-          pill.textContent = statusText;
           if (response.status >= 200 && response.status < 300) {
+            pill.textContent = currentPlaygroundMode === 'sandbox' ? '200 OK (0-Friction Test Passed)' : '200 OK (Settled)';
             pill.className = 'playground-status-pill status-200';
           } else if (response.status === 402) {
+            pill.textContent = '402 Payment Required';
             pill.className = 'playground-status-pill status-402';
           } else {
+            pill.textContent = statusText;
             pill.className = 'playground-status-pill status-err';
           }
         }
@@ -2022,7 +2707,9 @@ Content-Type: application/json</code></pre>
         if (btn) {
           btn.disabled = false;
           var labelReset = btn.querySelector('.btn-label');
-          if (labelReset) labelReset.textContent = 'Execute Tool';
+          if (labelReset) {
+            labelReset.textContent = currentPlaygroundMode === 'sandbox' ? 'Run 0-Friction Test' : 'Execute Tool (x402)';
+          }
         }
       }
     }
