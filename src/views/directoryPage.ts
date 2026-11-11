@@ -82,6 +82,7 @@ export function renderToolCard(
   tool: Tool,
   baseUrl: string = "/",
   activeCapability?: string,
+  cardIndex: number = 0,
 ): string {
   const health = deriveReliability(tool);
   const humanTitle = escapeHtml(formatHumanToolTitle(tool.name));
@@ -137,7 +138,7 @@ export function renderToolCard(
   );
 
   return `
-    <article class="tool-card ${cardStatusClass}" data-namespace="${escapedNamespace}" data-group="${group}">
+    <article class="tool-card ${cardStatusClass}" data-namespace="${escapedNamespace}" data-group="${group}" style="--card-index: ${cardIndex}; animation-delay: ${Math.min(cardIndex * 32, 640)}ms;">
       <!-- 21st.dev #5115 Glass Header -->
       <div class="tool-card-glass-header">
         ${
@@ -327,7 +328,7 @@ export function renderDirectoryPage(
 
   const cardsHtml =
     sortedTools.length > 0
-      ? sortedTools.map((t) => renderToolCard(t, baseUrl, activeCapability)).join("\n")
+      ? sortedTools.map((t, idx) => renderToolCard(t, baseUrl, activeCapability, idx)).join("\n")
       : `<div class="empty-state">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="11" cy="11" r="8"></circle>
@@ -704,29 +705,65 @@ export function renderDirectoryPage(
     }
 
     .stats-block-card {
-      background: #0A0C12;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
       padding: 28px;
-      transition: border-color 0.2s ease, transform 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+      will-change: transform, box-shadow;
+      transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .stats-block-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(350px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(0, 240, 255, 0.28), rgba(245, 158, 11, 0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .stats-block-card:hover::before {
+      opacity: 1;
+    }
+
+    .stats-block-card > * {
+      position: relative;
+      z-index: 2;
+      transform: translateZ(10px);
     }
 
     .stats-block-card:hover {
-      border-color: rgba(245, 158, 11, 0.35);
-      transform: translateY(-2px);
+      border-color: rgba(0, 240, 255, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 24px rgba(0, 240, 255, 0.12);
     }
 
     .stats-block-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
       background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.28);
+      border: 1px solid rgba(245, 158, 11, 0.35);
       color: var(--primary-bright);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 20px;
+      transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+    }
+
+    .stats-block-card:hover .stats-block-icon {
+      transform: translateY(-3px) scale(1.06) translateZ(18px);
+      border-color: #FFD000;
+      background: rgba(245, 158, 11, 0.18);
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.35);
     }
 
     .stats-block-number {
@@ -1052,6 +1089,29 @@ export function renderDirectoryPage(
       margin-bottom: 48px;
     }
 
+    @keyframes cardEntrance {
+      0% {
+        opacity: 0;
+        transform: translateY(22px) scale(0.97);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes radarPing {
+      0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 7px rgba(16, 185, 129, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
     .tool-card {
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
@@ -1060,14 +1120,58 @@ export function renderDirectoryPage(
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+      will-change: transform, box-shadow;
+      transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      animation: cardEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+
+    .tool-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: radial-gradient(400px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(0, 240, 255, 0.28), rgba(245, 158, 11, 0.12), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .tool-card:hover::before {
+      opacity: 1;
+    }
+
+    .tool-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.5), rgba(245, 158, 11, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .tool-card:hover::after {
+      opacity: 1;
+    }
+
+    .tool-card > * {
+      position: relative;
+      z-index: 2;
     }
 
     .tool-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--border-strong);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      border-color: rgba(0, 240, 255, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 240, 255, 0.14);
     }
 
     .tool-card-glass-header {
@@ -1077,6 +1181,13 @@ export function renderDirectoryPage(
       padding: 16px;
       position: relative;
       overflow: hidden;
+      transform: translateZ(12px);
+      transition: border-color 0.25s ease, background-color 0.25s ease;
+    }
+
+    .tool-card:hover .tool-card-glass-header {
+      border-color: rgba(0, 240, 255, 0.35);
+      background: #141926;
     }
 
     .tool-card-art-thumb {
@@ -1085,6 +1196,7 @@ export function renderDirectoryPage(
       overflow: hidden;
       border-bottom: 1px solid var(--border-subtle);
       background: var(--surface-terminal);
+      position: relative;
     }
 
     .tool-card-art-thumb img {
@@ -1092,6 +1204,12 @@ export function renderDirectoryPage(
       height: 100%;
       object-fit: cover;
       object-position: center;
+      transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), filter 0.4s ease;
+    }
+
+    .tool-card:hover .tool-card-art-thumb img {
+      transform: scale(1.05);
+      filter: brightness(1.08) contrast(1.02);
     }
 
     .tool-card-header {
@@ -1271,7 +1389,7 @@ export function renderDirectoryPage(
     }
 
     .badge-high { color: var(--healthy); }
-    .dot-high { background: var(--healthy); box-shadow: 0 0 6px var(--healthy); }
+    .dot-high { background: var(--healthy); box-shadow: 0 0 6px var(--healthy); animation: radarPing 2.2s infinite ease-out; }
     .badge-degraded { color: var(--degraded); }
     .dot-degraded { background: var(--degraded); box-shadow: 0 0 6px var(--degraded); }
     .badge-failing { color: var(--failing); }
@@ -1364,18 +1482,20 @@ export function renderDirectoryPage(
       color: var(--primary-bright);
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       padding: 6px 12px;
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-xs);
       background: var(--surface-raised);
-      transition: all 0.18s ease;
+      transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
     }
 
     .card-action-link:hover {
       border-color: var(--accent-cyan);
-      color: #FFFFFF;
-      background: rgba(0, 240, 255, 0.12);
+      color: #020305;
+      background: var(--accent-cyan);
+      transform: translateX(3px);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
       text-decoration: none;
     }
 
@@ -2389,6 +2509,49 @@ Accept: application/json
         }, 2000);
       });
     }
+
+    // 21st.dev 3D Tilt Physics & Cursor-Following Spotlight
+    (function initCardInteractiveMotion() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+      var cards = document.querySelectorAll('.tool-card, .stats-block-card');
+      cards.forEach(function(card) {
+        var bounds = null;
+        var rafId = null;
+
+        function onMouseMove(e) {
+          if (!bounds) bounds = card.getBoundingClientRect();
+          var mouseX = e.clientX - bounds.left;
+          var mouseY = e.clientY - bounds.top;
+
+          card.style.setProperty('--mouse-x', mouseX + 'px');
+          card.style.setProperty('--mouse-y', mouseY + 'px');
+
+          var centerX = bounds.width / 2;
+          var centerY = bounds.height / 2;
+          var tiltX = ((mouseY - centerY) / centerY) * -6.5;
+          var tiltY = ((mouseX - centerX) / centerX) * 6.5;
+
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(function() {
+            card.style.transform = 'perspective(1000px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg) translateY(-4px) scale3d(1.012, 1.012, 1.012)';
+          });
+        }
+
+        function onMouseLeave() {
+          if (rafId) cancelAnimationFrame(rafId);
+          bounds = null;
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px) scale3d(1, 1, 1)';
+        }
+
+        card.addEventListener('mouseenter', function() {
+          bounds = card.getBoundingClientRect();
+        });
+        card.addEventListener('mousemove', onMouseMove);
+        card.addEventListener('mouseleave', onMouseLeave);
+      });
+    })();
   </script>
   ${renderWebMcpRuntimeScript({ pageType: "directory" })}
 </body>

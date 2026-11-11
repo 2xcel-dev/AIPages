@@ -244,8 +244,8 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 22px;
-    font-size: 0.9rem;
+    gap: 18px;
+    font-size: 0.88rem;
     font-weight: 500;
     flex-wrap: nowrap;
     white-space: nowrap;
@@ -431,14 +431,33 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     box-shadow: 0 0 8px var(--healthy);
   }
 
+  @media (max-width: 1140px) {
+    .nav-links {
+      gap: 14px;
+      font-size: 0.82rem;
+    }
+    .nav-inner {
+      gap: 12px;
+    }
+  }
+
   @media (max-width: 920px) {
     .minimal-footer-grid {
       grid-template-columns: 1fr 1fr;
     }
     .nav-inner {
-      height: auto;
-      padding: 14px 0;
-      flex-wrap: wrap;
+      height: 68px;
+      gap: 12px;
+      overflow: hidden;
+    }
+    .nav-links {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .nav-links::-webkit-scrollbar {
+      display: none;
     }
   }
 
