@@ -284,10 +284,14 @@ export function renderCapabilitiesPage(
 
           return `
             <a href="/tool/${encodeURIComponent(t.namespace)}" class="cap-tool-pill" title="${escapedNs}">
-              <span class="cap-tool-name">${escapedToolName}</span>
-              ${t.isFirstParty ? `<span class="badge-aus" title="First-Party AUS Tool">AUS</span>` : ""}
-              <span class="cap-tool-price">${priceDisplay}</span>
-              <span class="badge ${relBadgeClass}">${relLabel}</span>
+              <div class="cap-tool-left">
+                <span class="cap-tool-name">${escapedToolName}</span>
+                ${t.isFirstParty ? `<span class="badge-aus" title="First-Party AUS Tool">AUS</span>` : ""}
+              </div>
+              <div class="cap-tool-right">
+                <span class="cap-tool-price">${priceDisplay}</span>
+                <span class="badge ${relBadgeClass}">${relLabel}</span>
+              </div>
             </a>
           `;
         })
@@ -452,6 +456,7 @@ ${jsonLdScript}
       flex-direction: column;
       gap: 16px;
       transition: transform 0.18s ease, border-color 0.18s ease;
+      overflow: hidden;
     }
 
     .cap-card:hover {
@@ -486,7 +491,7 @@ ${jsonLdScript}
     }
 
     .cap-title {
-      font-size: 1.18rem;
+      font-size: 1.6rem;
       font-weight: 700;
       line-height: 1.3;
     }
@@ -522,6 +527,7 @@ ${jsonLdScript}
       border: 1px solid rgba(255, 255, 255, 0.07);
       border-radius: 12px;
       padding: 14px;
+      overflow: hidden;
     }
 
     .cap-tools-label {
@@ -536,32 +542,54 @@ ${jsonLdScript}
 
     .cap-tools-list {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 8px;
-      align-items: center;
     }
 
     .cap-tool-pill {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 10px;
       background: #0A0C12;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 999px;
-      padding: 6px 14px;
+      border-radius: 10px;
+      padding: 10px 14px;
       font-size: 1.08rem;
       color: #FFFFFF;
       text-decoration: none;
+      transition: all 0.18s ease;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .cap-tool-pill:hover {
       border-color: var(--primary);
+      background: rgba(245, 158, 11, 0.06);
       text-decoration: none;
+    }
+
+    .cap-tool-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .cap-tool-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .cap-tool-name {
       font-weight: 600;
       color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .badge-aus {
@@ -571,11 +599,14 @@ ${jsonLdScript}
       background: rgba(245, 158, 11, 0.18);
       border-radius: 4px;
       padding: 2px 6px;
+      flex-shrink: 0;
     }
 
     .cap-tool-price {
       font-size: 1.08rem;
       color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .badge {
@@ -585,6 +616,8 @@ ${jsonLdScript}
       font-weight: 600;
       padding: 3px 8px;
       border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .badge-healthy {
