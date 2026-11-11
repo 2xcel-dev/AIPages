@@ -696,7 +696,7 @@ ${aeoGraphScript}
     }
     .namespace-tag {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       background: var(--card-bg);
       color: var(--primary);
       border: 1px solid var(--border);
@@ -705,7 +705,7 @@ ${aeoGraphScript}
       word-break: break-all;
     }
     .tool-description {
-      font-size: 1.05rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       max-width: 850px;
       margin-top: 8px;
@@ -716,7 +716,7 @@ ${aeoGraphScript}
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 4px 12px;
       border-radius: 999px;
@@ -833,12 +833,12 @@ ${aeoGraphScript}
     }
     .reliability-summary-title {
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 1.08rem;
       color: #fff;
       margin-bottom: 4px;
     }
     .reliability-summary-desc {
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
     }
 
@@ -852,7 +852,7 @@ ${aeoGraphScript}
       justify-content: space-between;
       align-items: flex-start;
       gap: 12px;
-      font-size: 0.9rem;
+      font-size: 1.08rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       padding-bottom: 8px;
     }
@@ -873,7 +873,7 @@ ${aeoGraphScript}
     }
     .meta-value code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       background: var(--code-bg);
       padding: 2px 6px;
       border-radius: 4px;
@@ -887,7 +887,7 @@ ${aeoGraphScript}
       padding: 14px 16px;
       border-radius: var(--radius-sm);
       margin-top: 14px;
-      font-size: 0.88rem;
+      font-size: 1.08rem;
     }
     .failure-box-header {
       font-weight: 700;
@@ -906,7 +906,7 @@ ${aeoGraphScript}
       border-left: 3px solid var(--primary);
       padding: 12px 14px;
       border-radius: var(--radius-sm);
-      font-size: 0.8rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.5;
     }
@@ -926,7 +926,7 @@ ${aeoGraphScript}
       border-radius: var(--radius-sm);
       padding: 16px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       color: #cbd5e1;
       overflow-x: auto;
       max-height: 380px;
@@ -939,7 +939,7 @@ ${aeoGraphScript}
       gap: 6px;
       background: var(--primary);
       color: #090d16;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 8px 16px;
       border-radius: var(--radius-sm);
@@ -953,7 +953,7 @@ ${aeoGraphScript}
     }
     .btn-sm {
       padding: 6px 12px;
-      font-size: 0.8rem;
+      font-size: 1.08rem;
     }
 
     /* Related Tools Grid */
@@ -985,7 +985,7 @@ ${aeoGraphScript}
       margin-bottom: 4px;
     }
     .related-tool-name {
-      font-size: 1rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: #fff;
     }
@@ -998,7 +998,7 @@ ${aeoGraphScript}
       text-decoration: underline;
     }
     .related-tool-price {
-      font-size: 0.72rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: var(--healthy);
       background: var(--healthy-bg);
@@ -1009,13 +1009,13 @@ ${aeoGraphScript}
     }
     .related-tool-ns {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.72rem;
+      font-size: 1.08rem;
       color: var(--text-dim);
       margin-bottom: 8px;
       word-break: break-all;
     }
     .related-tool-desc {
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.4;
       margin-bottom: 12px;
@@ -1031,7 +1031,7 @@ ${aeoGraphScript}
       margin-bottom: 12px;
     }
     .cap-tag {
-      font-size: 0.7rem;
+      font-size: 1.08rem;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -1050,7 +1050,7 @@ ${aeoGraphScript}
       margin-top: auto;
     }
     .btn-link {
-      font-size: 0.8rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: var(--primary);
       text-decoration: none;
@@ -1065,7 +1065,7 @@ ${aeoGraphScript}
       padding: 24px 16px;
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       margin-top: 12px;
     }
 
@@ -1076,7 +1076,7 @@ ${aeoGraphScript}
       background: var(--card-bg);
       padding: 24px 0;
       color: var(--text-dim);
-      font-size: 0.85rem;
+      font-size: 1.08rem;
     }
     .footer-inner {
       display: flex;
@@ -1104,7 +1104,7 @@ ${aeoGraphScript}
       border-left: 4px solid var(--healthy);
     }
     .auth-notice-header {
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: #fff;
       display: flex;
@@ -1113,7 +1113,7 @@ ${aeoGraphScript}
       margin-bottom: 6px;
     }
     .auth-notice-desc {
-      font-size: 0.84rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.5;
     }
@@ -1124,7 +1124,7 @@ ${aeoGraphScript}
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
-      font-size: 0.8rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
     }
     .auth-notice-meta code {
@@ -1161,7 +1161,7 @@ ${aeoGraphScript}
       padding: 6px 14px;
       border-radius: var(--radius-sm);
       cursor: pointer;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       font-weight: 600;
       transition: all 0.15s ease;
     }
@@ -1179,7 +1179,7 @@ ${aeoGraphScript}
       border: 1px solid var(--border-light);
       color: var(--primary);
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 5px 12px;
       border-radius: var(--radius-sm);
@@ -1230,12 +1230,12 @@ ${aeoGraphScript}
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: #fff;
     }
     .playground-panel-header .panel-badge {
-      font-size: 0.72rem;
+      font-size: 1.08rem;
       background: rgba(56, 189, 248, 0.2);
       color: var(--primary);
       padding: 2px 6px;
@@ -1257,7 +1257,7 @@ ${aeoGraphScript}
       border-radius: var(--radius-sm);
       color: #e2e8f0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       line-height: 1.5;
       padding: 12px;
       resize: vertical;
@@ -1274,7 +1274,7 @@ ${aeoGraphScript}
     }
     .playground-input-label {
       display: block;
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: var(--text-muted);
       margin-bottom: 4px;
@@ -1286,7 +1286,7 @@ ${aeoGraphScript}
       border-radius: var(--radius-sm);
       color: #e2e8f0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       padding: 8px 10px;
       box-sizing: border-box;
       outline: none;
@@ -1305,7 +1305,7 @@ ${aeoGraphScript}
       background: rgba(16, 185, 129, 0.1);
       border: 1px solid rgba(16, 185, 129, 0.3);
       border-radius: var(--radius-sm);
-      font-size: 0.8rem;
+      font-size: 1.08rem;
       color: #34d399;
     }
     .playground-actions {
@@ -1319,7 +1319,7 @@ ${aeoGraphScript}
       background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
       color: #030712;
       font-weight: 700;
-      font-size: 0.86rem;
+      font-size: 1.08rem;
       border: none;
       border-radius: var(--radius-sm);
       padding: 8px 18px;
@@ -1343,7 +1343,7 @@ ${aeoGraphScript}
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       padding: 4px 10px;
       border-radius: var(--radius-sm);
       cursor: pointer;
@@ -1354,7 +1354,7 @@ ${aeoGraphScript}
       color: #fff;
     }
     .playground-status-pill {
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 3px 10px;
       border-radius: 999px;
@@ -1383,7 +1383,7 @@ ${aeoGraphScript}
       border: 1px solid rgba(56, 189, 248, 0.4);
     }
     .playground-timing {
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       color: var(--text-dim);
       background: rgba(255, 255, 255, 0.04);
@@ -1416,7 +1416,7 @@ ${aeoGraphScript}
     }
     .btn-agent {
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       border-radius: var(--radius-sm);
       padding: 9px 15px;
       cursor: pointer;
@@ -1472,7 +1472,7 @@ ${aeoGraphScript}
       color: #38bdf8;
       border: 1px solid rgba(56, 189, 248, 0.4);
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       border-radius: var(--radius-sm);
       padding: 9px 15px;
       cursor: pointer;
@@ -1502,7 +1502,7 @@ ${aeoGraphScript}
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 4px 12px;
       border-radius: 999px;
@@ -1539,7 +1539,7 @@ ${aeoGraphScript}
       flex-wrap: wrap;
     }
     .presets-label {
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       color: var(--text-dim);
       font-weight: 600;
       text-transform: uppercase;
@@ -1549,7 +1549,7 @@ ${aeoGraphScript}
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       padding: 3px 8px;
       border-radius: 4px;
       cursor: pointer;
@@ -1640,7 +1640,7 @@ ${aeoGraphScript}
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      font-size: 0.85rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 10px 14px;
       cursor: pointer;
@@ -1665,7 +1665,7 @@ ${aeoGraphScript}
       border-bottom-color: #2dd4bf;
     }
     .client-path-tag {
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
@@ -1683,7 +1683,7 @@ ${aeoGraphScript}
       border: 1px solid #38bdf8;
       box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       color: #fff;
-      font-size: 0.86rem;
+      font-size: 1.08rem;
       font-weight: 600;
       padding: 12px 20px;
       border-radius: var(--radius-sm);
@@ -1701,7 +1701,7 @@ ${aeoGraphScript}
     <div class="hero tool-hero-banner" style="${flowArtwork ? "" : "grid-template-columns: 1fr;"}">
       <div>
         <div class="hero-top">
-          <h1 class="tool-title">${humanTitle !== escapedName ? `${humanTitle} <span style="font-size: 1.05rem; font-family: var(--font-mono); color: #A1A1AA; font-weight: 500;">(${escapedName})</span>` : escapedName}</h1>
+          <h1 class="tool-title">${humanTitle !== escapedName ? `${humanTitle} <span style="font-size: 1.08rem; font-family: var(--font-mono); color: #A1A1AA; font-weight: 500;">(${escapedName})</span>` : escapedName}</h1>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             ${isFirstParty ? `<span class="badge badge-first-party"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First-Party AUS Tool</span>` : ""}
             ${statusBadgeHtml}
@@ -1725,11 +1725,11 @@ ${aeoGraphScript}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
             <span class="btn-text">Add to Cline</span>
           </button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 1.08rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <span>Setup Guide</span>
           </button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" title="Copy GitHub README Verification Badge" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" title="Copy GitHub README Verification Badge" style="font-size: 1.08rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             <span>README Badge</span>
           </button>
@@ -1752,7 +1752,7 @@ ${aeoGraphScript}
             </svg>
             Interactive Test Console
           </h2>
-          <span class="badge badge-healthy" style="font-size: 0.72rem; padding: 2px 8px;">
+          <span class="badge badge-healthy" style="font-size: 1.08rem; padding: 2px 8px;">
             <span class="pulse-dot"></span> Test Live Before Paying (0-Friction)
           </span>
         </div>
@@ -1770,7 +1770,7 @@ ${aeoGraphScript}
         </div>
       </div>
 
-      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px;">
+      <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 12px;">
         Test this tool directly from your browser with zero friction before deploying or paying. Dispatches live request to <code>POST /tool/${escapedNamespace}</code>.
       </p>
 
@@ -1797,10 +1797,10 @@ ${aeoGraphScript}
               ? `
           <div class="playground-auth-group" id="playground-auth-group">
             <label for="playground-payment-header" class="playground-input-label">
-              x-payment-receipt Header <span style="color: var(--text-dim); font-size: 0.72rem;">(Base USDC tx receipt)</span>
+              x-payment-receipt Header <span style="color: var(--text-dim); font-size: 1.08rem;">(Base USDC tx receipt)</span>
             </label>
             <input type="text" id="playground-payment-header" name="x-payment-receipt" class="playground-input" toolparamdescription="Optional Base Mainnet 0x transaction receipt hash for HTTP 402 production settlement" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
-            <div id="playground-mode-hint" style="font-size: 0.76rem; color: #34d399; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+            <div id="playground-mode-hint" style="font-size: 1.08rem; color: #34d399; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>
             </div>
@@ -1925,9 +1925,9 @@ ${aeoGraphScript}
       <div style="margin-top: 16px; padding: 12px 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-light); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <img src="/badge/${encodeURIComponent(tool.namespace)}.svg" alt="AIPages Verification Shield" style="height: 20px;" loading="lazy" />
-          <span style="font-size: 0.85rem; color: var(--text-muted);">Embed this verification shield in your repository README to show verified on-chain status.</span>
+          <span style="font-size: 1.08rem; color: var(--text-muted);">Embed this verification shield in your repository README to show verified on-chain status.</span>
         </div>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" style="padding: 6px 12px; font-size: 0.78rem; cursor: pointer;">
+        <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" style="padding: 6px 12px; font-size: 1.08rem; cursor: pointer;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <span class="btn-text">Copy Markdown Badge</span>
         </button>
@@ -1998,7 +1998,7 @@ ${aeoGraphScript}
         ${
           isUnchecked
             ? `
-        <div style="background: var(--card-surface); border: 1px dashed var(--border); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 14px; font-size: 0.85rem; color: var(--text-muted);">
+        <div style="background: var(--card-surface); border: 1px dashed var(--border); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 14px; font-size: 1.08rem; color: var(--text-muted);">
           <strong>Health Monitoring:</strong> This tool has not yet been probed by the automated outreach worker. Probes evaluate HTTP endpoint reachability with bounded timeouts.
         </div>
         `
@@ -2022,7 +2022,7 @@ ${aeoGraphScript}
             </svg>
             Tool Metadata
           </h2>
-          <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">
+          <span style="font-size: 1.08rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">
             ${escapeHtml(tool.status || "active")}
           </span>
         </div>
@@ -2106,12 +2106,12 @@ ${aeoGraphScript}
 
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">Direct Execution Proxy</div>
-            <button type="button" class="btn btn-sm btn-proxy-copy" onclick="copyProxySnippet(this)" style="padding: 3px 8px; font-size: 0.75rem;">
+            <div style="font-size: 1.08rem; font-weight: 600; color: #fff;">Direct Execution Proxy</div>
+            <button type="button" class="btn btn-sm btn-proxy-copy" onclick="copyProxySnippet(this)" style="padding: 3px 8px; font-size: 1.08rem;">
               <span class="proxy-copy-label">Copy</span>
             </button>
           </div>
-          <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          <div style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 12px;">
             Invoke dynamically with autonomous agent wallet authorization:
             <a href="#integration-examples" style="color: var(--primary); margin-left: 6px;">View Full cURL &amp; Payload &darr;</a>
           </div>
@@ -2137,9 +2137,9 @@ Content-Type: application/json</code></pre>
           </svg>
           Input Parameters Schema
         </h2>
-        <span style="font-size: 0.8rem; color: var(--text-dim); font-family: monospace;">JSON Schema (Draft-07)</span>
+        <span style="font-size: 1.08rem; color: var(--text-dim); font-family: monospace;">JSON Schema (Draft-07)</span>
       </div>
-      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 12px;">
+      <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 12px;">
         Payloads dispatched to this tool are strictly validated against this schema before proxying.
       </p>
       <pre><code>${schemaJson}</code></pre>
@@ -2158,14 +2158,14 @@ Content-Type: application/json</code></pre>
           </svg>
           Related Tools by Shared Capabilities
         </h2>
-        <span style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">
+        <span style="font-size: 1.08rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">
           Directory Discovery
         </span>
       </div>
       ${
         relatedTools && relatedTools.length > 0
           ? `
-      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+      <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 16px;">
         Other public tools in the AIPages directory sharing capability tags with <strong>${escapedName}</strong>:
       </p>
       <div class="related-tools-grid">
@@ -2225,7 +2225,7 @@ Content-Type: application/json</code></pre>
           </div>
           <div>
             <h3 id="agent-modal-title" style="margin: 0; font-size: 1.1rem; color: #fff; font-weight: 700;">Connect ${escapedName} to Your Agent</h3>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Ready-to-use Agent MCP Configuration with Base USDC Settlement</div>
+            <div style="font-size: 1.08rem; color: var(--text-muted);">Ready-to-use Agent MCP Configuration with Base USDC Settlement</div>
           </div>
         </div>
         <button type="button" class="btn-close-modal" onclick="closeAgentModal()" aria-label="Close modal">&times;</button>
@@ -2249,17 +2249,17 @@ Content-Type: application/json</code></pre>
       <div class="cursor-modal-body">
         <!-- Cursor Tab Panel -->
         <div id="agent-modal-panel-cursor">
-          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+          <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 8px;">
             Paste this configuration into your project root at <code>.cursor/mcp.json</code> to give your Cursor agent autonomous access to <strong>${escapedName}</strong> with on-chain settlement:
           </p>
           <div style="position: relative;">
-            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="cursor-modal-snippet">${escapeHtml(requestExample.cursorConfig || "")}</code></pre>
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 1.08rem; overflow-x: auto;"><code id="cursor-modal-snippet">${escapeHtml(requestExample.cursorConfig || "")}</code></pre>
             <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('cursor', this)" style="position: absolute; top: 10px; right: 10px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span class="copy-label">Copy Config</span>
             </button>
           </div>
-          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+          <div style="margin-top: 14px; font-size: 1.08rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
             <div><strong style="color: #e2e8f0;">Step 1:</strong> In your workspace root, create or edit <code>.cursor/mcp.json</code>.</div>
             <div><strong style="color: #e2e8f0;">Step 2:</strong> Paste the JSON configuration block above.</div>
             <div><strong style="color: #e2e8f0;">Step 3:</strong> Save the file. Cursor will automatically detect the tool for stealth scraping and Base USDC settlement.</div>
@@ -2268,19 +2268,19 @@ Content-Type: application/json</code></pre>
 
         <!-- Claude Desktop Tab Panel -->
         <div id="agent-modal-panel-claude" style="display: none;">
-          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+          <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 8px;">
             Add this MCP configuration block to your Claude Desktop config file:
             <span class="client-path-tag">macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</span>
             <span class="client-path-tag">Windows: %APPDATA%\\Claude\\claude_desktop_config.json</span>
           </p>
           <div style="position: relative;">
-            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="claude-modal-snippet">${escapeHtml(requestExample.claudeConfig || "")}</code></pre>
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 1.08rem; overflow-x: auto;"><code id="claude-modal-snippet">${escapeHtml(requestExample.claudeConfig || "")}</code></pre>
             <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('claude', this)" style="position: absolute; top: 10px; right: 10px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span class="copy-label">Copy Config</span>
             </button>
           </div>
-          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+          <div style="margin-top: 14px; font-size: 1.08rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
             <div><strong style="color: #e2e8f0;">Step 1:</strong> Open Claude Desktop &gt; Settings &gt; Developer &gt; Edit Config.</div>
             <div><strong style="color: #e2e8f0;">Step 2:</strong> Paste the <code>mcpServers</code> configuration block above into <code>claude_desktop_config.json</code>.</div>
             <div><strong style="color: #e2e8f0;">Step 3:</strong> Restart Claude Desktop. The hammer icon confirms active agent connectivity.</div>
@@ -2289,18 +2289,18 @@ Content-Type: application/json</code></pre>
 
         <!-- Cline Tab Panel -->
         <div id="agent-modal-panel-cline" style="display: none;">
-          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 8px;">
+          <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 8px;">
             Add this MCP configuration block to your Cline MCP settings:
             <span class="client-path-tag">cline_mcp_settings.json</span>
           </p>
           <div style="position: relative;">
-            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 0.84rem; overflow-x: auto;"><code id="cline-modal-snippet">${escapeHtml(requestExample.clineConfig || "")}</code></pre>
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 1.08rem; overflow-x: auto;"><code id="cline-modal-snippet">${escapeHtml(requestExample.clineConfig || "")}</code></pre>
             <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('cline', this)" style="position: absolute; top: 10px; right: 10px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span class="copy-label">Copy Config</span>
             </button>
           </div>
-          <div style="margin-top: 14px; font-size: 0.82rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+          <div style="margin-top: 14px; font-size: 1.08rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
             <div><strong style="color: #e2e8f0;">Step 1:</strong> Open VS Code or Cursor Cline extension tab.</div>
             <div><strong style="color: #e2e8f0;">Step 2:</strong> Click the MCP Server icon and select "Configure MCP Servers" (or edit <code>cline_mcp_settings.json</code>).</div>
             <div><strong style="color: #e2e8f0;">Step 3:</strong> Paste the JSON block. Cline connects with auto-approval and payment receipt ready.</div>
@@ -2828,7 +2828,7 @@ export function renderNotFoundPage(slug: string): string {
     p {
       color: #A1A1AA;
       margin-bottom: 24px;
-      font-size: 0.96rem;
+      font-size: 1.08rem;
     }
     code {
       background: #050507;

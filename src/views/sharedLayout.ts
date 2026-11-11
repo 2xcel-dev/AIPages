@@ -251,11 +251,11 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   }
 
   .brand-badge {
-    font-size: 0.68rem;
+    font-size: 1.08rem;
     background: rgba(245, 158, 11, 0.12);
     color: var(--primary-bright);
     border: 1px solid rgba(245, 158, 11, 0.3);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 999px;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -266,7 +266,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     display: flex;
     align-items: center;
     gap: 18px;
-    font-size: 0.88rem;
+    font-size: 1.08rem;
     font-weight: 500;
     flex-wrap: nowrap;
     white-space: nowrap;
@@ -301,7 +301,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.03);
     color: #E4E4E7;
-    font-size: 0.85rem;
+    font-size: 1.08rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.18s ease;
@@ -321,7 +321,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     border: 1px solid #FFD000;
     padding: 9px 16px;
     border-radius: 10px;
-    font-size: 0.85rem;
+    font-size: 1.08rem;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -365,7 +365,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
 
   .minimal-footer-brand p {
     color: var(--text-muted);
-    font-size: 0.92rem;
+    font-size: 1.08rem;
     max-width: 380px;
     margin-top: 14px;
     line-height: 1.65;
@@ -398,7 +398,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
 
   .minimal-footer-col-title {
     display: block;
-    font-size: 0.78rem;
+    font-size: 1.08rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -414,7 +414,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
 
   .minimal-footer-links a {
     color: var(--text-muted);
-    font-size: 0.88rem;
+    font-size: 1.08rem;
     text-decoration: none;
     width: max-content;
     transition: color 0.18s ease;
@@ -432,7 +432,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     align-items: center;
     gap: 16px;
     padding-top: 24px;
-    font-size: 0.84rem;
+    font-size: 1.08rem;
     color: var(--text-dim);
   }
 
@@ -441,7 +441,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     align-items: center;
     gap: 8px;
     color: #D4D4D8;
-    font-size: 0.82rem;
+    font-size: 1.08rem;
   }
 
   .minimal-footer-status-dot {
@@ -455,7 +455,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   @media (max-width: 1140px) {
     .nav-links {
       gap: 14px;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
     }
     .nav-inner {
       gap: 12px;

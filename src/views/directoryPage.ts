@@ -1372,87 +1372,6 @@ export function renderDirectoryPage(
 
     .td-deck-btn {
       background: transparent;
-      border: none;
-      color: #CBD5E1;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: color 0.18s ease;
-    }
-
-    .td-deck-btn:hover {
-      color: var(--accent-cyan);
-    }
-
-    .td-deck-counter {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #F8FAFC;
-      letter-spacing: 0.05em;
-    }
-
-    .flow-progress-bar {
-      display: none;
-    }
-
-    .flow-progress-step {
-      background: transparent;
-      border: none;
-      border-right: 1px solid var(--border-subtle);
-      padding: 14px 12px;
-      text-align: left;
-      color: var(--text-dim);
-      transition: all 0.18s ease;
-      position: relative;
-    }
-
-    .flow-progress-step:last-child {
-      border-right: none;
-    }
-
-    .flow-progress-step::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: transparent;
-      transition: background 0.2s ease;
-    }
-
-    .flow-progress-step.active {
-      background: rgba(0, 240, 255, 0.05);
-      color: #F8FAFC;
-    }
-
-    .flow-progress-step.active::before {
-      background: var(--accent-cyan);
-    }
-
-    .flow-step-num {
-      display: block;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--accent-cyan);
-      margin-bottom: 2px;
-    }
-
-    .flow-step-label {
-      display: block;
-      font-size: 0.78rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     /* Directory Controls & Category Tabs */
     .directory-section {
       padding: 44px 0 72px;
@@ -1909,9 +1828,9 @@ export function renderDirectoryPage(
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      font-size: 0.8rem;
-      height: 38px;
-      min-height: 38px;
+      font-size: 1.08rem;
+      height: 46px;
+      min-height: 46px;
       box-sizing: border-box;
     }
 
@@ -1926,7 +1845,7 @@ export function renderDirectoryPage(
     }
 
     .strip-label {
-      font-size: 0.68rem;
+      font-size: 1.08rem;
       text-transform: uppercase;
       color: var(--text-dim);
       font-weight: 700;
@@ -1938,7 +1857,7 @@ export function renderDirectoryPage(
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       font-weight: 600;
       font-family: 'JetBrains Mono', monospace;
     }
@@ -1965,14 +1884,14 @@ export function renderDirectoryPage(
       color: var(--text-muted);
       font-weight: 500;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
+      font-size: 1.08rem;
     }
 
     .card-failure-reason {
       background: var(--failing-bg);
       border: 1px solid var(--failing-border);
       color: #FCA5A5;
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       padding: 6px 10px;
       border-radius: var(--radius-sm);
       margin-bottom: 12px;
@@ -1988,8 +1907,8 @@ export function renderDirectoryPage(
       display: flex;
       align-items: center;
       gap: 8px;
-      height: 36px;
-      min-height: 36px;
+      height: 38px;
+      min-height: 38px;
       margin-bottom: 14px;
       overflow: hidden;
       white-space: nowrap;
@@ -1999,11 +1918,11 @@ export function renderDirectoryPage(
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 1.05rem;
+      font-size: 1.08rem;
       background: var(--surface-raised);
       border: 1px solid var(--border-strong);
       color: var(--text-muted);
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: var(--radius-xs);
       text-decoration: none;
       transition: all 0.15s ease;
@@ -2028,10 +1947,10 @@ export function renderDirectoryPage(
     }
 
     .card-cap-more {
-      font-size: 0.95rem;
+      font-size: 1.08rem;
       color: var(--text-dim);
       align-self: center;
-      padding: 3px 8px;
+      padding: 4px 10px;
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -2041,16 +1960,16 @@ export function renderDirectoryPage(
       align-items: center;
       padding-top: 14px;
       border-top: 1px solid var(--border-subtle);
-      font-size: 1.05rem;
-      height: 48px;
-      min-height: 48px;
+      font-size: 1.08rem;
+      height: 52px;
+      min-height: 52px;
       box-sizing: border-box;
     }
 
     .fee-note {
       color: var(--text-dim);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
+      font-size: 1.08rem;
       max-width: 200px;
       white-space: nowrap;
       overflow: hidden;
@@ -2059,7 +1978,7 @@ export function renderDirectoryPage(
 
     .card-action-link {
       font-weight: 700;
-      font-size: 1.05rem;
+      font-size: 1.08rem;
       color: var(--primary-bright);
       display: inline-flex;
       align-items: center;
@@ -2088,10 +2007,10 @@ export function renderDirectoryPage(
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid var(--primary);
       color: var(--primary-bright);
-      padding: 2px 9px;
+      padding: 4px 12px;
       border-radius: 6px;
       font-weight: 600;
-      font-size: 0.8rem;
+      font-size: 1.08rem;
     }
 
     .clear-tag-btn {
@@ -2104,8 +2023,8 @@ export function renderDirectoryPage(
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.14);
       color: #D4D4D8;
-      font-size: 0.8rem;
-      padding: 6px 12px;
+      font-size: 1.08rem;
+      padding: 6px 14px;
       border-radius: 8px;
     }
 
@@ -2137,7 +2056,7 @@ export function renderDirectoryPage(
     .showcase-step-item summary {
       padding: 20px 24px;
       font-weight: 700;
-      font-size: 1.05rem;
+      font-size: 1.6rem;
       color: #FFFFFF;
       cursor: pointer;
       list-style: none;
@@ -2149,7 +2068,7 @@ export function renderDirectoryPage(
     .showcase-step-body {
       padding: 0 24px 20px;
       color: var(--text-muted);
-      font-size: 0.94rem;
+      font-size: 1.12rem;
       line-height: 1.65;
     }
 
@@ -2176,7 +2095,7 @@ export function renderDirectoryPage(
       border: none;
       background: transparent;
       color: var(--text-muted);
-      font-size: 0.86rem;
+      font-size: 1.08rem;
       font-weight: 600;
     }
 
@@ -2190,7 +2109,7 @@ export function renderDirectoryPage(
       padding: 24px;
       background: #050609;
       overflow-x: auto;
-      font-size: 0.84rem;
+      font-size: 1.08rem;
       line-height: 1.6;
       color: #E4E4E7;
     }
@@ -2221,7 +2140,7 @@ export function renderDirectoryPage(
     .faq-item summary {
       padding: 20px 24px;
       font-weight: 700;
-      font-size: 1.04rem;
+      font-size: 1.6rem;
       color: #FFFFFF;
       cursor: pointer;
       list-style: none;
@@ -2230,7 +2149,7 @@ export function renderDirectoryPage(
     .faq-item p {
       padding: 0 24px 20px;
       color: var(--text-muted);
-      font-size: 0.95rem;
+      font-size: 1.12rem;
       line-height: 1.7;
     }
 
@@ -2313,7 +2232,7 @@ export function renderDirectoryPage(
       border: none;
       border-bottom: 2px solid transparent;
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       font-weight: 600;
     }
 
@@ -2340,7 +2259,7 @@ export function renderDirectoryPage(
       margin: 0;
       padding: 18px;
       overflow-x: auto;
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       color: #E4E4E7;
     }
 
@@ -2348,8 +2267,8 @@ export function renderDirectoryPage(
       position: absolute;
       top: 10px;
       right: 10px;
-      font-size: 0.76rem;
-      padding: 6px 12px;
+      font-size: 1.08rem;
+      padding: 6px 14px;
     }
 
     @media (max-width: 960px) {
@@ -2660,7 +2579,7 @@ export function renderDirectoryPage(
 
       <!-- Results Count & Active Filter Summary -->
       <div class="results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 0.92rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+        <div style="font-size: 1.08rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
           <span>Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools</span>
           ${searchQuery ? ` matching "<em>${searchQuery}</em>"` : ""}
           ${
@@ -2815,8 +2734,8 @@ Accept: application/json
 
         <div class="policy-callout-card">
           <div>
-            <h3 style="font-size: 1.2rem; color: #FFFFFF; margin-bottom: 6px;">Authorized Commercial &amp; Legal Documentation</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Inspect our complete Privacy Policy, 24-Hour USDT Refund Policy, and Terms of Service.</p>
+            <h3 style="font-size: 1.65rem; color: #FFFFFF; margin-bottom: 6px;">Authorized Commercial &amp; Legal Documentation</h3>
+            <p style="font-size: 1.12rem; color: var(--text-muted);">Inspect our complete Privacy Policy, 24-Hour USDT Refund Policy, and Terms of Service.</p>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <a href="/privacy" class="btn btn-secondary">Privacy Policy</a>
@@ -2834,8 +2753,8 @@ Accept: application/json
     <div class="mcp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-header">
         <div>
-          <h3 id="modal-title" style="font-size: 1.2rem; color: #FFFFFF; font-weight: 700;">Connect AIPages to Claude Desktop or Cursor</h3>
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Equip your coding agent with all 50 registered tools and AUS utilities</p>
+          <h3 id="modal-title" style="font-size: 1.65rem; color: #FFFFFF; font-weight: 700;">Connect AIPages to Claude Desktop or Cursor</h3>
+          <p style="font-size: 1.12rem; color: var(--text-muted); margin-top: 4px;">Equip your coding agent with all 50 registered tools and AUS utilities</p>
         </div>
         <button type="button" class="modal-close-btn" onclick="closeMcpModal()" aria-label="Close modal">&times;</button>
       </div>
@@ -2849,7 +2768,7 @@ Accept: application/json
 
       <div class="modal-body">
         <div class="modal-tab-content" id="tab-content-gateway">
-          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px;">
+          <p style="font-size: 1.12rem; color: var(--text-muted); margin-bottom: 8px;">
             <strong>Install once. Discover &amp; execute everything.</strong> Equips your agent with on-the-fly meta-tools (<code>aipages_search</code> and <code>aipages_execute</code>) to dynamically discover and call any tool across AIPages without restarting:
           </p>
           <div class="code-container">
@@ -2866,7 +2785,7 @@ Accept: application/json
         </div>
 
         <div class="modal-tab-content" id="tab-content-claude" style="display: none;">
-          <p style="font-size: 0.88rem; color: var(--text-muted);">Add this block to your <code>claude_desktop_config.json</code> under <code>mcpServers</code>:</p>
+          <p style="font-size: 1.12rem; color: var(--text-muted);">Add this block to your <code>claude_desktop_config.json</code> under <code>mcpServers</code>:</p>
           <div class="code-container">
             <pre><code id="snippet-claude-config">{
   "mcpServers": {
@@ -2885,7 +2804,7 @@ Accept: application/json
         </div>
 
         <div class="modal-tab-content" id="tab-content-cursor" style="display: none;">
-          <p style="font-size: 0.88rem; color: var(--text-muted);">Place this configuration in your workspace at <code>.cursor/mcp.json</code>:</p>
+          <p style="font-size: 1.12rem; color: var(--text-muted);">Place this configuration in your workspace at <code>.cursor/mcp.json</code>:</p>
           <div class="code-container">
             <pre><code id="snippet-cursor-config">{
   "mcpServers": {
@@ -2900,7 +2819,7 @@ Accept: application/json
         </div>
 
         <div class="modal-tab-content" id="tab-content-curl" style="display: none;">
-          <p style="font-size: 0.88rem; color: var(--text-muted);">Invoke any canonical AUS utility directly over HTTP 402:</p>
+          <p style="font-size: 1.12rem; color: var(--text-muted);">Invoke any canonical AUS utility directly over HTTP 402:</p>
           <div class="code-container">
             <pre><code id="snippet-curl-config">curl -X POST "https://aipages.tech/tool/schema-sanitizer" \\
   -H "Content-Type: application/json" \\

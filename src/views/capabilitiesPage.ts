@@ -392,7 +392,7 @@ ${jsonLdScript}
     }
 
     .stat-label {
-      font-size: 0.82rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -416,7 +416,7 @@ ${jsonLdScript}
       border-radius: 14px;
       padding: 15px 20px 15px 46px;
       color: #FFFFFF;
-      font-size: 0.98rem;
+      font-size: 1.12rem;
       outline: none;
       transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
@@ -500,7 +500,7 @@ ${jsonLdScript}
     }
 
     .cap-count-badge {
-      font-size: 0.75rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: var(--primary-bright);
       background: rgba(245, 158, 11, 0.14);
@@ -511,7 +511,7 @@ ${jsonLdScript}
     }
 
     .cap-desc {
-      font-size: 0.92rem;
+      font-size: 1.12rem;
       color: var(--text-muted);
       line-height: 1.6;
       flex: 1;
@@ -526,7 +526,7 @@ ${jsonLdScript}
 
     .cap-tools-label {
       display: block;
-      font-size: 0.7rem;
+      font-size: 1.08rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -548,8 +548,8 @@ ${jsonLdScript}
       background: #0A0C12;
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 999px;
-      padding: 5px 11px;
-      font-size: 0.78rem;
+      padding: 6px 14px;
+      font-size: 1.08rem;
       color: #FFFFFF;
       text-decoration: none;
     }
@@ -565,25 +565,25 @@ ${jsonLdScript}
     }
 
     .badge-aus {
-      font-size: 0.65rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: var(--primary-bright);
       background: rgba(245, 158, 11, 0.18);
       border-radius: 4px;
-      padding: 1px 5px;
+      padding: 2px 6px;
     }
 
     .cap-tool-price {
-      font-size: 0.72rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      font-size: 0.68rem;
+      font-size: 1.08rem;
       font-weight: 600;
-      padding: 1px 6px;
+      padding: 3px 8px;
       border-radius: 999px;
     }
 
@@ -612,7 +612,7 @@ ${jsonLdScript}
     }
 
     .cap-more-pill {
-      font-size: 0.74rem;
+      font-size: 1.08rem;
       color: var(--text-dim);
       padding: 2px 6px;
     }
@@ -626,7 +626,7 @@ ${jsonLdScript}
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       font-weight: 700;
       color: var(--primary-bright);
     }

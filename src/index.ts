@@ -892,6 +892,9 @@ app.get("/robots.txt", (c) => {
 // ── Public route: IndexNow & Search Engine Verification Key ──
 app.get("/:filename", async (c, next) => {
   const filename = c.req.param("filename") || "";
+  if (filename === "llms-full.txt" || filename === "llms.txt" || filename === "robots.txt") {
+    return next();
+  }
   // 1. IndexNow verification key (.txt)
   if (filename.endsWith(".txt") && /^[a-z0-9_-]{8,64}\.txt$/i.test(filename)) {
     const key = filename.replace(/\.txt$/i, "");

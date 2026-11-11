@@ -39,7 +39,7 @@ const LEGAL_PAGE_STYLES = `
   .legal-tab {
     padding: 10px 20px;
     border-radius: 999px;
-    font-size: 0.88rem;
+    font-size: 1.08rem;
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.03);
@@ -89,7 +89,7 @@ const LEGAL_PAGE_STYLES = `
   }
 
   .legal-section h2 {
-    font-size: 1.45rem;
+    font-size: 1.65rem;
     font-weight: 700;
     color: #FFFFFF;
     margin-bottom: 12px;
@@ -100,7 +100,7 @@ const LEGAL_PAGE_STYLES = `
 
   .legal-section p {
     color: #D4D4D8;
-    font-size: 0.98rem;
+    font-size: 1.12rem;
     line-height: 1.75;
     margin-bottom: 14px;
   }
@@ -118,7 +118,7 @@ const LEGAL_PAGE_STYLES = `
     align-items: flex-start;
     gap: 12px;
     color: #D4D4D8;
-    font-size: 0.95rem;
+    font-size: 1.12rem;
     line-height: 1.65;
   }
 
@@ -143,13 +143,13 @@ const LEGAL_PAGE_STYLES = `
   }
 
   .legal-highlight-box h3 {
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     color: #FFFFFF;
     margin-bottom: 8px;
   }
 
   .legal-highlight-box p {
-    font-size: 0.88rem;
+    font-size: 1.08rem;
     color: var(--text-muted);
     line-height: 1.6;
   }
@@ -173,7 +173,7 @@ const LEGAL_PAGE_STYLES = `
   }
 
   .form-label {
-    font-size: 0.88rem;
+    font-size: 1.08rem;
     font-weight: 600;
     color: #E4E4E7;
   }
@@ -187,7 +187,7 @@ const LEGAL_PAGE_STYLES = `
     border-radius: 10px;
     padding: 13px 16px;
     color: #FFFFFF;
-    font-size: 0.94rem;
+    font-size: 1.12rem;
     font-family: inherit;
     outline: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
@@ -212,7 +212,7 @@ const LEGAL_PAGE_STYLES = `
     border: 1px solid var(--primary-bright);
     border-radius: 10px;
     padding: 14px 28px;
-    font-size: 0.96rem;
+    font-size: 1.12rem;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -581,11 +581,11 @@ export function renderSubmitToolPage() {
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 12px;">
-          <span style="font-size: 0.85rem; color: var(--text-muted);">Listing Fee: <strong style="color: var(--primary-bright);">0.00 USDT (Free)</strong></span>
+          <span style="font-size: 1.08rem; color: var(--text-muted);">Listing Fee: <strong style="color: var(--primary-bright);">0.00 USDT (Free)</strong></span>
           <button type="submit" id="submit-btn" class="btn-primary-amber">Register Tool in Vector Index</button>
         </div>
 
-        <div id="submit-result" style="display: none; margin-top: 20px; padding: 16px; border-radius: 12px; font-size: 0.9rem;"></div>
+        <div id="submit-result" style="display: none; margin-top: 20px; padding: 16px; border-radius: 12px; font-size: 1.08rem;"></div>
       </form>
     </div>
   </main>
