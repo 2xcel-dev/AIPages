@@ -498,7 +498,6 @@ export function renderSharedNavbar(activeRoute = "directory", showMcpButton = tr
           ${renderBrandLogoSvg()}
         </span>
         <span class="brand-wordmark">AI<span>Pages</span></span>
-        <span class="brand-badge">Registry</span>
       </a>
       <div class="nav-links">
         <a href="/tool"${activeRoute === "directory" ? ' class="active"' : ""}>Tool Directory</a>

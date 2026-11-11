@@ -591,16 +591,20 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       color: #040507;
       border: 1px solid var(--primary-bright);
       border-radius: var(--radius-sm);
-      padding: 10px 20px;
-      font-size: 0.9rem;
+      padding: 10px 18px;
+      font-size: 0.88rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       text-decoration: none;
       transition: all 0.18s ease;
       white-space: nowrap;
+      height: 42px;
+      box-sizing: border-box;
+      line-height: 1;
     }
 
     .btn:hover {
@@ -622,11 +626,21 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: stretch;
       gap: 12px;
       margin-bottom: 28px;
+    }
+
+    .hero-cta-row .btn {
+      width: 100%;
+      height: 46px;
+      padding: 0 14px;
+      font-size: 0.86rem;
+      text-align: center;
+      white-space: normal;
+      line-height: 1.25;
     }
 
     /* Hero Feature Cards Stack (Right Column) */
@@ -903,9 +917,18 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       box-sizing: border-box;
     }
 
+    .flow-slide-actions .btn {
+      min-width: 200px;
+      width: 220px;
+      height: 42px;
+      padding: 0 16px;
+      justify-content: center;
+    }
+
     .flow-nav-circle {
       width: 42px;
       height: 42px;
+      flex-shrink: 0;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-strong);
       background: var(--surface-raised);
@@ -1010,24 +1033,36 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .category-tabs,
     .category-tabs-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
     }
 
     .category-tab-btn {
-      padding: 9px 16px;
+      padding: 12px 14px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-strong);
       background: var(--surface-base);
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 600;
-      display: inline-flex;
+      display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
       transition: all 0.18s ease;
+      height: 48px;
+      box-sizing: border-box;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .category-tab-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
     }
 
     .category-tab-btn:hover {
@@ -1042,12 +1077,20 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       font-weight: 700;
     }
 
+    .category-tab-btn.active .category-tab-count {
+      background: rgba(0, 0, 0, 0.35);
+      color: #FFFFFF;
+    }
+
     .category-tab-count {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.74rem;
-      padding: 2px 6px;
+      font-weight: 700;
+      padding: 3px 8px;
       border-radius: var(--radius-xs);
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--primary-bright);
+      flex-shrink: 0;
     }
 
     .directory-controls {
@@ -1873,6 +1916,13 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     @media (max-width: 960px) {
+      .hero-cta-row {
+        grid-template-columns: 1fr;
+      }
+      .category-tabs,
+      .category-tabs-bar {
+        grid-template-columns: 1fr 1fr;
+      }
       .stats-block-grid,
       .flow-carousel-grid,
       .showcase-grid {
@@ -1882,6 +1932,13 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
         grid-template-columns: repeat(4, 1fr);
       }
       .cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .category-tabs,
+      .category-tabs-bar {
         grid-template-columns: 1fr;
       }
     }
@@ -2067,16 +2124,20 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       <!-- Clean 4-Tab Use-Case Category Switcher -->
       <div class="category-tabs-bar" role="tablist" aria-label="Tool Category Tabs">
         <button type="button" class="category-tab-btn active" data-group-filter="all" onclick="filterToolCardsByGroup('all')">
-          All Use Cases <span class="category-tab-count">${sortedTools.length}</span>
+          <span class="category-tab-label">All Use Cases</span>
+          <span class="category-tab-count">${sortedTools.length}</span>
         </button>
         <button type="button" class="category-tab-btn" data-group-filter="core" onclick="filterToolCardsByGroup('core')">
-          Security &amp; Sanitization (Core AUS Utilities) <span class="category-tab-count">${coreCount}</span>
+          <span class="category-tab-label">Security &amp; Sanitization (Core AUS Utilities)</span>
+          <span class="category-tab-count">${coreCount}</span>
         </button>
         <button type="button" class="category-tab-btn" data-group-filter="mesh" onclick="filterToolCardsByGroup('mesh')">
-          Finance &amp; Audit (AUS Mesh, Ledger &amp; Motion) <span class="category-tab-count">${meshCount}</span>
+          <span class="category-tab-label">Finance &amp; Audit (AUS Mesh, Ledger &amp; Motion)</span>
+          <span class="category-tab-count">${meshCount}</span>
         </button>
         <button type="button" class="category-tab-btn" data-group-filter="framework" onclick="filterToolCardsByGroup('framework')">
-          Autonomous AI &amp; Agents (Open Agent Frameworks) <span class="category-tab-count">${frameworkCount}</span>
+          <span class="category-tab-label">Autonomous AI &amp; Agents (Open Agent Frameworks)</span>
+          <span class="category-tab-count">${frameworkCount}</span>
         </button>
       </div>
 
