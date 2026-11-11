@@ -36,10 +36,11 @@ async function pingUrl(serviceName: string, pingUrl: string): Promise<void> {
 
 async function submitIndexNow(urls: string[]): Promise<void> {
   const indexNowUrl = "https://api.indexnow.org/indexnow";
+  const hexKey = process.env.INDEXNOW_KEY || "e57cb8c73c4000ea04ba0eb607228cba";
   const payload = {
     host: "aipages.tech",
-    key: process.env.INDEXNOW_KEY || "aipages_indexnow_verification_key",
-    keyLocation: `https://aipages.tech/${process.env.INDEXNOW_KEY || "aipages_indexnow_verification_key"}.txt`,
+    key: hexKey,
+    keyLocation: `https://aipages.tech/${hexKey}.txt`,
     urlList: urls,
   };
 

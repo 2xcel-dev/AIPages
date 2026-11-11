@@ -1784,7 +1784,7 @@ export function renderDirectoryPage(
     }
 
     .card-title {
-      font-size: 1.12rem;
+      font-size: 1.38rem;
       font-weight: 700;
       color: #FFFFFF;
       line-height: 1.35;
@@ -1792,9 +1792,9 @@ export function renderDirectoryPage(
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 2.7rem;
-      max-height: 2.7rem;
-      margin-bottom: 2px;
+      min-height: 3.4rem;
+      max-height: 3.4rem;
+      margin-bottom: 4px;
     }
 
     .card-title a {
@@ -1808,14 +1808,14 @@ export function renderDirectoryPage(
 
     .sr-machine-slug {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 1.05rem;
       font-weight: 500;
       color: var(--text-dim);
     }
 
     .card-ns {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.73rem;
+      font-size: 1.05rem;
       color: var(--primary);
       display: block;
       white-space: nowrap;
@@ -1825,12 +1825,12 @@ export function renderDirectoryPage(
     }
 
     .tool-card-price-row {
-      padding-top: 10px;
+      padding-top: 12px;
       border-top: 1px solid rgba(255, 255, 255, 0.07);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 32px;
+      height: 38px;
       box-sizing: border-box;
     }
 
@@ -1842,21 +1842,21 @@ export function renderDirectoryPage(
 
     .price-main {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.35rem;
+      font-size: 1.55rem;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.02em;
     }
 
     .price-unit {
-      font-size: 0.78rem;
+      font-size: 1.05rem;
       color: var(--text-muted);
     }
 
     .pill {
-      font-size: 0.68rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 6px;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -1887,7 +1887,7 @@ export function renderDirectoryPage(
     }
 
     .tool-card-body {
-      padding: 14px 10px 6px;
+      padding: 16px 12px 8px;
       display: flex;
       flex-direction: column;
       flex: 1;
@@ -1895,16 +1895,16 @@ export function renderDirectoryPage(
     }
 
     .card-description {
-      font-size: 0.88rem;
+      font-size: 1.08rem;
       color: #CBD5E1;
-      line-height: 1.55;
-      margin-bottom: 14px;
+      line-height: 1.6;
+      margin-bottom: 16px;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 4.1rem;
-      height: 4.1rem;
+      min-height: 5.1rem;
+      height: 5.1rem;
     }
 
     .card-reliability-strip {
@@ -1994,10 +1994,10 @@ export function renderDirectoryPage(
     .card-caps-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      height: 28px;
-      min-height: 28px;
-      margin-bottom: 12px;
+      gap: 8px;
+      height: 36px;
+      min-height: 36px;
+      margin-bottom: 14px;
       overflow: hidden;
       white-space: nowrap;
     }
@@ -2005,12 +2005,12 @@ export function renderDirectoryPage(
     .card-cap-pill {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: 0.74rem;
+      gap: 6px;
+      font-size: 1.05rem;
       background: var(--surface-raised);
       border: 1px solid var(--border-strong);
       color: var(--text-muted);
-      padding: 4px 9px;
+      padding: 5px 12px;
       border-radius: var(--radius-xs);
       text-decoration: none;
       transition: all 0.15s ease;
@@ -2030,15 +2030,15 @@ export function renderDirectoryPage(
     }
 
     .card-cap-default {
-      opacity: 0.75;
+      opacity: 0.85;
       border-style: dashed;
     }
 
     .card-cap-more {
-      font-size: 0.72rem;
+      font-size: 0.95rem;
       color: var(--text-dim);
       align-self: center;
-      padding: 2px 6px;
+      padding: 3px 8px;
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -2046,19 +2046,19 @@ export function renderDirectoryPage(
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 10px;
+      padding-top: 14px;
       border-top: 1px solid var(--border-subtle);
-      font-size: 0.82rem;
-      height: 42px;
-      min-height: 42px;
+      font-size: 1.05rem;
+      height: 48px;
+      min-height: 48px;
       box-sizing: border-box;
     }
 
     .fee-note {
       color: var(--text-dim);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      max-width: 190px;
+      font-size: 0.95rem;
+      max-width: 200px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2066,11 +2066,12 @@ export function renderDirectoryPage(
 
     .card-action-link {
       font-weight: 700;
+      font-size: 1.05rem;
       color: var(--primary-bright);
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
+      gap: 6px;
+      padding: 8px 16px;
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-xs);
       background: var(--surface-raised);
