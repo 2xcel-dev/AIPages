@@ -1,6 +1,10 @@
 import { type Tool } from "../types.js";
 export declare function classifyToolGroup(tool: Tool): "core" | "mesh" | "framework";
 /**
+ * Render a high-contrast vector Solar Icon glyph for a tool group.
+ */
+export declare function renderCategoryGlyphSvg(group: "core" | "mesh" | "framework"): string;
+/**
  * Render an individual tool card using the 21st.dev #5115 Pricing Card glass-header architecture
  * while preserving all reliability, freshness, and capability hooks required by the test suite.
  */

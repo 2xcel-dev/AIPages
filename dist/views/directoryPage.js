@@ -71,6 +71,34 @@ export function classifyToolGroup(tool) {
     return "framework";
 }
 /**
+ * Render a high-contrast vector Solar Icon glyph for a tool group.
+ */
+export function renderCategoryGlyphSvg(group) {
+    if (group === "core") {
+        // Solar Icon: cpu-bolt
+        return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+      <path d="M10 17H14C15.4142 17 16.1213 17 16.5607 16.5607C17 16.1213 17 15.4142 17 14V10C17 8.58579 17 7.87868 16.5607 7.43934C16.1213 7 15.4142 7 14 7H10C8.58579 7 7.87868 7 7.43934 7.43934C7 7.87868 7 8.58579 7 10V14C7 15.4142 7 16.1213 7.43934 16.5607C7.87868 17 8.58579 17 10 17Z" stroke-linecap="round"/>
+      <path d="M12.4286 10L11 12H13L11.5714 14" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 20C8.22876 20 6.34315 20 5.17157 18.8284C4 17.6569 4 15.7712 4 12C4 8.22876 4 6.34315 5.17157 5.17157C6.34315 4 8.22876 4 12 4C15.7712 4 17.6569 4 18.8284 5.17157C20 6.34315 20 8.22876 20 12C20 15.7712 20 17.6569 18.8284 18.8284C17.6569 20 15.7712 20 12 20Z" stroke-linecap="round"/>
+    </svg>`;
+    }
+    if (group === "mesh") {
+        // Solar Icon: layers-minimalistic
+        return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+      <path d="M16.2127 10.8085L19.0212 9.68508C21.0071 8.89073 22 8.49355 22 8C22 7.50645 21.0071 7.10927 19.0212 6.31492L16.2127 5.19153C14.2268 4.39718 13.2339 4 12 4C10.7661 4 9.77318 4.39718 7.7873 5.19153L4.97883 6.31492C2.99294 7.10927 2 7.50645 2 8C2 8.49355 2.99294 8.89073 4.97883 9.68508L7.7873 10.8085C9.77318 11.6028 10.7661 12 12 12C13.2339 12 14.2268 11.6028 16.2127 10.8085Z" stroke-linecap="round"/>
+      <path d="M22 12C22 12 21.0071 12.8907 19.0212 13.6851L16.2127 14.8085C14.2268 15.6028 13.2339 16 12 16C10.7661 16 9.77318 15.6028 7.7873 14.8085L4.97883 13.6851C2.99294 12.8907 2 12 2 12" stroke-linecap="round"/>
+      <path d="M22 16C22 16 21.0071 16.8907 19.0212 17.6851L16.2127 18.8085C14.2268 19.6028 13.2339 20 12 20C10.7661 20 9.77318 19.6028 7.7873 18.8085L4.97883 17.6851C2.99294 16.8907 2 16 2 16" stroke-linecap="round"/>
+    </svg>`;
+    }
+    // Framework: Solar Icon code-circle
+    return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" stroke-linecap="round"/>
+    <path d="M9 8.5L5.5 12L9 15.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M15 8.5L18.5 12L15 15.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M13.5 7L10.5 17" stroke-linecap="round"/>
+  </svg>`;
+}
+/**
  * Render an individual tool card using the 21st.dev #5115 Pricing Card glass-header architecture
  * while preserving all reliability, freshness, and capability hooks required by the test suite.
  */
@@ -127,17 +155,17 @@ export function renderToolCard(tool, baseUrl = "/", activeCapability, cardIndex 
     <article class="tool-card ${cardStatusClass}" data-namespace="${escapedNamespace}" data-group="${group}" style="--card-index: ${cardIndex}; animation-delay: ${Math.min(cardIndex * 32, 640)}ms;">
       <!-- 21st.dev #5115 Glass Header -->
       <div class="tool-card-glass-header">
-        ${flowArt
-        ? `<div class="tool-card-art-thumb">
-                <img src="${flowArt}" alt="${humanTitle} artwork" loading="lazy" />
-              </div>`
-        : ""}
         <div class="tool-card-header">
+          <div class="header-badge-box">
+            ${flowArt
+        ? `<div class="card-avatar-art"><img src="${flowArt}" alt="${humanTitle} avatar" loading="lazy" /></div>`
+        : `<div class="card-avatar-glyph" aria-hidden="true">${renderCategoryGlyphSvg(group)}</div>`}
+          </div>
           <div class="header-left">
             <h3 class="card-title">
-              <a href="/tool/${escapedNamespace}">
+              <a href="/tool/${escapedNamespace}" title="${humanTitle}">
                 <span>${humanTitle}</span>
-                <span class="sr-machine-slug">(${escapedName})</span>
+                <span class="sr-machine-slug sr-only">(${escapedName})</span>
               </a>
             </h3>
             <span class="card-ns" title="${escapedNamespace}">${escapedNamespace}</span>
@@ -166,7 +194,7 @@ export function renderToolCard(tool, baseUrl = "/", activeCapability, cardIndex 
 
       <!-- 21st.dev #5115 Card Body -->
       <div class="tool-card-body">
-        <p class="card-description">${escapedDescription}</p>
+        <p class="card-description" title="${escapedDescription}">${escapedDescription}</p>
 
         <!-- Reliability & Freshness Strip -->
         <div class="card-reliability-strip">
@@ -202,7 +230,7 @@ export function renderToolCard(tool, baseUrl = "/", activeCapability, cardIndex 
         ? `
         <div class="card-caps-row">
           ${tool.capabilities
-            .slice(0, 4)
+            .slice(0, 3)
             .map((c) => {
             const isSelected = activeCapability?.toLowerCase().trim() === c.toLowerCase().trim();
             return `<a href="${baseUrl}?capability=${encodeURIComponent(c)}" class="card-cap-pill ${isSelected ? "card-cap-selected" : ""}" title="Filter by capability: ${escapeHtml(c)}">
@@ -211,11 +239,21 @@ export function renderToolCard(tool, baseUrl = "/", activeCapability, cardIndex 
               </a>`;
         })
             .join(" ")}
-          ${tool.capabilities.length > 4
-            ? `<span class="card-cap-more">+${tool.capabilities.length - 4}</span>`
+          ${tool.capabilities.length > 3
+            ? `<span class="card-cap-more">+${tool.capabilities.length - 3}</span>`
             : ""}
         </div>`
-        : ""}
+        : `
+        <div class="card-caps-row">
+          <span class="card-cap-pill card-cap-default">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            HTTP 402
+          </span>
+          <span class="card-cap-pill card-cap-default">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Ajv Strict
+          </span>
+        </div>`}
 
         <div class="tool-card-footer">
           <span class="fee-note">${pricingModel === "free" || costPerCall === 0
@@ -1019,12 +1057,13 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 20px;
       margin-bottom: 48px;
+      align-items: stretch;
     }
 
     @keyframes cardEntrance {
       0% {
         opacity: 0;
-        transform: translateY(22px) scale(0.97);
+        transform: translateY(16px) scale(0.98);
       }
       100% {
         opacity: 1;
@@ -1059,7 +1098,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       will-change: transform, box-shadow;
       transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), border-color 0.25s ease, box-shadow 0.25s ease;
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-      animation: cardEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      min-height: 388px;
     }
 
     .tool-card::before {
@@ -1085,7 +1125,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       left: 0;
       right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.5), rgba(245, 158, 11, 0.5), transparent);
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.6), rgba(245, 158, 11, 0.6), transparent);
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
@@ -1110,11 +1150,13 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: var(--surface-raised);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 16px;
+      padding: 14px 14px 10px;
       position: relative;
       overflow: hidden;
       transform: translateZ(12px);
       transition: border-color 0.25s ease, background-color 0.25s ease;
+      min-height: 104px;
+      box-sizing: border-box;
     }
 
     .tool-card:hover .tool-card-glass-header {
@@ -1122,34 +1164,57 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: #141926;
     }
 
-    .tool-card-art-thumb {
-      margin: -16px -16px 14px -16px;
-      height: 140px;
-      overflow: hidden;
-      border-bottom: 1px solid var(--border-subtle);
-      background: var(--surface-terminal);
-      position: relative;
+    .tool-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
     }
 
-    .tool-card-art-thumb img {
+    .header-badge-box {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-terminal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-avatar-art {
+      width: 100%;
+      height: 100%;
+    }
+
+    .card-avatar-art img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
-      transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), filter 0.4s ease;
+      transition: transform 0.3s ease;
     }
 
-    .tool-card:hover .tool-card-art-thumb img {
-      transform: scale(1.05);
-      filter: brightness(1.08) contrast(1.02);
+    .tool-card:hover .card-avatar-art img {
+      transform: scale(1.1);
     }
 
-    .tool-card-header {
+    .card-avatar-glyph {
+      width: 100%;
+      height: 100%;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 14px;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.06);
+      transition: transform 0.3s ease, color 0.3s ease, background 0.3s ease;
+    }
+
+    .tool-card:hover .card-avatar-glyph {
+      color: #FFFFFF;
+      background: rgba(0, 240, 255, 0.18);
+      transform: scale(1.08);
     }
 
     .header-left {
@@ -1159,16 +1224,24 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .header-right {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 6px;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
     }
 
     .card-title {
-      font-size: 1.22rem;
+      font-size: 1.12rem;
       font-weight: 700;
       color: #FFFFFF;
-      line-height: 1.3;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.7rem;
+      max-height: 2.7rem;
+      margin-bottom: 2px;
     }
 
     .card-title a {
@@ -1177,7 +1250,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .card-title a:hover {
-      color: var(--primary-bright);
+      color: var(--accent-cyan);
     }
 
     .sr-machine-slug {
@@ -1185,42 +1258,45 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       font-size: 0.75rem;
       font-weight: 500;
       color: var(--text-dim);
-      margin-left: 4px;
     }
 
     .card-ns {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       color: var(--primary);
       display: block;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-top: 4px;
+      max-width: 100%;
     }
 
     .tool-card-price-row {
-      padding-top: 12px;
+      padding-top: 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 32px;
+      box-sizing: border-box;
     }
 
     .price-display {
       display: flex;
       align-items: baseline;
-      flex-wrap: wrap;
       gap: 8px;
     }
 
     .price-main {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.55rem;
+      font-size: 1.35rem;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.02em;
     }
 
     .price-unit {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
     }
 
@@ -1243,14 +1319,12 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: var(--healthy-bg);
       color: var(--healthy);
       border: 1px solid var(--healthy-border);
-      margin-left: auto;
     }
 
     .pill-paid {
       background: rgba(245, 158, 11, 0.14);
       color: var(--primary-bright);
       border: 1px solid rgba(245, 158, 11, 0.35);
-      margin-left: auto;
     }
 
     .pill-first-party {
@@ -1260,18 +1334,24 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .tool-card-body {
-      padding: 16px 12px 10px;
+      padding: 14px 10px 6px;
       display: flex;
       flex-direction: column;
       flex: 1;
+      justify-content: space-between;
     }
 
     .card-description {
-      font-size: 0.92rem;
-      color: #E2E8F0;
-      line-height: 1.6;
-      margin-bottom: 16px;
-      flex-grow: 1;
+      font-size: 0.88rem;
+      color: #CBD5E1;
+      line-height: 1.55;
+      margin-bottom: 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 4.1rem;
+      height: 4.1rem;
     }
 
     .card-reliability-strip {
@@ -1282,8 +1362,11 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       font-size: 0.8rem;
+      height: 38px;
+      min-height: 38px;
+      box-sizing: border-box;
     }
 
     .reliability-col, .freshness-col {
@@ -1343,20 +1426,27 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: var(--failing-bg);
       border: 1px solid var(--failing-border);
       color: #FCA5A5;
-      font-size: 0.78rem;
-      padding: 8px 12px;
+      font-size: 0.76rem;
+      padding: 6px 10px;
       border-radius: var(--radius-sm);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .card-caps-row {
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 6px;
-      margin-bottom: 16px;
+      height: 28px;
+      min-height: 28px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .card-cap-pill {
@@ -1386,6 +1476,11 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       text-decoration: none;
     }
 
+    .card-cap-default {
+      opacity: 0.75;
+      border-style: dashed;
+    }
+
     .card-cap-more {
       font-size: 0.72rem;
       color: var(--text-dim);
@@ -1398,15 +1493,22 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
+      padding-top: 10px;
       border-top: 1px solid var(--border-subtle);
       font-size: 0.82rem;
+      height: 42px;
+      min-height: 42px;
+      box-sizing: border-box;
     }
 
     .fee-note {
       color: var(--text-dim);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
+      font-size: 0.75rem;
+      max-width: 190px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .card-action-link {
@@ -1420,6 +1522,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       border-radius: var(--radius-xs);
       background: var(--surface-raised);
       transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+      white-space: nowrap;
     }
 
     .card-action-link:hover {
@@ -2447,12 +2550,12 @@ Accept: application/json
 
           var centerX = bounds.width / 2;
           var centerY = bounds.height / 2;
-          var tiltX = ((mouseY - centerY) / centerY) * -6.5;
-          var tiltY = ((mouseX - centerX) / centerX) * 6.5;
+          var tiltX = ((mouseY - centerY) / centerY) * -5;
+          var tiltY = ((mouseX - centerX) / centerX) * 5;
 
           if (rafId) cancelAnimationFrame(rafId);
           rafId = requestAnimationFrame(function() {
-            card.style.transform = 'perspective(1000px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg) translateY(-4px) scale3d(1.012, 1.012, 1.012)';
+            card.style.transform = 'perspective(1000px) rotateX(' + tiltX.toFixed(2) + 'deg) rotateY(' + tiltY.toFixed(2) + 'deg) translateY(-3px) scale3d(1.01, 1.01, 1.01)';
           });
         }
 
