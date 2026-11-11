@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E1726" />
+      <stop offset="100%" stop-color="#05080F" />
+    </linearGradient>
+  </defs>
+
+  <!-- High-End Agency Squircle Container -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#icon-grad)" stroke="#1E293B" stroke-width="4" />
+
+  <!-- Terminal Window Mark -->
+  <g transform="translate(106, 116)">
+    <!-- Terminal Outer Frame -->
+    <rect x="0" y="0" width="300" height="280" rx="36" fill="#090D16" stroke="#334155" stroke-width="4" />
+
+    <!-- Terminal Controls -->
+    <circle cx="50" cy="50" r="10" fill="#EF4444" />
+    <circle cx="80" cy="50" r="10" fill="#FFD000" />
+    <circle cx="110" cy="50" r="10" fill="#10B981" />
+
+    <!-- Command Prompt '>' in Cyber Yellow -->
+    <path d="M 55 125 L 98 155 L 55 185" fill="none" stroke="#FFD000" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Agent Cursor Block -->
+    <rect x="125" y="130" width="44" height="50" rx="8" fill="#FFD000" />
+
+    <!-- Terminal Code / Directory Lines -->
+    <line x1="190" y1="155" x2="245" y2="155" stroke="#64748B" stroke-width="8" stroke-linecap="round" />
+    <line x1="55" y1="220" x2="210" y2="220" stroke="#334155" stroke-width="6" stroke-linecap="round" />
+  </g>
+</svg>

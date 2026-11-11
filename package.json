@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch --dns-result-order=ipv4first src/index.ts",
-    "build": "tsc && node -e \"console.log('Build verified, dist contents:', require('fs').readdirSync('dist'))\"",
+    "build": "tsc && node -e \"const fs=require('fs'); fs.cpSync('assets', 'dist/assets', {recursive:true}); console.log('Build verified, dist contents:', fs.readdirSync('dist'))\"",
     "start": "node dist/index.js",
     "seed": "tsx scripts/seed.ts",
     "setup-index": "tsx scripts/setup-vector-index.ts",

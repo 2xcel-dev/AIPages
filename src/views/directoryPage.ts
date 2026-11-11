@@ -215,11 +215,7 @@ export function renderToolCard(
       <div class="tool-card-glass-header">
         <div class="tool-card-header">
           <div class="header-badge-box">
-            ${
-              flowArt
-                ? `<div class="card-avatar-art"><img src="${flowArt}" alt="${humanTitle} avatar" loading="lazy" /></div>`
-                : `<div class="card-avatar-glyph" aria-hidden="true">${renderCategoryGlyphSvg(group)}</div>`
-            }
+            <div class="card-avatar-glyph" aria-hidden="true">${renderCategoryGlyphSvg(group)}</div>
           </div>
           <div class="header-left">
             <h3 class="card-title">
@@ -1387,15 +1383,24 @@ export function renderDirectoryPage(
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--accent-cyan);
-      background: rgba(0, 240, 255, 0.06);
-      transition: transform 0.3s ease, color 0.3s ease, background 0.3s ease;
+      color: var(--primary-bright);
+      background: rgba(245, 158, 11, 0.08);
+      border-radius: inherit;
+      transition: all 0.35s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .card-avatar-glyph svg {
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .tool-card:hover .card-avatar-glyph {
-      color: #FFFFFF;
-      background: rgba(0, 240, 255, 0.18);
-      transform: scale(1.08);
+      color: #040507;
+      background: var(--primary-bright);
+      box-shadow: 0 0 20px rgba(255, 208, 0, 0.6);
+    }
+
+    .tool-card:hover .card-avatar-glyph svg {
+      transform: scale(1.15) rotate(6deg);
     }
 
     .header-left {

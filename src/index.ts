@@ -1097,7 +1097,9 @@ app.get("/assets/flow/:file", (c) => {
   if (!safeFile.endsWith(".jpg") && !safeFile.endsWith(".jpeg") && !safeFile.endsWith(".png")) {
     return c.text("Not found", 404);
   }
-  const filePath = path.resolve(process.cwd(), "assets", "flow", safeFile);
+  const candidate1 = path.resolve(process.cwd(), "assets", "flow", safeFile);
+  const candidate2 = path.resolve(process.cwd(), "dist", "assets", "flow", safeFile);
+  const filePath = fs.existsSync(candidate1) ? candidate1 : candidate2;
   try {
     if (!fs.existsSync(filePath)) {
       return c.text("Asset not found", 404);

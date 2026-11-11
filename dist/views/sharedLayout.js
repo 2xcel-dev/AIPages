@@ -135,6 +135,27 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    position: relative;
+  }
+
+  /* Full-site Glass Tiles WebGL Canvas */
+  #site-glass-tiles-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+
+  /* Ensure all layout containers layer cleanly above the ambient glass background */
+  nav.nav,
+  main,
+  footer.minimal-footer,
+  .modal-backdrop {
+    position: relative;
+    z-index: 1;
   }
 
   h1, h2, h3, h4, .font-display {
@@ -606,6 +627,136 @@ export function renderSharedFooter() {
         </div>
       </div>
     </div>
-  </footer>`;
+  </footer>
+  <canvas id="site-glass-tiles-canvas" aria-hidden="true"></canvas>
+  <script>
+    (function initSiteGlassTiles() {
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+      var cv = document.getElementById('site-glass-tiles-canvas');
+      if (!cv) return;
+      var gl = cv.getContext('webgl', { antialias: false, alpha: true });
+      if (!gl) return;
+
+      var VERT = 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }';
+      var FRAG = 'precision highp float;\n' +
+        'uniform vec2 uRes; uniform float uTime; uniform float uCols; uniform vec2 uMouse; uniform float uLamp;\n' +
+        'uniform vec3 uGlow; uniform vec3 uDeep; uniform vec3 uGround;\n' +
+        'float light(vec2 p){\n' +
+        '  float t = uTime;\n' +
+        '  float v = 0.0;\n' +
+        '  for (int i = 0; i < 3; i++){\n' +
+        '    float fi = float(i);\n' +
+        '    float y = 0.5 + 0.32 * sin(p.x * (0.9 + fi * 0.35) + t * (0.21 + fi * 0.07) + fi * 2.1) + 0.12 * sin(p.x * 2.7 - t * 0.3 + fi);\n' +
+        '    v += exp(-pow((p.y - y) / 0.02, 2.0)) * (1.0 - fi * 0.18);\n' +
+        '  }\n' +
+        '  for (int i = 0; i < 3; i++){\n' +
+        '    float fi = float(i);\n' +
+        '    vec2 c = vec2(0.5 * uRes.x / uRes.y + 0.6 * sin(t * 0.13 + fi * 2.4), 0.5 + 0.35 * cos(t * 0.11 + fi * 1.7));\n' +
+        '    v += exp(-dot(p - c, p - c) / 0.05) * 0.35;\n' +
+        '  }\n' +
+        '  vec2 m = uMouse / uRes.y;\n' +
+        '  v += exp(-dot(p - m, p - m) / 0.012) * 1.2 * uLamp;\n' +
+        '  return v;\n' +
+        '}\n' +
+        'void main(){\n' +
+        '  vec2 p = gl_FragCoord.xy / uRes.y;\n' +
+        '  float aspect = uRes.x / uRes.y;\n' +
+        '  float size = aspect / uCols;\n' +
+        '  vec2 id = floor(p / size);\n' +
+        '  vec2 q = (fract(p / size) - 0.5) * 2.0;\n' +
+        '  vec2 aq = abs(q);\n' +
+        '  float sq = pow(pow(aq.x, 9.0) + pow(aq.y, 9.0), 1.0 / 9.0);\n' +
+        '  float d = sq - 0.955;\n' +
+        '  if (d > 0.0) { gl_FragColor = vec4(uGround * 0.6, 1.0); return; }\n' +
+        '  float edge = clamp(1.0 + d / 0.55, 0.0, 1.0);\n' +
+        '  vec2 g = normalize(sign(q) * pow(aq + 1e-4, vec2(8.0)));\n' +
+        '  float bend = pow(edge, 2.2);\n' +
+        '  vec2 centre = (id + 0.5) * size;\n' +
+        '  vec2 look = centre + q * size * 0.5 * (1.0 - 0.55 * bend) - g * bend * size * 0.9;\n' +
+        '  float L = light(look);\n' +
+        '  float face = light(centre + q * size * 0.32) * 0.3;\n' +
+        '  float rim = L * pow(edge, 1.5) * 3.2;\n' +
+        '  float fres = pow(edge, 8.0) * 0.08;\n' +
+        '  vec3 col = uGround + uDeep * (face + 0.04) + uGlow * (rim + face * 0.6) + vec3(1.0) * pow(max(rim - 1.2, 0.0), 2.0) * 0.35 + fres;\n' +
+        '  col *= 0.85 + 0.15 * (0.5 + 0.5 * q.y);\n' +
+        '  gl_FragColor = vec4(col, 1.0);\n' +
+        '}';
+
+      function compile(type, src) {
+        var sh = gl.createShader(type);
+        gl.shaderSource(sh, src);
+        gl.compileShader(sh);
+        return sh;
+      }
+      var pr = gl.createProgram();
+      gl.attachShader(pr, compile(gl.VERTEX_SHADER, VERT));
+      gl.attachShader(pr, compile(gl.FRAGMENT_SHADER, FRAG));
+      gl.linkProgram(pr);
+      if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return;
+      gl.useProgram(pr);
+
+      gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+      var uRes = gl.getUniformLocation(pr, 'uRes');
+      var uTime = gl.getUniformLocation(pr, 'uTime');
+      var uCols = gl.getUniformLocation(pr, 'uCols');
+      var uMouse = gl.getUniformLocation(pr, 'uMouse');
+      var uLamp = gl.getUniformLocation(pr, 'uLamp');
+
+      // Canonical AIPages Cyber Yellow / Amber Depth Palette
+      gl.uniform3f(gl.getUniformLocation(pr, 'uGlow'), 1.0, 0.815, 0.0);   // #FFD000 Cyber Yellow
+      gl.uniform3f(gl.getUniformLocation(pr, 'uDeep'), 0.85, 0.466, 0.02);  // #D97706 Deep Amber
+      gl.uniform3f(gl.getUniformLocation(pr, 'uGround'), 0.015, 0.02, 0.028); // #040507 Deep Void
+
+      var m = { x: 0, y: 0, tx: 0, ty: 0, l: 0, tl: 0 };
+      var t = 12;
+      var last = 0;
+
+      function resize() {
+        var scale = Math.min(window.devicePixelRatio || 1, 1.5) * 0.75;
+        cv.width = Math.max(1, Math.round(window.innerWidth * scale));
+        cv.height = Math.max(1, Math.round(window.innerHeight * scale));
+        gl.viewport(0, 0, cv.width, cv.height);
+        gl.uniform2f(uRes, cv.width, cv.height);
+        var cols = window.innerWidth < 768 ? 6.0 : 12.0;
+        gl.uniform1f(uCols, cols);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function onMove(e) {
+        m.tx = (e.clientX / window.innerWidth) * cv.width;
+        m.ty = (1 - (e.clientY / window.innerHeight)) * cv.height;
+        if (!m.l) { m.x = m.tx; m.y = m.ty; }
+        m.tl = 1;
+      }
+      function onLeave() { m.tl = 0; }
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerleave', onLeave);
+
+      function render(now) {
+        if (!document.hidden) {
+          var dt = last ? Math.min(0.08, (now - last) / 1000) : 0.016;
+          last = now;
+          t += dt * 0.7;
+          m.x += (m.tx - m.x) * 0.12;
+          m.y += (m.ty - m.y) * 0.12;
+          m.l += (m.tl - m.l) * 0.06;
+
+          gl.uniform1f(uTime, t);
+          gl.uniform2f(uMouse, m.x, m.y);
+          gl.uniform1f(uLamp, m.l);
+          gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+        requestAnimationFrame(render);
+      }
+      requestAnimationFrame(render);
+    })();
+  </script>`;
 }
 //# sourceMappingURL=sharedLayout.js.map
