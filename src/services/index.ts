@@ -26,3 +26,4 @@ export * from "./browserStealth.js";
 
 // Crawling & Indexing Utilities
 export * from "./agentScraper.js";
+export * from "./contextCompressor.js";

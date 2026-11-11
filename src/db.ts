@@ -460,14 +460,15 @@ export class InMemoryToolStore implements ToolStore {
     }
     if (filter?.q && filter.q.trim()) {
       const cLower = filter.q.trim().toLowerCase();
+      const terms = cLower.split(/\s+/).filter((t) => t.length > 1);
       result = result.filter((t) => {
-        if (t.name.toLowerCase().includes(cLower)) return true;
-        if (t.namespace.toLowerCase().includes(cLower)) return true;
-        if (t.description?.toLowerCase().includes(cLower)) return true;
-        if (t.capabilities && Array.isArray(t.capabilities) && t.capabilities.some((c) => c.toLowerCase().includes(cLower))) return true;
+        const corpus = `${t.name} ${t.namespace} ${t.description ?? ""} ${(t.capabilities || []).join(" ")}`.toLowerCase();
+        if (corpus.includes(cLower)) return true;
+        if (terms.length > 1 && terms.some((term) => corpus.includes(term))) return true;
         if (t.schema?.properties) {
           for (const [propName, propDef] of Object.entries(t.schema.properties)) {
             if (propName.toLowerCase().includes(cLower)) return true;
+            if (terms.length > 0 && terms.some((term) => propName.toLowerCase().includes(term))) return true;
             if (
               typeof propDef === "object" &&
               propDef !== null &&

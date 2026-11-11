@@ -754,6 +754,60 @@ export const CANONICAL_AUS_TOOLS: Omit<Tool, "embedding" | "updatedAt">[] = [
       name: "2XceL AUS Fleet",
     },
   },
+  {
+    namespace: "net.2xcel.aus.context-compressor",
+    name: "context_compressor",
+    description:
+      "Agent Utility Service (AUS) Context Compressor: High-performance semantic token compressor and budget optimizer. Reduces oversized context payloads down to a strict token budget without losing critical entities, code symbols, key-value pairs, or operational facts.",
+    schema: {
+      type: "object",
+      properties: {
+        content: {
+          type: "string",
+          description: "Raw markdown, long text, error log, or JSON payload to compress",
+        },
+        budget_tokens: {
+          type: "number",
+          default: 1500,
+          description: "Target maximum token count for the compressed output",
+        },
+        format: {
+          type: "string",
+          enum: ["facts", "markdown", "json", "summary"],
+          default: "facts",
+          description: "Output format structure for distilled context",
+        },
+        preserve_entities: {
+          type: "boolean",
+          default: true,
+          description: "Prioritize preserving numbers, code identifiers, URLs, and key entities",
+        },
+      },
+      required: ["content"],
+    },
+    connectionType: "http",
+    endpointUrl: `${AUS_BASE_URL}/tool/context-compressor`,
+    healthStatus: "unknown",
+    lastChecked: undefined,
+    failureReason: null,
+    status: "active",
+    isFirstParty: true,
+    capabilities: ["token-compression", "context-optimization", "semantic-distillation", "token-optimization"],
+    pricing: {
+      model: "paid",
+      costPerCall: 0.002,
+    },
+    authentication: AUS_AUTH_SPEC,
+    rateLimit: AUS_STANDARD_RATE_LIMIT,
+    protocolDetails: AUS_PROTOCOL_DETAILS,
+    developer: {
+      address: AUS_DEVELOPER_ADDRESS,
+      listingFeePaid: true,
+      listingFeeAmount: 0,
+      isFirstParty: true,
+      name: "2XceL AUS Fleet",
+    },
+  },
 ];
 
 export interface RawScrapedTool {

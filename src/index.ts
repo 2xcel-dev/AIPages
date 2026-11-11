@@ -31,7 +31,7 @@ import { setStore, default as ingestionRouter } from "./invocation.js";
 import { setRateLimitStore, MongoRateStore, startRateLimitCleanup, tokenBucket } from "./rate-limit.js";
 import { metrics } from "./metrics.js";
 import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
-import { deriveReliability, type Tool, type ToolSchema, type ConnectionType, type HealthStatus } from "./types.js";
+import { deriveReliability, type Tool, type ToolSchema, type ConnectionType, type HealthStatus, type SearchResult } from "./types.js";
 import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402.js";
 import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
@@ -293,8 +293,13 @@ app.get("/search", async (c) => {
   const limit = Math.min(Number(c.req.query("limit") ?? 10), 50);
 
   const activeStore = await getActiveStore();
-  const queryEmbedding = await embed(query);
-  let results = await activeStore.search(queryEmbedding, limit);
+  let results: SearchResult[] = [];
+  try {
+    const queryEmbedding = await embed(query);
+    results = await activeStore.search(queryEmbedding, limit);
+  } catch (err) {
+    console.warn("[search] Vector search failed or hit rate limit, falling back to keyword search:", err);
+  }
 
   // Fallback: If vector search returns 0 results (e.g. Gemini embedding quota/rate limit or index drift),
   // perform resilient keyword & capability matching so developers/agents never receive false empty responses.
@@ -303,15 +308,40 @@ app.get("/search", async (c) => {
     const qLower = query.toLowerCase().trim();
     const terms = qLower.split(/\s+/).filter((t) => t.length > 1);
     const matched = allTools.filter((t) => {
-      const corpus = `${t.name} ${t.description} ${t.namespace} ${(t.capabilities || []).join(" ")}`.toLowerCase();
-      return terms.length > 0
-        ? terms.some((term) => corpus.includes(term))
-        : corpus.includes(qLower);
+      const corpus = `${t.name} ${t.description ?? ""} ${t.namespace} ${(t.capabilities || []).join(" ")}`.toLowerCase();
+      if (corpus.includes(qLower)) return true;
+      if (terms.length > 0 && terms.some((term) => corpus.includes(term))) return true;
+      if (t.schema?.properties) {
+        for (const [propName, propDef] of Object.entries(t.schema.properties)) {
+          if (propName.toLowerCase().includes(qLower)) return true;
+          if (terms.some((term) => propName.toLowerCase().includes(term))) return true;
+          if (
+            typeof propDef === "object" &&
+            propDef !== null &&
+            (propDef as any).description?.toLowerCase().includes(qLower)
+          ) {
+            return true;
+          }
+        }
+      }
+      return false;
     });
+
+    matched.sort((a, b) => {
+      const corpusA = `${a.name} ${a.description ?? ""} ${a.namespace} ${(a.capabilities || []).join(" ")}`.toLowerCase();
+      const corpusB = `${b.name} ${b.description ?? ""} ${b.namespace} ${(b.capabilities || []).join(" ")}`.toLowerCase();
+      const exactA = corpusA.includes(qLower) ? 10 : 0;
+      const exactB = corpusB.includes(qLower) ? 10 : 0;
+      const termsA = terms.filter((term) => corpusA.includes(term)).length;
+      const termsB = terms.filter((term) => corpusB.includes(term)).length;
+      return (exactB + termsB) - (exactA + termsA);
+    });
+
     results = matched.slice(0, limit).map((t) => ({
       namespace: t.namespace,
       name: t.name,
       description: t.description,
+      schema: t.schema,
       connectionType: t.connectionType,
       endpointUrl: t.endpointUrl,
       healthStatus: t.healthStatus,
@@ -600,13 +630,13 @@ export async function handleDirectoryRequest(
   // Ensure matching covers name, namespace, description, and capabilities
   if (searchQuery && searchQuery.trim()) {
     const q = searchQuery.toLowerCase().trim();
-    tools = tools.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.namespace.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q)) ||
-        (t.capabilities && Array.isArray(t.capabilities) && t.capabilities.some((c) => c.toLowerCase().includes(q))),
-    );
+    const terms = q.split(/\s+/).filter((term: string) => term.length > 1);
+    tools = tools.filter((t) => {
+      const corpus = `${t.name} ${t.namespace} ${t.description ?? ""} ${(t.capabilities || []).join(" ")}`.toLowerCase();
+      if (corpus.includes(q)) return true;
+      if (terms.length > 1 && terms.some((term: string) => corpus.includes(term))) return true;
+      return false;
+    });
   }
 
   const total = tools.length;

@@ -511,12 +511,12 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px;
+      padding: 8px 16px;
       background: var(--surface-raised);
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
+      font-size: 1.08rem;
       color: #F8FAFC;
       margin-bottom: 18px;
     }
@@ -784,7 +784,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.76rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: #38BDF8;
       font-family: 'JetBrains Mono', monospace;
@@ -801,11 +801,11 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .verified-network-badge {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
+      font-size: 1.08rem;
       color: var(--primary-bright);
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 2px 7px;
+      padding: 4px 10px;
       border-radius: 4px;
       white-space: nowrap;
       flex-shrink: 0;
@@ -833,7 +833,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .section-subtitle {
-      font-size: 0.98rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
       max-width: 620px;
       margin-top: 6px;
@@ -866,14 +866,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .flow-slide-counter {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.05rem;
-      color: var(--accent-cyan);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      display: inline-block;
-      height: 22px;
+      display: none;
     }
 
     .flow-slide-title {
@@ -1444,7 +1437,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .category-tab-count {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
+      font-size: 1.08rem;
       font-weight: 700;
       padding: 4px 10px;
       border-radius: var(--radius-xs);
@@ -1507,7 +1500,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .capability-drawer summary {
       cursor: pointer;
-      font-size: 0.84rem;
+      font-size: 1.08rem;
       font-weight: 600;
       color: var(--primary-bright);
       user-select: none;
@@ -2454,7 +2447,6 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
         <div class="flow-carousel-grid">
           <div class="flow-carousel-narrative">
             <div>
-              <span id="flow-counter" class="flow-slide-counter">Slide 01 of 07</span>
               <h3 id="flow-title" class="flow-slide-title">The API Marketplace Built for AI Agents</h3>
               <p id="flow-subtitle" class="flow-slide-subtitle">Autonomous Discovery and USDT Micro-Payments</p>
               <p id="flow-desc" class="flow-slide-desc">
@@ -2469,37 +2461,6 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
           <div class="flow-carousel-art">
             <img id="flow-image" src="/assets/flow/flow-01-hero-marketplace.jpg" alt="The API Marketplace Built for AI Agents" />
           </div>
-        </div>
-
-        <div class="flow-progress-bar" role="tablist" aria-label="Google Flow Showcase Slides">
-          <button type="button" class="flow-progress-step active" data-slide="0" onclick="selectFlowSlide(0)">
-            <span class="flow-step-num">01</span>
-            <span class="flow-step-label">API Marketplace</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="1" onclick="selectFlowSlide(1)">
-            <span class="flow-step-num">02</span>
-            <span class="flow-step-label">8 Core Utilities</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="2" onclick="selectFlowSlide(2)">
-            <span class="flow-step-num">03</span>
-            <span class="flow-step-label">Schema Sanitizer</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="3" onclick="selectFlowSlide(3)">
-            <span class="flow-step-num">04</span>
-            <span class="flow-step-label">Financial Audit</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="4" onclick="selectFlowSlide(4)">
-            <span class="flow-step-num">05</span>
-            <span class="flow-step-label">Verification Oracle</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="5" onclick="selectFlowSlide(5)">
-            <span class="flow-step-num">06</span>
-            <span class="flow-step-label">Geospatial Verifier</span>
-          </button>
-          <button type="button" class="flow-progress-step" data-slide="6" onclick="selectFlowSlide(6)">
-            <span class="flow-step-num">07</span>
-            <span class="flow-step-label">Scale Workflows</span>
-          </button>
         </div>
       </div>
     </section>
@@ -2942,10 +2903,14 @@ Accept: application/json
       }
       currentFlowIndex = (index + FLOW_SLIDES.length) % FLOW_SLIDES.length;
       var slide = FLOW_SLIDES[currentFlowIndex];
-      document.getElementById('flow-counter').textContent = slide.num;
-      document.getElementById('flow-title').textContent = slide.title;
-      document.getElementById('flow-subtitle').textContent = slide.subtitle;
-      document.getElementById('flow-desc').textContent = slide.desc;
+      var counterEl = document.getElementById('flow-counter');
+      if (counterEl) counterEl.textContent = slide.num;
+      var titleEl = document.getElementById('flow-title');
+      if (titleEl) titleEl.textContent = slide.title;
+      var subEl = document.getElementById('flow-subtitle');
+      if (subEl) subEl.textContent = slide.subtitle;
+      var descEl = document.getElementById('flow-desc');
+      if (descEl) descEl.textContent = slide.desc;
       var imgEl = document.getElementById('flow-image');
       if (imgEl) {
         imgEl.style.opacity = '0.35';

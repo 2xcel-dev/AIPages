@@ -112,16 +112,25 @@ export function matchesSearch(tool, searchQuery) {
     const q = searchQuery.toLowerCase().trim();
     if (!q)
         return true;
-    if (tool.name.toLowerCase().includes(q))
+    const corpus = `${tool.name} ${tool.namespace} ${tool.description ?? ""} ${(tool.capabilities ?? []).join(" ")}`.toLowerCase();
+    if (corpus.includes(q))
         return true;
-    if (tool.namespace.toLowerCase().includes(q))
+    const terms = q.split(/\s+/).filter((t) => t.length > 1);
+    if (terms.length > 1 && terms.some((term) => corpus.includes(term))) {
         return true;
-    if (tool.description && tool.description.toLowerCase().includes(q))
-        return true;
-    if (tool.capabilities &&
-        Array.isArray(tool.capabilities) &&
-        tool.capabilities.some((c) => c.toLowerCase().includes(q))) {
-        return true;
+    }
+    if (tool.schema?.properties) {
+        for (const [propName, propDef] of Object.entries(tool.schema.properties)) {
+            if (propName.toLowerCase().includes(q))
+                return true;
+            if (terms.length > 0 && terms.some((term) => propName.toLowerCase().includes(term)))
+                return true;
+            if (typeof propDef === "object" &&
+                propDef !== null &&
+                propDef.description?.toLowerCase().includes(q)) {
+                return true;
+            }
+        }
     }
     return false;
 }

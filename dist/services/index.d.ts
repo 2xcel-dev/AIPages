@@ -20,4 +20,5 @@ export * from "./githubSummarizer.js";
 export * from "./leadEnrich.js";
 export * from "./browserStealth.js";
 export * from "./agentScraper.js";
+export * from "./contextCompressor.js";
 //# sourceMappingURL=index.d.ts.map
