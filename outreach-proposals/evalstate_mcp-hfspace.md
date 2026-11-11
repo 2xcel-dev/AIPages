@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/evalstate/mcp-hfspace
 **Referral Code:** `ref_mcp_evalstate_mcp-hfspace`
-**Generated At:** 2026-11-10T03:17:46.122Z
+**Generated At:** 2026-11-10T18:54:53.606Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_evalstate_mcp-hfspace",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_evalstate_mcp-hfspace&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.121Z"
+    "generatedAt": "2026-11-10T18:54:53.606Z"
   }
 }
 ```

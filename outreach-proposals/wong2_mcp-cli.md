@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/wong2/mcp-cli
 **Referral Code:** `ref_mcp_wong2_mcp-cli`
-**Generated At:** 2026-11-10T03:17:46.115Z
+**Generated At:** 2026-11-10T18:54:53.590Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_wong2_mcp-cli",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_wong2_mcp-cli&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.115Z"
+    "generatedAt": "2026-11-10T18:54:53.590Z"
   }
 }
 ```

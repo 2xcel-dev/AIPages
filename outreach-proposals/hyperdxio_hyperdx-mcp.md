@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/hyperdxio/hyperdx-mcp
 **Referral Code:** `ref_mcp_hyperdxio_hyperdx-mcp`
-**Generated At:** 2026-11-10T03:17:46.118Z
+**Generated At:** 2026-11-10T18:54:53.603Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_hyperdxio_hyperdx-mcp",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_hyperdxio_hyperdx-mcp&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.118Z"
+    "generatedAt": "2026-11-10T18:54:53.603Z"
   }
 }
 ```

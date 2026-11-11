@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/punkpeye/awesome-mcp-servers
 **Referral Code:** `ref_mcp_punkpeye_awesome-mcp-servers`
-**Generated At:** 2026-11-10T03:17:46.114Z
+**Generated At:** 2026-11-10T18:54:53.589Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_punkpeye_awesome-mcp-servers",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_punkpeye_awesome-mcp-servers&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.114Z"
+    "generatedAt": "2026-11-10T18:54:53.589Z"
   }
 }
 ```

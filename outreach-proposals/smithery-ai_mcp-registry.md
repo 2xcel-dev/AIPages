@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/smithery-ai/mcp-registry
 **Referral Code:** `ref_mcp_smithery-ai_mcp-registry`
-**Generated At:** 2026-11-10T03:17:46.120Z
+**Generated At:** 2026-11-10T18:54:53.605Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_smithery-ai_mcp-registry",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_smithery-ai_mcp-registry&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.119Z"
+    "generatedAt": "2026-11-10T18:54:53.605Z"
   }
 }
 ```

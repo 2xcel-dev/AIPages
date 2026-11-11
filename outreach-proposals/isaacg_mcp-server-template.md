@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/isaacg/mcp-server-template
 **Referral Code:** `ref_mcp_isaacg_mcp-server-template`
-**Generated At:** 2026-11-10T03:17:46.116Z
+**Generated At:** 2026-11-10T18:54:53.591Z
 
 ---
 
@@ -84,7 +84,7 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_isaacg_mcp-server-template",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_isaacg_mcp-server-template&source=mcp_prospecting",
-    "generatedAt": "2026-11-10T03:17:46.116Z"
+    "generatedAt": "2026-11-10T18:54:53.591Z"
   }
 }
 ```
