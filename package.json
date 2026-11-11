@@ -1,6 +1,6 @@
 {
   "name": "aipages-backend",
-  "version": "0.1.3",
+  "version": "1.0.0",
   "description": "Machine-native discovery registry and vector search index for autonomous AI agent tools.",
   "type": "module",
   "license": "MIT",
