@@ -388,39 +388,57 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     /* 21st.dev #8948 Spacious Centered SaaS Hero */
+    /* 21st.dev #8948 SaaS Hero Redesigned with Cyber-Terminal HUD */
     .hero-section {
       position: relative;
-      padding: 84px 0 64px;
-      text-align: center;
+      padding: 64px 0 72px;
       overflow: hidden;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    .hero-glow {
-      position: absolute;
-      top: -120px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 820px;
-      height: 360px;
-      background: radial-gradient(circle, rgba(245, 158, 11, 0.14) 0%, rgba(6, 6, 8, 0) 70%);
-      pointer-events: none;
-      z-index: 0;
+    .hero-grid-split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .hero-protocol-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #F8FAFC;
+      margin-bottom: 18px;
+    }
+
+    .hero-protocol-badge .status-ping {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--healthy);
+      box-shadow: 0 0 10px var(--healthy);
     }
 
     .hero-inner {
       position: relative;
       z-index: 1;
-      max-width: 880px;
-      margin: 0 auto;
+      text-align: left;
     }
 
     .hero-headline {
-      font-size: clamp(2.6rem, 5.2vw, 4.4rem);
+      font-size: clamp(2.3rem, 4.2vw, 3.8rem);
       font-weight: 800;
-      line-height: 1.08;
+      line-height: 1.1;
       letter-spacing: -0.035em;
-      color: #FFFFFF;
-      margin-bottom: 22px;
+      color: #F8FAFC;
+      margin-bottom: 18px;
+      text-align: left;
     }
 
     .hero-headline span {
@@ -430,35 +448,35 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-subtitle {
-      font-size: clamp(1.05rem, 1.8vw, 1.24rem);
-      color: #D4D4D8;
-      max-width: 720px;
-      margin: 0 auto 36px;
-      line-height: 1.7;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-bottom: 26px;
+      line-height: 1.65;
+      text-align: left;
     }
 
     .hero-search-form {
-      max-width: 740px;
-      margin: 0 auto 28px;
-      background: #0B0D14;
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 16px;
-      padding: 8px;
+      max-width: 100%;
+      margin: 0 0 22px 0;
+      background: var(--surface-base);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 6px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
 
     .hero-search-form:focus-within {
-      border-color: var(--primary);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 3px rgba(245, 158, 11, 0.15);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.25), 0 12px 30px rgba(0, 0, 0, 0.6);
     }
 
     .hero-search-icon {
-      margin-left: 14px;
-      color: var(--primary);
+      margin-left: 12px;
+      color: var(--accent-cyan);
       flex-shrink: 0;
     }
 
@@ -466,23 +484,24 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       flex: 1;
       background: transparent;
       border: none;
-      padding: 12px 8px;
-      font-size: 1rem;
-      color: #FFFFFF;
+      padding: 10px 8px;
+      font-size: 0.94rem;
+      color: #F8FAFC;
       outline: none;
+      font-family: inherit;
     }
 
     .search-input::placeholder {
-      color: #71717A;
+      color: var(--text-dim);
     }
 
     .btn {
       background: var(--primary);
-      color: #060608;
+      color: #040507;
       border: 1px solid var(--primary-bright);
-      border-radius: 12px;
-      padding: 12px 24px;
-      font-size: 0.94rem;
+      border-radius: var(--radius-sm);
+      padding: 10px 20px;
+      font-size: 0.9rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -490,31 +509,121 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       gap: 8px;
       text-decoration: none;
       transition: all 0.18s ease;
+      white-space: nowrap;
     }
 
     .btn:hover {
       background: var(--primary-bright);
-      color: #060608;
+      color: #040507;
       text-decoration: none;
     }
 
     .btn-secondary {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      color: #E4E4E7;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      color: #F8FAFC;
     }
 
     .btn-secondary:hover {
-      border-color: var(--primary);
+      border-color: var(--accent-cyan);
       color: #FFFFFF;
-      background: rgba(245, 158, 11, 0.08);
+      background: rgba(0, 240, 255, 0.08);
     }
 
     .hero-cta-row {
       display: flex;
-      justify-content: center;
       flex-wrap: wrap;
-      gap: 14px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    /* Terminal HUD Panel (Right Column) */
+    .hero-terminal-card {
+      background: var(--surface-terminal);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+
+    .hero-terminal-header {
+      background: var(--surface-base);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #2D374D;
+    }
+
+    .terminal-dot.active {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .terminal-header-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    .hero-terminal-body {
+      padding: 18px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: #E2E8F0;
+      overflow-x: auto;
+    }
+
+    .hero-terminal-body .cmd-prompt {
+      color: var(--accent-cyan);
+      user-select: none;
+      margin-right: 6px;
+    }
+
+    .hero-terminal-body .cmd-highlight {
+      color: #FDE68A;
+    }
+
+    .hero-terminal-body .cmd-success {
+      color: var(--healthy);
+      font-weight: 600;
+    }
+
+    .hero-terminal-body .cmd-comment {
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 990px) {
+      .hero-grid-split {
+        grid-template-columns: 1fr;
+      }
+      .hero-headline,
+      .hero-subtitle {
+        text-align: center;
+      }
+      .hero-cta-row {
+        justify-content: center;
+      }
+      .hero-protocol-badge {
+        display: flex;
+        margin: 0 auto 18px auto;
+        width: fit-content;
+      }
     }
 
     /* 21st.dev #29870 Stats Section by shadcnui-blocks */
@@ -571,7 +680,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     /* 21st.dev #10025 Elegant Split-Panel Carousel by dev.yadhakim */
     .flow-carousel-section {
-      padding: 72px 0;
+      padding: 64px 0;
     }
 
     .section-header-block {
@@ -580,91 +689,91 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       align-items: flex-end;
       flex-wrap: wrap;
       gap: 20px;
-      margin-bottom: 36px;
+      margin-bottom: 28px;
     }
 
     .section-title {
-      font-size: clamp(1.85rem, 3vw, 2.5rem);
+      font-size: clamp(1.75rem, 2.8vw, 2.3rem);
       font-weight: 800;
-      color: #FFFFFF;
+      color: #F8FAFC;
       line-height: 1.15;
     }
 
     .section-subtitle {
-      font-size: 1.02rem;
+      font-size: 0.98rem;
       color: var(--text-muted);
       max-width: 620px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     .flow-carousel-shell {
-      background: #0A0C12;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 24px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
     }
 
     .flow-carousel-grid {
       display: grid;
       grid-template-columns: 1.05fr 1fr;
-      min-height: 480px;
+      min-height: 460px;
     }
 
     .flow-carousel-narrative {
-      padding: 48px;
+      padding: 40px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      border-right: 1px solid var(--border-subtle);
     }
 
     .flow-slide-counter {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.82rem;
-      color: var(--primary-bright);
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       display: inline-block;
     }
 
     .flow-slide-title {
-      font-size: clamp(1.8rem, 2.8vw, 2.45rem);
+      font-size: clamp(1.7rem, 2.6vw, 2.25rem);
       font-weight: 800;
-      color: #FFFFFF;
-      line-height: 1.15;
-      margin-bottom: 12px;
+      color: #F8FAFC;
+      line-height: 1.18;
+      margin-bottom: 10px;
     }
 
     .flow-slide-subtitle {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 18px;
+      color: var(--primary-bright);
+      margin-bottom: 16px;
     }
 
     .flow-slide-desc {
-      font-size: 0.98rem;
-      color: #D4D4D8;
-      line-height: 1.75;
-      margin-bottom: 28px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 24px;
     }
 
     .flow-slide-actions {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
     .flow-nav-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.03);
-      color: #FFFFFF;
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--surface-raised);
+      color: #F8FAFC;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -672,40 +781,40 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .flow-nav-circle:hover {
-      border-color: var(--primary);
-      background: rgba(245, 158, 11, 0.12);
-      color: var(--primary-bright);
+      border-color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      color: #FFFFFF;
     }
 
     .flow-carousel-art {
-      background: #050507;
+      background: var(--surface-terminal);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
       position: relative;
     }
 
     .flow-carousel-art img {
       width: 100%;
-      max-height: 440px;
+      max-height: 420px;
       object-fit: contain;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
     }
 
     .flow-progress-bar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      background: #07080D;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--surface-terminal);
     }
 
     .flow-progress-step {
       background: transparent;
       border: none;
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 16px 14px;
+      border-right: 1px solid var(--border-subtle);
+      padding: 14px 12px;
       text-align: left;
       color: var(--text-dim);
       transition: all 0.18s ease;
@@ -722,31 +831,31 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       top: 0;
       left: 0;
       right: 0;
-      height: 3px;
+      height: 2px;
       background: transparent;
       transition: background 0.2s ease;
     }
 
     .flow-progress-step.active {
-      background: rgba(245, 158, 11, 0.07);
-      color: #FFFFFF;
+      background: rgba(0, 240, 255, 0.05);
+      color: #F8FAFC;
     }
 
     .flow-progress-step.active::before {
-      background: var(--primary-bright);
+      background: var(--accent-cyan);
     }
 
     .flow-step-num {
       display: block;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.72rem;
-      color: var(--primary);
-      margin-bottom: 4px;
+      color: var(--accent-cyan);
+      margin-bottom: 2px;
     }
 
     .flow-step-label {
       display: block;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
@@ -755,24 +864,24 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     /* Directory Controls & Category Tabs */
     .directory-section {
-      padding: 48px 0 80px;
+      padding: 44px 0 72px;
     }
 
     .category-tabs,
     .category-tabs-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: 8px;
+      margin-bottom: 20px;
     }
 
     .category-tab-btn {
-      padding: 11px 20px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: #0A0C12;
-      color: #D4D4D8;
-      font-size: 0.9rem;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--surface-base);
+      color: var(--text-muted);
+      font-size: 0.88rem;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
@@ -781,66 +890,66 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .category-tab-btn:hover {
-      border-color: rgba(245, 158, 11, 0.4);
-      color: #FFFFFF;
+      border-color: var(--border-focus);
+      color: #F8FAFC;
     }
 
     .category-tab-btn.active {
       background: var(--primary);
       border-color: var(--primary-bright);
-      color: #060608;
+      color: #040507;
       font-weight: 700;
     }
 
     .category-tab-count {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.76rem;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.22);
+      font-size: 0.74rem;
+      padding: 2px 6px;
+      border-radius: var(--radius-xs);
+      background: rgba(0, 0, 0, 0.25);
     }
 
     .directory-controls {
-      background: #0A0C12;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 22px 24px;
-      margin-bottom: 28px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 24px;
     }
 
     .filter-pills-row {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
+      gap: 6px;
+      font-size: 0.84rem;
     }
 
     .filter-label {
-      color: var(--text-muted);
+      color: var(--text-dim);
       font-weight: 600;
       margin-right: 6px;
     }
 
     .filter-chip {
-      background: #10131C;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      color: #D4D4D8;
-      padding: 5px 13px;
-      border-radius: 999px;
-      font-size: 0.82rem;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      color: var(--text-muted);
+      padding: 4px 11px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
       text-decoration: none;
       transition: all 0.18s ease;
     }
 
     .filter-chip:hover {
       border-color: var(--primary);
-      color: #FFFFFF;
+      color: #F8FAFC;
       text-decoration: none;
     }
 
     .filter-chip.active {
-      background: rgba(245, 158, 11, 0.16);
+      background: rgba(245, 158, 11, 0.15);
       border-color: var(--primary);
       color: var(--primary-bright);
       font-weight: 600;
@@ -849,7 +958,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     .capability-drawer {
       margin-top: 14px;
       padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-top: 1px solid var(--border-subtle);
     }
 
     .capability-drawer summary {
@@ -868,47 +977,47 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       margin-top: 12px;
     }
 
-    /* 21st.dev #5115 Glass-Header Tool Cards Grid */
+    /* 21st.dev #5115 Glass-Header Tool Cards Grid (Terminal High-Density) */
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 28px;
+      gap: 20px;
       margin-bottom: 48px;
     }
 
     .tool-card {
-      background: #0A0C12;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      border-radius: 20px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
       padding: 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
     }
 
     .tool-card:hover {
-      transform: translateY(-3px);
-      border-color: rgba(245, 158, 11, 0.42);
-      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
     }
 
     .tool-card-glass-header {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(16, 19, 28, 0.85) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 20px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 16px;
       position: relative;
       overflow: hidden;
     }
 
     .tool-card-art-thumb {
-      margin: -20px -20px 16px -20px;
-      height: 150px;
+      margin: -16px -16px 14px -16px;
+      height: 140px;
       overflow: hidden;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: #050507;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--surface-terminal);
     }
 
     .tool-card-art-thumb img {
@@ -1470,65 +1579,122 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
   ${renderSharedNavbar("directory", true)}
 
   <main>
-    <!-- 21st.dev #8948 Centered SaaS Hero + #29870 Stats Block -->
+    <!-- 21st.dev #8948 Dual-Column Cyber-Terminal Hero + #29870 Stats Block -->
     <section class="hero-section">
-      <div class="hero-glow"></div>
       <div class="container hero-inner">
-        <h1 class="hero-headline">
-          The API Marketplace <span>Built for AI Agents</span>
-        </h1>
-        <p class="hero-subtitle">
-          AI agents and developers use AIPages to find verified APIs, inspect JSON schemas, and run tools with instant USDT micro-payments on Base Mainnet.
-        </p>
+        <div class="hero-grid-split">
+          <!-- Left Column: Core Value, Command Bar & CTA -->
+          <div>
+            <div class="hero-protocol-badge">
+              <span class="status-ping"></span>
+              <span>16 AUS Engines Online | Base Mainnet (8453) | x402 Active</span>
+            </div>
 
-        <form method="GET" action="${baseUrl}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
-          ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" toolparamdescription="Functional capability tag filter" />` : ""}
-          ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" toolparamdescription="Endpoint reliability filter (all, high, degraded, failing, unchecked)" />` : ""}
-          <svg class="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <label for="directory-search-input" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Search tools by name, description, namespace, or capability</label>
-          <input
-            type="text"
-            id="directory-search-input"
-            name="q"
-            class="search-input"
-            aria-label="Search tools by name, description, namespace, or capability"
-            toolparamdescription="Natural language search query, tool name, namespace, or capability keyword"
-            placeholder="Search 50 agent tools by name, capability, or JSON schema..."
-            value="${searchQuery}"
-          />
-          <button type="submit" class="btn">Search Tools</button>
-        </form>
+            <h1 class="hero-headline">
+              The API Marketplace <span>Built for AI Agents</span>
+            </h1>
+            <p class="hero-subtitle">
+              AI agents and developers use AIPages to find verified APIs, inspect JSON schemas, and run tools with instant USDT micro-payments on Base Mainnet.
+            </p>
 
-        <div class="hero-cta-row">
-          <button type="button" class="btn" onclick="openMcpModal()">
-            Connect to Claude Desktop or Cursor
-          </button>
-          <a href="#directory-section" class="btn btn-secondary">Browse All ${totalCount} Tools</a>
-          <a href="/capabilities" class="btn btn-secondary">Capabilities Index</a>
+            <form method="GET" action="${baseUrl}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
+              ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" toolparamdescription="Functional capability tag filter" />` : ""}
+              ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" toolparamdescription="Endpoint reliability filter (all, high, degraded, failing, unchecked)" />` : ""}
+              <div class="search-input-wrapper" style="position: relative; flex: 1; display: flex; align-items: center;">
+                <!-- Solar Icons: minimalistic-magnifier (linear) -->
+                <svg class="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11.5" cy="11.5" r="9.5" stroke-linecap="round"/>
+                  <path d="M20 20L22 22" stroke-linecap="round"/>
+                </svg>
+                <label for="directory-search-input" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Search tools by name, description, namespace, or capability</label>
+                <input
+                  type="text"
+                  id="directory-search-input"
+                  name="q"
+                  class="search-input"
+                  aria-label="Search tools by name, description, namespace, or capability"
+                  toolparamdescription="Natural language search query, tool name, namespace, or capability keyword"
+                  placeholder="Search 50 agent tools by name, capability, or JSON schema..."
+                  value="${searchQuery}"
+                />
+              </div>
+              <button type="submit" class="btn">Search Tools</button>
+            </form>
+
+            <div class="hero-cta-row">
+              <button type="button" class="btn" onclick="openMcpModal()">
+                Connect to Claude Desktop or Cursor
+              </button>
+              <a href="#directory-section" class="btn btn-secondary">Browse All ${totalCount} Tools</a>
+              <a href="/capabilities" class="btn btn-secondary">Capabilities Index</a>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Cyber-Terminal Mockup -->
+          <div class="hero-terminal-card" aria-label="Live Invocation Stream Mockup">
+            <div class="hero-terminal-header">
+              <div class="terminal-dots">
+                <span class="terminal-dot active"></span>
+                <span class="terminal-dot"></span>
+                <span class="terminal-dot"></span>
+              </div>
+              <span class="terminal-header-title">agent@aipages:~ (x402-gateway)</span>
+            </div>
+            <div class="hero-terminal-body">
+              <div style="margin-bottom: 8px;">
+                <span class="cmd-comment"># Discover &amp; execute 3072-dim vector agent tools</span>
+              </div>
+              <div style="margin-bottom: 6px;">
+                <span class="cmd-prompt">&gt;</span><span class="cmd-highlight">curl -s "https://aipages.tech/search?q=sanitize+user+json&amp;limit=1"</span>
+              </div>
+              <div style="margin-bottom: 12px; color: var(--text-dim);">
+                [{"name":"schema_sanitizer","score":0.941,"pricing":"0.001 USDT"}]
+              </div>
+              <div style="margin-bottom: 6px;">
+                <span class="cmd-prompt">&gt;</span><span class="cmd-highlight">curl -X POST "https://aipages.tech/tool/schema-sanitizer" \\</span><br/>
+                <span style="padding-left: 20px;">-H "Content-Type: application/json" \\</span><br/>
+                <span style="padding-left: 20px;">-H "x-payment-receipt: 0x8f3c...8453" \\</span><br/>
+                <span style="padding-left: 20px;">-d '{"data":{"raw":"&lt;script&gt;xss&lt;/script&gt;Clean"}}'</span>
+              </div>
+              <div>
+                <span class="cmd-success">HTTP/1.1 200 OK (22ms)</span><br/>
+                <span style="color: #67E8F9;">{"status":"sanitized","cleanText":"Clean","feeConsumed":"0.001 USDT"}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- 21st.dev #29870 Stats Section by shadcnui-blocks -->
-        <div class="stats-block-grid">
+        <!-- 21st.dev #29870 Stats Section by shadcnui-blocks with Solar Icons -->
+        <div class="stats-block-grid" style="margin-top: 48px;">
           <div class="stats-block-card">
-            <div class="stats-block-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div class="stats-block-icon" aria-hidden="true">
+              <!-- Solar Icons: minimalistic-magnifier (linear) -->
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="11.5" cy="11.5" r="9.5" stroke-linecap="round"/>
+                <path d="M20 20L22 22" stroke-linecap="round"/>
+              </svg>
             </div>
             <span class="stats-block-number">0.00 USDT</span>
             <p class="stats-block-label">Free semantic vector discovery, schema inspection, and developer tool listing forever.</p>
           </div>
           <div class="stats-block-card">
-            <div class="stats-block-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div class="stats-block-icon" aria-hidden="true">
+              <!-- Solar Icons: shield-check (linear) -->
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M21 11.9914C21 11.4234 21 10.8996 21 10.4167C21 7.21907 21 5.62028 20.6225 5.08241C20.245 4.54454 18.7417 4.02996 15.7351 3.00079L15.1623 2.80472C13.595 2.26824 12.8114 2 12 2C11.1886 2 10.405 2.26824 8.83772 2.80472L8.26491 3.00079C5.25832 4.02996 3.75503 4.54454 3.37752 5.08241C3 5.62028 3 7.21907 3 10.4167C3 10.8996 3 11.4234 3 11.9914C3 17.6294 7.23896 20.3655 9.89856 21.5273C10.62 21.8424 10.9807 22 12 22C13.0193 22 13.38 21.8424 14.1014 21.5273C16.761 20.3655 21 17.6294 21 11.9914Z" stroke-linecap="round"/>
+                <path d="M9.5 12.4L10.9286 14L14.5 10" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
             <span class="stats-block-number">100% Verified</span>
             <p class="stats-block-label">Every endpoint includes strict Ajv JSON Schema validation, OpenAPI 3.1 specs, and JSON-LD metadata.</p>
           </div>
           <div class="stats-block-card">
-            <div class="stats-block-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <div class="stats-block-icon" aria-hidden="true">
+              <!-- Solar Icons: check-circle (linear) -->
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="12" cy="12" r="10" stroke-linecap="round"/>
+                <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
             <span class="stats-block-number">2xx Only</span>
             <p class="stats-block-label">Atomic HTTP 402 USDT settlement on Base Mainnet collects payment strictly on successful execution.</p>

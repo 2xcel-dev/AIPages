@@ -65,33 +65,56 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap');
 
   :root {
-    --bg: #060608;
-    --bg-elevated: #0A0C12;
-    --card-bg: #0A0C12;
-    --card-surface: #10131C;
-    --border: rgba(255, 255, 255, 0.09);
-    --border-light: rgba(245, 158, 11, 0.35);
-    --text: #FFFFFF;
-    --text-muted: #A1A1AA;
-    --text-dim: #71717A;
+    /* Canvas & Structural Surfaces (Terminal High-Contrast) */
+    --bg-canvas: #040507;
+    --surface-base: #0B0E14;
+    --surface-raised: #111520;
+    --surface-overlay: #181D2B;
+    --surface-terminal: #020305;
+
+    /* High-Contrast Razor Borders */
+    --border-subtle: #1E2433;
+    --border-strong: #2D374D;
+    --border-focus: #00F0FF;
+
+    /* Semantic Compatibility & Theme Mappings */
+    --bg: #040507;
+    --bg-elevated: #0B0E14;
+    --card-bg: #0B0E14;
+    --card-surface: #111520;
+    --border: #1E2433;
+    --border-light: rgba(245, 158, 11, 0.4);
+
+    /* Text Crispness (WCAG AAA 16:1 on canvas) */
+    --text: #F8FAFC;
+    --text-muted: #CBD5E1;
+    --text-dim: #94A3B8;
+
+    /* Brand & Status Accents */
     --primary: #F59E0B;
     --primary-bright: #FFD000;
     --primary-hover: #D97706;
+    --accent-cyan: #00F0FF;
     --healthy: #10B981;
     --healthy-bg: rgba(16, 185, 129, 0.12);
-    --healthy-border: rgba(16, 185, 129, 0.32);
+    --healthy-border: rgba(16, 185, 129, 0.35);
     --degraded: #F59E0B;
     --degraded-bg: rgba(245, 158, 11, 0.12);
-    --degraded-border: rgba(245, 158, 11, 0.32);
+    --degraded-border: rgba(245, 158, 11, 0.35);
     --failing: #EF4444;
     --failing-bg: rgba(239, 68, 68, 0.14);
     --failing-border: rgba(239, 68, 68, 0.38);
-    --unchecked: #A1A1AA;
-    --unchecked-bg: rgba(161, 161, 170, 0.1);
-    --unchecked-border: rgba(161, 161, 170, 0.24);
-    --code-bg: #050609;
-    --radius: 16px;
-    --radius-sm: 10px;
+    --unchecked: #94A3B8;
+    --unchecked-bg: rgba(148, 163, 184, 0.1);
+    --unchecked-border: rgba(148, 163, 184, 0.25);
+    --code-bg: #020305;
+
+    /* Sharpened Institutional Radii (6px - 8px) */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius: 8px;
   }
 
   * {
@@ -152,7 +175,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     position: sticky;
     top: 0;
     z-index: 60;
-    background: rgba(6, 6, 8, 0.84);
+    background: rgba(6, 6, 8, 0.88);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -163,7 +186,8 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     justify-content: space-between;
     align-items: center;
     height: 76px;
-    gap: 20px;
+    gap: 16px;
+    flex-wrap: nowrap;
   }
 
   .brand {
@@ -172,6 +196,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     gap: 12px;
     text-decoration: none;
     color: #FFFFFF;
+    flex-shrink: 0;
   }
 
   .brand:hover {
@@ -181,13 +206,14 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   .brand-logo-box {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
   }
 
   .brand-wordmark {
@@ -196,6 +222,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     font-weight: 700;
     letter-spacing: -0.03em;
     color: #FFFFFF;
+    white-space: nowrap;
   }
 
   .brand-wordmark span {
@@ -203,28 +230,29 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   }
 
   .brand-badge {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     background: rgba(245, 158, 11, 0.12);
     color: var(--primary-bright);
     border: 1px solid rgba(245, 158, 11, 0.3);
-    padding: 3px 9px;
+    padding: 3px 8px;
     border-radius: 999px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
 
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 26px;
-    font-size: 0.92rem;
+    gap: 22px;
+    font-size: 0.9rem;
     font-weight: 500;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 
   .nav-links a {
-    color: #D4D4D8;
+    color: #A1A1AA;
     text-decoration: none;
     padding: 6px 0;
     transition: color 0.18s ease;
@@ -232,20 +260,21 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
 
   .nav-links a:hover,
   .nav-links a.active {
-    color: var(--primary-bright);
+    color: #FFFFFF;
     text-decoration: none;
   }
 
   .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    flex-shrink: 0;
   }
 
   .nav-submit-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     padding: 9px 15px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -255,6 +284,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     font-weight: 600;
     text-decoration: none;
     transition: all 0.18s ease;
+    white-space: nowrap;
   }
 
   .nav-submit-link:hover {
@@ -265,9 +295,9 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   }
 
   .nav-mcp-btn {
-    background: var(--primary);
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
     color: #060608;
-    border: 1px solid var(--primary-bright);
+    border: 1px solid #FFD000;
     padding: 9px 16px;
     border-radius: 10px;
     font-size: 0.85rem;
@@ -277,12 +307,14 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     align-items: center;
     gap: 7px;
     transition: all 0.18s ease;
-    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.22);
+    box-shadow: 0 4px 18px rgba(245, 158, 11, 0.25);
+    white-space: nowrap;
   }
 
   .nav-mcp-btn:hover {
-    background: var(--primary-bright);
+    background: #FFD000;
     color: #060608;
+    box-shadow: 0 6px 22px rgba(245, 158, 11, 0.4);
   }
 
   /* 21st.dev #7264 Minimal Footer by efferd */
@@ -427,18 +459,18 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
 `;
 
 /**
- * Render the 3D layered isometric AIPages SVG mark.
+ * Render the authentic Solar Icons layers brandmark with dual-tone depth.
  */
 export function renderBrandLogoSvg(): string {
-  return `<svg width="24" height="24" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-    <path d="M8 9L18 4L28 9V21L18 26L8 21V9Z" stroke="#F59E0B" stroke-width="2" fill="rgba(245,158,11,0.12)"/>
-    <path d="M12 14L22 9L30 13V25L22 29L12 25V14Z" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.65"/>
-    <circle cx="18" cy="15" r="2.5" fill="#FFD000"/>
+  return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="solar-icon">
+    <path d="M16.2127 10.8085L19.0212 9.68508C21.0071 8.89073 22 8.49355 22 8C22 7.50645 21.0071 7.10927 19.0212 6.31492L16.2127 5.19153C14.2268 4.39718 13.2339 4 12 4C10.7661 4 9.77318 4.39718 7.7873 5.19153L4.97883 6.31492C2.99294 7.10927 2 7.50645 2 8C2 8.49355 2.99294 8.89073 4.97883 9.68508L7.7873 10.8085C9.77318 11.6028 10.7661 12 12 12C13.2339 12 14.2268 11.6028 16.2127 10.8085Z" stroke="#F59E0B" stroke-width="1.75" stroke-linecap="round" fill="rgba(245, 158, 11, 0.15)"/>
+    <path d="M22 12C22 12 21.0071 12.8907 19.0212 13.6851L16.2127 14.8085C14.2268 15.6028 13.2339 16 12 16C10.7661 16 9.77318 15.6028 7.7873 14.8085L4.97883 13.6851C2.99294 12.8907 2 12 2 12" stroke="#FFD000" stroke-width="1.75" stroke-linecap="round"/>
+    <path d="M22 16C22 16 21.0071 16.8907 19.0212 17.6851L16.2127 18.8085C14.2268 19.6028 13.2339 20 12 20C10.7661 20 9.77318 19.6028 7.7873 18.8085L4.97883 17.6851C2.99294 16.8907 2 16 2 16" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-linecap="round"/>
   </svg>`;
 }
 
 /**
- * Render the 21st.dev #8948 Fixed SaaS Navigation Bar.
+ * Render the 21st.dev #8948 Fixed SaaS Navigation Bar with Solar Icons.
  * Preserves exact `<a href="/capabilities">Capabilities</a>` for test suite compatibility.
  */
 export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "submit" | "legal" | "tool" = "directory", showMcpButton: boolean = true): string {
@@ -460,16 +492,24 @@ export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "
         <a href="/privacy"${activeRoute === "legal" ? ' class="active"' : ""}>Privacy &amp; Refunds</a>
       </div>
       <div class="nav-actions">
-        <a href="/submit" class="nav-submit-link"${activeRoute === "submit" ? ' style="border-color: var(--primary); color: #fff;"' : ""}>Submit Tool</a>
+        <a href="/submit" class="nav-submit-link"${activeRoute === "submit" ? ' style="border-color: var(--primary); color: #fff;"' : ""}>
+          <!-- Solar Icons: add-circle (linear) -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" stroke-linecap="round"/>
+            <path d="M15 12L12 12M12 12L9 12M12 12L12 9M12 12L12 15" stroke-linecap="round"/>
+          </svg>
+          <span>Submit Tool</span>
+        </a>
         ${
           showMcpButton
             ? `<button type="button" class="nav-mcp-btn" onclick="typeof openMcpModal === 'function' ? openMcpModal() : window.location.href='/#agent-human-section'">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                  <line x1="8" y1="21" x2="16" y2="21"></line>
-                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                <!-- Solar Icons: cpu-bolt (linear) -->
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <path d="M10 17H14C15.4142 17 16.1213 17 16.5607 16.5607C17 16.1213 17 15.4142 17 14V10C17 8.58579 17 7.87868 16.5607 7.43934C16.1213 7 15.4142 7 14 7H10C8.58579 7 7.87868 7 7.43934 7.43934C7 7.87868 7 8.58579 7 10V14C7 15.4142 7 16.1213 7.43934 16.5607C7.87868 17 8.58579 17 10 17Z" stroke-linecap="round"/>
+                  <path d="M12.4286 10L11 12H13L11.5714 14" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 20C8.22876 20 6.34315 20 5.17157 18.8284C4 17.6569 4 15.7712 4 12C4 8.22876 4 6.34315 5.17157 5.17157C6.34315 4 8.22876 4 12 4C15.7712 4 17.6569 4 18.8284 5.17157C20 6.34315 20 8.22876 20 12C20 15.7712 20 17.6569 18.8284 18.8284C17.6569 20 15.7712 20 12 20Z" stroke-linecap="round"/>
                 </svg>
-                Connect Agent
+                <span>Connect Agent</span>
               </button>`
             : `<a href="/tool" class="nav-mcp-btn">Explore Tools</a>`
         }
