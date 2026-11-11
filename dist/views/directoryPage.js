@@ -356,6 +356,21 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     const coreCount = sortedTools.filter((t) => classifyToolGroup(t) === "core").length;
     const meshCount = sortedTools.filter((t) => classifyToolGroup(t) === "mesh").length;
     const frameworkCount = sortedTools.filter((t) => classifyToolGroup(t) === "framework").length;
+    const rolodexToolsJson = JSON.stringify(sortedTools.map((t) => {
+        const cost = t.pricing?.costPerCall ?? 0;
+        const isFirstParty = Boolean(t.isFirstParty ?? t.developer?.isFirstParty ?? t.namespace?.startsWith("net.2xcel.aus"));
+        const caps = (t.capabilities || []).slice(0, 3);
+        return {
+            title: formatHumanToolTitle(t.name),
+            namespace: t.namespace,
+            price: cost === 0 ? "0.00 USDT" : cost + " USDT",
+            badge: isFirstParty ? "AUS OFFICIAL" : (t.connectionType || "HTTP").toUpperCase(),
+            isFirstParty: isFirstParty,
+            useCase: deriveToolUseCase(t),
+            capabilities: caps,
+            desc: t.description || "Autonomous agent utility endpoint with JSON Schema validation and HTTP 402 micro-settlement.",
+        };
+    }));
     const cardsHtml = sortedTools.length > 0
         ? sortedTools.map((t, idx) => renderToolCard(t, baseUrl, activeCapability, idx)).join("\n")
         : `<div class="empty-state">
@@ -537,7 +552,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-subtitle {
-      font-size: 1.05rem;
+      font-size: 1.25rem;
       color: var(--text-muted);
       margin-bottom: 26px;
       line-height: 1.65;
@@ -574,7 +589,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: transparent;
       border: none;
       padding: 10px 8px;
-      font-size: 0.94rem;
+      font-size: 1.1rem;
       color: #F8FAFC;
       outline: none;
       font-family: inherit;
@@ -589,8 +604,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       color: #040507;
       border: 1px solid var(--primary-bright);
       border-radius: var(--radius-sm);
-      padding: 10px 18px;
-      font-size: 0.88rem;
+      padding: 10px 20px;
+      font-size: 1.08rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -600,7 +615,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       text-decoration: none;
       transition: all 0.18s ease;
       white-space: nowrap;
-      height: 42px;
+      height: 48px;
       box-sizing: border-box;
       line-height: 1;
     }
@@ -633,9 +648,9 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .hero-cta-row .btn {
       width: 100%;
-      height: 46px;
-      padding: 0 14px;
-      font-size: 0.86rem;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 1.08rem;
       text-align: center;
       white-space: normal;
       line-height: 1.25;
@@ -653,7 +668,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: flex;
       align-items: center;
       gap: 18px;
-      padding: 18px 22px;
+      padding: 20px 24px;
       background: var(--surface-base);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
@@ -694,8 +709,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-grid-split .stats-block-icon {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       border-radius: var(--radius-sm);
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid rgba(245, 158, 11, 0.35);
@@ -722,7 +737,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .hero-grid-split .stats-block-number {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.35rem;
+      font-size: 1.6rem;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.02em;
@@ -731,10 +746,10 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-grid-split .stats-block-label {
-      margin-top: 3px;
-      font-size: 0.82rem;
+      margin-top: 4px;
+      font-size: 1.08rem;
       color: var(--text-muted);
-      line-height: 1.45;
+      line-height: 1.55;
     }
 
     @media (max-width: 990px) {
@@ -835,9 +850,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     .flow-carousel-grid {
       display: grid;
       grid-template-columns: 1.1fr 1fr;
-      height: 440px;
-      min-height: 440px;
-      max-height: 440px;
+      min-height: 480px;
       box-sizing: border-box;
     }
 
@@ -854,24 +867,24 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .flow-slide-counter {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
+      font-size: 1.05rem;
       color: var(--accent-cyan);
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 12px;
       display: inline-block;
-      height: 18px;
+      height: 22px;
     }
 
     .flow-slide-title {
-      font-size: clamp(1.45rem, 2.1vw, 1.85rem);
+      font-size: clamp(26px, 2.8vw, 36px);
       font-weight: 800;
       color: #F8FAFC;
-      line-height: 1.22;
+      line-height: 1.2;
       margin-bottom: 8px;
-      height: 52px;
-      min-height: 52px;
-      max-height: 52px;
+      height: 64px;
+      min-height: 64px;
+      max-height: 64px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -879,25 +892,25 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .flow-slide-subtitle {
-      font-size: 0.95rem;
+      font-size: 1.15rem;
       font-weight: 600;
       color: var(--primary-bright);
       margin-bottom: 12px;
-      height: 24px;
-      min-height: 24px;
-      max-height: 24px;
+      height: 28px;
+      min-height: 28px;
+      max-height: 28px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
     }
 
     .flow-slide-desc {
-      font-size: 0.92rem;
+      font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.65;
-      height: 76px;
-      min-height: 76px;
-      max-height: 76px;
+      height: 90px;
+      min-height: 90px;
+      max-height: 90px;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -911,15 +924,16 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       gap: 12px;
       margin-top: auto;
       padding-top: 16px;
-      height: 52px;
+      height: 56px;
       box-sizing: border-box;
     }
 
     .flow-slide-actions .btn {
-      min-width: 200px;
-      width: 220px;
-      height: 42px;
-      padding: 0 16px;
+      min-width: 220px;
+      width: 240px;
+      height: 48px;
+      padding: 0 20px;
+      font-size: 1.08rem;
       justify-content: center;
     }
 
@@ -949,27 +963,375 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
       position: relative;
+      min-height: 460px;
       height: 100%;
       box-sizing: border-box;
       overflow: hidden;
     }
 
     .flow-carousel-art img {
-      width: 100%;
-      height: 100%;
-      max-height: 400px;
-      object-fit: cover;
-      border-radius: var(--radius-sm);
+      max-width: 100%;
+      max-height: 440px;
+      width: auto;
+      height: auto;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
+      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 240, 255, 0.08);
+      transition: opacity 0.35s ease, transform 0.4s ease;
+    }
+
+    /* 21st.dev 3D Tumble Rolodex Tool Deck */
+    .tumble-deck-section {
+      padding: 44px 0 20px 0;
+    }
+
+    .tumble-deck-shell {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px 20px 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .td-root {
+      position: relative;
+      width: 100%;
+      height: 640px;
+      touch-action: none;
+      overflow: hidden;
+      outline: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .td-scene {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      pointer-events: none;
+    }
+
+    .td-card {
+      position: absolute;
+      left: 50%;
+      top: var(--td-top);
+      width: var(--td-w);
+      height: var(--td-h);
+      margin-left: calc(var(--td-w) / -2);
+      transform-origin: 50% 100%;
+      transform-style: preserve-3d;
+      backface-visibility: visible;
+      will-change: transform;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      pointer-events: auto;
+      background: rgba(14, 18, 28, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      box-shadow: 0 28px 60px -15px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.08);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .td-card:hover {
+      border-color: rgba(0, 240, 255, 0.65);
+      box-shadow: 0 32px 70px -12px rgba(0, 0, 0, 0.95), 0 0 36px rgba(0, 240, 255, 0.25);
+    }
+
+    .td-card-backdrop {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 18% 18%, rgba(0, 240, 255, 0.12), transparent 48%),
+                  radial-gradient(circle at 85% 82%, rgba(245, 158, 11, 0.08), transparent 45%),
+                  linear-gradient(175deg, rgba(16, 22, 34, 0.94) 0%, rgba(9, 12, 18, 0.97) 100%);
+      pointer-events: none;
+    }
+
+    .td-card-grid-texture {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .td-card-glow-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.8), rgba(245, 158, 11, 0.8), transparent);
+      pointer-events: none;
+    }
+
+    .td-card-content {
+      position: absolute;
+      inset: 0;
+      padding: 34px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .td-card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .td-card-tags {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .td-card-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+    }
+
+    .td-card-badge.first-party {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .td-card-usecase {
+      font-size: 17px;
+      font-weight: 600;
+      color: #E2E8F0;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .td-card-price {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      padding: 6px 16px;
+      border-radius: var(--radius-sm);
+      letter-spacing: -0.01em;
+    }
+
+    .td-card-mid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: auto 0;
+    }
+
+    .td-card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .td-card-icon-frame {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.12);
+    }
+
+    .td-card:hover .td-card-icon-frame {
+      background: var(--primary-bright);
+      color: #040507;
+      border-color: var(--primary-bright);
+      box-shadow: 0 0 20px rgba(255, 208, 0, 0.5);
+    }
+
+    .td-card-title {
+      font-size: clamp(26px, 2.6vw, 34px);
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    .td-card-ns {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      color: var(--primary-bright);
+      letter-spacing: 0.02em;
+      opacity: 0.95;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .td-card-desc {
+      font-size: 18px;
+      color: #E2E8F0;
+      line-height: 1.65;
+      margin: 4px 0 0 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      max-width: 92%;
+    }
+
+    .td-card-caps {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .td-card-cap-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 600;
+      color: #CBD5E1;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 5px 12px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .td-card-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .td-network-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      color: #94A3B8;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .td-network-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .td-action-label {
+      font-size: 17px;
+      font-weight: 700;
+      color: #040507;
+      background: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--primary-bright);
+      transition: all 0.2s ease;
+    }
+
+    .td-card:hover .td-action-label {
+      background: var(--primary-bright);
+      box-shadow: 0 0 16px rgba(255, 208, 0, 0.45);
+    }
+
+    .td-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: #000;
+      opacity: var(--td-shade, 0);
+      z-index: 4;
+    }
+
+    .td-deck-controls-bar {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 10;
+      background: rgba(11, 14, 20, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      padding: 7px 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    }
+
+    .td-deck-btn {
+      background: transparent;
+      border: none;
+      color: #CBD5E1;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.18s ease;
+    }
+
+    .td-deck-btn:hover {
+      color: var(--accent-cyan);
+    }
+
+    .td-deck-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #F8FAFC;
+      letter-spacing: 0.05em;
     }
 
     .flow-progress-bar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      border-top: 1px solid var(--border-subtle);
-      background: var(--surface-terminal);
+      display: none;
     }
 
     .flow-progress-step {
@@ -1935,6 +2297,21 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       .showcase-grid {
         grid-template-columns: 1fr;
       }
+      .flow-carousel-grid {
+        min-height: unset;
+        height: auto;
+      }
+      .flow-carousel-art {
+        min-height: 320px;
+        padding: 16px;
+      }
+      .flow-carousel-art img {
+        max-width: 320px;
+        max-height: 320px;
+      }
+      .td-root {
+        height: 420px;
+      }
       .flow-progress-bar {
         grid-template-columns: repeat(4, 1fr);
       }
@@ -1947,6 +2324,21 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       .category-tabs,
       .category-tabs-bar {
         grid-template-columns: 1fr;
+      }
+      .flow-carousel-art {
+        min-height: 260px;
+        padding: 12px;
+      }
+      .flow-carousel-art img {
+        max-width: 250px;
+        max-height: 250px;
+      }
+      .td-root {
+        height: 360px;
+      }
+      .td-deck-controls-bar {
+        width: calc(100% - 32px);
+        justify-content: space-between;
       }
     }
   </style>
@@ -2070,12 +2462,6 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
             </div>
             <div class="flow-slide-actions">
               <a id="flow-cta" href="/tool" class="btn">Explore Tool Directory</a>
-              <button type="button" class="flow-nav-circle" onclick="stepFlowSlide(-1)" aria-label="Previous slide">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-              <button type="button" class="flow-nav-circle" onclick="stepFlowSlide(1)" aria-label="Next slide">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
             </div>
           </div>
 
@@ -2113,6 +2499,27 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
             <span class="flow-step-num">07</span>
             <span class="flow-step-label">Scale Workflows</span>
           </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 21st.dev 3D Tumble Rolodex Tool Deck Showcase -->
+    <section id="rolodex-showcase" class="tumble-deck-section container">
+      <div class="section-header-block">
+        <div>
+          <h2 class="section-title">Autonomous Tool Rolodex</h2>
+          <p class="section-subtitle">
+            Explore all registered autonomous agent tools in 3D tumbling perspective. Click any tool card to inspect its JSON schema and execution gateway.
+          </p>
+        </div>
+        <div class="deck-top-counter">
+          <span id="td-deck-top-counter">1 of ${sortedTools.length}</span>
+        </div>
+      </div>
+
+      <div class="tumble-deck-shell">
+        <div id="td-container" class="td-root" role="region" aria-roledescription="carousel" aria-label="Autonomous agent tool 3D rolodex deck" tabindex="0">
+          <div id="td-scene" class="td-scene"></div>
         </div>
       </div>
     </section>
@@ -2383,13 +2790,31 @@ Accept: application/json
       </div>
 
       <div class="modal-tabs">
-        <button type="button" class="modal-tab-btn active" data-tab="claude" onclick="switchModalTab('claude')">Claude Desktop</button>
+        <button type="button" class="modal-tab-btn active" data-tab="gateway" onclick="switchModalTab('gateway')">Unified MCP Proxy (Trojan Horse)</button>
+        <button type="button" class="modal-tab-btn" data-tab="claude" onclick="switchModalTab('claude')">Claude Desktop</button>
         <button type="button" class="modal-tab-btn" data-tab="cursor" onclick="switchModalTab('cursor')">Cursor (.cursor/mcp.json)</button>
         <button type="button" class="modal-tab-btn" data-tab="curl" onclick="switchModalTab('curl')">cURL HTTP 402</button>
       </div>
 
       <div class="modal-body">
-        <div class="modal-tab-content" id="tab-content-claude">
+        <div class="modal-tab-content" id="tab-content-gateway">
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 8px;">
+            <strong>Install once. Discover &amp; execute everything.</strong> Equips your agent with on-the-fly meta-tools (<code>aipages_search</code> and <code>aipages_execute</code>) to dynamically discover and call any tool across AIPages without restarting:
+          </p>
+          <div class="code-container">
+            <pre><code id="snippet-gateway-config">{
+  "mcpServers": {
+    "aipages": {
+      "command": "npx",
+      "args": ["-y", "@aipages/mcp-gateway", "--api-key=optional"]
+    }
+  }
+}</code></pre>
+            <button type="button" class="btn modal-copy-btn" onclick="copySnippet('snippet-gateway-config', this)">Copy Gateway Config</button>
+          </div>
+        </div>
+
+        <div class="modal-tab-content" id="tab-content-claude" style="display: none;">
           <p style="font-size: 0.88rem; color: var(--text-muted);">Add this block to your <code>claude_desktop_config.json</code> under <code>mcpServers</code>:</p>
           <div class="code-container">
             <pre><code id="snippet-claude-config">{
@@ -2508,8 +2933,12 @@ Accept: application/json
     ];
 
     var currentFlowIndex = 0;
+    var flowAutoPlayTimer = null;
 
-    function selectFlowSlide(index) {
+    function selectFlowSlide(index, isManual) {
+      if (isManual) {
+        restartFlowAutoPlay();
+      }
       currentFlowIndex = (index + FLOW_SLIDES.length) % FLOW_SLIDES.length;
       var slide = FLOW_SLIDES[currentFlowIndex];
       document.getElementById('flow-counter').textContent = slide.num;
@@ -2517,11 +2946,19 @@ Accept: application/json
       document.getElementById('flow-subtitle').textContent = slide.subtitle;
       document.getElementById('flow-desc').textContent = slide.desc;
       var imgEl = document.getElementById('flow-image');
-      imgEl.src = slide.img;
-      imgEl.alt = slide.title;
+      if (imgEl) {
+        imgEl.style.opacity = '0.35';
+        imgEl.src = slide.img;
+        imgEl.alt = slide.title;
+        setTimeout(function() {
+          imgEl.style.opacity = '1';
+        }, 50);
+      }
       var ctaEl = document.getElementById('flow-cta');
-      ctaEl.textContent = slide.ctaText;
-      ctaEl.href = slide.ctaHref;
+      if (ctaEl) {
+        ctaEl.textContent = slide.ctaText;
+        ctaEl.href = slide.ctaHref;
+      }
 
       var steps = document.querySelectorAll('.flow-progress-step');
       steps.forEach(function(btn, idx) {
@@ -2534,8 +2971,35 @@ Accept: application/json
     }
 
     function stepFlowSlide(delta) {
-      selectFlowSlide(currentFlowIndex + delta);
+      selectFlowSlide(currentFlowIndex + delta, true);
     }
+
+    function startFlowAutoPlay() {
+      if (!flowAutoPlayTimer) {
+        flowAutoPlayTimer = setInterval(function() {
+          selectFlowSlide(currentFlowIndex + 1, false);
+        }, 4500);
+      }
+    }
+
+    function stopFlowAutoPlay() {
+      if (flowAutoPlayTimer) {
+        clearInterval(flowAutoPlayTimer);
+        flowAutoPlayTimer = null;
+      }
+    }
+
+    function restartFlowAutoPlay() {
+      stopFlowAutoPlay();
+      startFlowAutoPlay();
+    }
+
+    var flowShell = document.querySelector('.flow-carousel-shell');
+    if (flowShell) {
+      flowShell.addEventListener('mouseenter', stopFlowAutoPlay);
+      flowShell.addEventListener('mouseleave', startFlowAutoPlay);
+    }
+    startFlowAutoPlay();
 
     function filterToolCardsByGroup(group) {
       var buttons = document.querySelectorAll('.category-tab-btn');
@@ -2633,6 +3097,341 @@ Accept: application/json
         }, 2000);
       });
     }
+
+    window.ROLODEX_DATA = ${rolodexToolsJson};
+
+    // 21st.dev 3D Tumble Rolodex Engine
+    (function initTumbleRolodex() {
+      var root = document.getElementById('td-container');
+      var scene = document.getElementById('td-scene');
+      var topCounterEl = document.getElementById('td-deck-top-counter');
+      if (!root || !scene || !window.ROLODEX_DATA || window.ROLODEX_DATA.length === 0) return;
+
+      var cards = window.ROLODEX_DATA;
+      var n = cards.length;
+      var depth = 5;
+      var pool = depth + 5;
+      var aspect = 1.85;
+      var scrollPerCard = 220;
+
+      function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+      function wrap(k, m) { return m ? ((k % m) + m) % m : 0; }
+      function fallAngle(t) {
+        var u = clamp01(t);
+        var land = 0.78;
+        if (u <= land) {
+          return -90 * Math.pow(u / land, 3);
+        }
+        var k2 = (u - land) / (1 - land);
+        return -90 + 6 * Math.sin(Math.PI * k2) * (1 - k2);
+      }
+      function deckAdvance(p) {
+        var i = Math.floor(p);
+        var f = p - i;
+        var k = clamp01((f - 0.28) / 0.6);
+        return i + k * k * (3 - 2 * k);
+      }
+      function cardPose(k, p, d) {
+        var t = p - k;
+        var lift = (k - Math.floor(p) + 3) * 0.6;
+        if (t >= 1) {
+          return { angle: -90, z: 0, lift: lift, opacity: t < 3 ? 1 : 0, flat: true };
+        }
+        if (t > 0) return { angle: fallAngle(t), z: 0, lift: lift, opacity: 1, flat: false };
+        var rel = k - deckAdvance(p);
+        var opacity = clamp01(d + 1 - rel);
+        return { angle: 0, z: -Math.max(rel, 0), lift: 0, opacity: opacity, flat: false };
+      }
+
+      var cardEls = [];
+      var titleEls = [];
+      var nsEls = [];
+      var descEls = [];
+      var badgeEls = [];
+      var useCaseEls = [];
+      var priceEls = [];
+      var capsEls = [];
+      var slotK = [];
+
+      for (var j = 0; j < pool; j++) {
+        var el = document.createElement('div');
+        el.className = 'td-card';
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'td-card-backdrop';
+        el.appendChild(backdrop);
+
+        var gridTexture = document.createElement('div');
+        gridTexture.className = 'td-card-grid-texture';
+        el.appendChild(gridTexture);
+
+        var glowBar = document.createElement('div');
+        glowBar.className = 'td-card-glow-bar';
+        el.appendChild(glowBar);
+
+        var content = document.createElement('div');
+        content.className = 'td-card-content';
+
+        var topRow = document.createElement('div');
+        topRow.className = 'td-card-top-row';
+
+        var tagsWrap = document.createElement('div');
+        tagsWrap.className = 'td-card-tags';
+
+        var badge = document.createElement('span');
+        badge.className = 'td-card-badge';
+        tagsWrap.appendChild(badge);
+
+        var useCase = document.createElement('span');
+        useCase.className = 'td-card-usecase';
+        useCase.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> <span class="usecase-text"></span>';
+        tagsWrap.appendChild(useCase);
+        topRow.appendChild(tagsWrap);
+
+        var price = document.createElement('span');
+        price.className = 'td-card-price';
+        topRow.appendChild(price);
+        content.appendChild(topRow);
+
+        var mid = document.createElement('div');
+        mid.className = 'td-card-mid';
+
+        var titleRow = document.createElement('div');
+        titleRow.className = 'td-card-title-row';
+
+        var iconFrame = document.createElement('div');
+        iconFrame.className = 'td-card-icon-frame';
+        iconFrame.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>';
+        titleRow.appendChild(iconFrame);
+
+        var titleBox = document.createElement('div');
+        var title = document.createElement('h3');
+        title.className = 'td-card-title';
+        var ns = document.createElement('span');
+        ns.className = 'td-card-ns';
+        titleBox.appendChild(title);
+        titleBox.appendChild(ns);
+        titleRow.appendChild(titleBox);
+        mid.appendChild(titleRow);
+
+        var desc = document.createElement('p');
+        desc.className = 'td-card-desc';
+        mid.appendChild(desc);
+
+        var capsRow = document.createElement('div');
+        capsRow.className = 'td-card-caps';
+        mid.appendChild(capsRow);
+
+        content.appendChild(mid);
+
+        var btmRow = document.createElement('div');
+        btmRow.className = 'td-card-bottom-row';
+        var netTag = document.createElement('span');
+        netTag.className = 'td-network-tag';
+        netTag.innerHTML = '<span class="td-network-dot"></span> Base Mainnet (8453) &middot; Success-Only Settlement';
+        var actionLabel = document.createElement('span');
+        actionLabel.className = 'td-action-label';
+        actionLabel.innerHTML = 'Inspect Schema &rarr;';
+        btmRow.appendChild(netTag);
+        btmRow.appendChild(actionLabel);
+        content.appendChild(btmRow);
+
+        el.appendChild(content);
+
+        (function(slotIdx) {
+          el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!dragged) {
+              var currentK = slotK[slotIdx];
+              if (currentK !== undefined && currentK !== -999) {
+                var cData = cards[wrap(currentK, n)];
+                if (cData && cData.namespace) {
+                  window.location.href = '/tool/' + encodeURIComponent(cData.namespace);
+                }
+              }
+            }
+          });
+        })(j);
+
+        scene.appendChild(el);
+        cardEls.push(el);
+        titleEls.push(title);
+        nsEls.push(ns);
+        descEls.push(desc);
+        badgeEls.push(badge);
+        useCaseEls.push(useCase.querySelector('.usecase-text'));
+        priceEls.push(price);
+        capsEls.push(capsRow);
+        slotK.push(-999);
+      }
+
+      var state = { pos: 0 };
+      var geo = { h: 440, gap: 70 };
+
+      function paint() {
+        var pos = state.pos;
+        var gap = geo.gap;
+        var base = Math.floor(pos) - 2;
+        var activeIndex = wrap(Math.round(pos), n);
+
+        if (topCounterEl) {
+          topCounterEl.textContent = (activeIndex + 1) + ' of ' + n;
+        }
+
+        for (var j = 0; j < pool; j++) {
+          var el = cardEls[j];
+          if (!el) continue;
+          var k = base + wrap(j - base, pool);
+          if (slotK[j] !== k) {
+            slotK[j] = k;
+            var c = cards[wrap(k, n)];
+            if (c) {
+              titleEls[j].textContent = c.title;
+              nsEls[j].textContent = c.namespace;
+              descEls[j].textContent = c.desc;
+              badgeEls[j].textContent = c.badge;
+              if (c.isFirstParty) {
+                badgeEls[j].className = 'td-card-badge first-party';
+              } else {
+                badgeEls[j].className = 'td-card-badge';
+              }
+              if (useCaseEls[j]) {
+                useCaseEls[j].textContent = c.useCase || 'Autonomous Agent Tool';
+              }
+              priceEls[j].textContent = c.price;
+
+              if (capsEls[j]) {
+                capsEls[j].innerHTML = '';
+                var capsList = c.capabilities || ['HTTP 402', 'Ajv Strict'];
+                for (var ci = 0; ci < capsList.length; ci++) {
+                  var pill = document.createElement('span');
+                  pill.className = 'td-card-cap-pill';
+                  pill.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> ' + capsList[ci];
+                  capsEls[j].appendChild(pill);
+                }
+              }
+            }
+          }
+          var p = cardPose(k, pos, depth);
+          el.style.transform = 'translate3d(0, ' + (-p.lift) + 'px, ' + (p.z * gap) + 'px) rotateX(' + p.angle + 'deg)';
+          el.style.opacity = String(p.opacity);
+          el.style.visibility = p.opacity > 0 ? 'visible' : 'hidden';
+          var shade = p.flat ? 0.08 : (-p.angle / 90) * 0.08;
+          el.style.setProperty('--td-shade', String(shade));
+        }
+      }
+
+      function fit() {
+        var W0 = root.clientWidth;
+        var H0 = root.clientHeight;
+        var wFrac = W0 < 480 ? 0.94 : (W0 < 960 ? 0.88 : 0.82);
+        var targetW = Math.max(280, Math.min(W0 * wFrac, 920));
+        var h = Math.max(340, Math.min(targetW / aspect, H0 * 0.84, 520));
+        var w = targetW;
+        var top = Math.max(16, (H0 - h) / 2 - 32);
+        geo.h = h;
+        geo.gap = 0.22 * h;
+        scene.style.perspective = (4.5 * h) + 'px';
+        scene.style.perspectiveOrigin = '50% ' + (top - 0.7 * h) + 'px';
+        root.style.setProperty('--td-w', w + 'px');
+        root.style.setProperty('--td-h', h + 'px');
+        root.style.setProperty('--td-top', top + 'px');
+        paint();
+      }
+
+      fit();
+      window.addEventListener('resize', fit);
+
+      var target = 0;
+      var isRunning = false;
+      var idleTimer = null;
+      var dragged = false;
+
+      function stepDeck(dir) {
+        pushPos(Math.round(target) + dir);
+      }
+
+      function follow() {
+        var dt = 1 / 60;
+        state.pos += (target - state.pos) * (1 - Math.exp(-dt * 9));
+        if (Math.abs(target - state.pos) < 2e-3) {
+          state.pos = target;
+          isRunning = false;
+        } else {
+          requestAnimationFrame(follow);
+        }
+        paint();
+      }
+
+      function pushPos(to) {
+        target = to;
+        if (!isRunning) {
+          isRunning = true;
+          requestAnimationFrame(follow);
+        }
+      }
+
+      function settle(bias) {
+        var finalPos = bias > 0 ? Math.floor(target + 0.7) : (bias < 0 ? Math.ceil(target - 0.7) : Math.round(target));
+        pushPos(finalPos);
+      }
+
+      function onWheel(e) {
+        e.preventDefault();
+        var scale = e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? root.clientHeight : 1);
+        var d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * scale;
+        pushPos(target + d / scrollPerCard);
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+          settle(Math.sign(d));
+        }, 140);
+      }
+
+      var drag = null;
+      function onPointerDown(e) {
+        if (e.button !== 0) return;
+        drag = { id: e.pointerId, y: e.clientY, travel: 0, last: 0 };
+        dragged = false;
+        clearTimeout(idleTimer);
+      }
+      function onPointerMove(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var dy = drag.y - e.clientY;
+        drag.y = e.clientY;
+        drag.travel += Math.abs(dy);
+        if (dy) drag.last = Math.sign(dy);
+        if (drag.travel > 6 && !dragged) {
+          dragged = true;
+          if (root.setPointerCapture) root.setPointerCapture(e.pointerId);
+        }
+        if (dragged) {
+          pushPos(target + dy / (geo.h * 1.1));
+        }
+      }
+      function onPointerUp(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        if (dragged) {
+          settle(drag.last);
+        }
+        drag = null;
+      }
+
+      root.addEventListener('wheel', onWheel, { passive: false });
+      root.addEventListener('pointerdown', onPointerDown);
+      root.addEventListener('pointermove', onPointerMove);
+      root.addEventListener('pointerup', onPointerUp);
+      root.addEventListener('pointercancel', onPointerUp);
+
+      root.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+          e.preventDefault();
+          stepDeck(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          stepDeck(-1);
+        }
+      });
+    })();
 
     // 21st.dev 3D Tilt Physics & Cursor-Following Spotlight
     (function initCardInteractiveMotion() {

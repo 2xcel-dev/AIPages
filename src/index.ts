@@ -41,6 +41,7 @@ import { generateLlmsTxt, generateLlmsFullTxt, generateToolMarkdown } from "./vi
 import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdown } from "./views/capabilitiesPage.js";
 import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
 import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
+import { generateBadgeSvg } from "./views/badge.js";
 import { CANONICAL_AUS_TOOLS, normalizeScrapedTool, type RawScrapedTool } from "./data/ausTools.js";
 import { DISCOVERED_GEMINI_TOOLS } from "./data/discoveredTools.js";
 import { assertValidFirstPartyTools, validateToolRecord } from "./validation/toolValidator.js";
@@ -678,6 +679,29 @@ async function handleToolDetail(c: any) {
 
 app.get("/tool/:slug", handleToolDetail);
 app.get("/tools/:slug", handleToolDetail);
+
+// ── Interactive GitHub Verification Badge Routes (/badge/:slug) ───────
+async function handleBadge(c: any) {
+  let slug = c.req.param("slug") || "";
+  if (slug.endsWith(".svg")) {
+    slug = slug.slice(0, -4);
+  }
+  const activeStore = await getActiveStore();
+  const tool = await findToolBySlug(activeStore, slug);
+  const label = c.req.query("label");
+  const status = c.req.query("status");
+  const color = c.req.query("color");
+  const svg = generateBadgeSvg(tool || slug, { label, status, color });
+
+  c.header("Content-Type", "image/svg+xml; charset=utf-8");
+  c.header("Cache-Control", "public, max-age=300, s-maxage=600");
+  return c.body(svg);
+}
+
+app.get("/badge/:slug", handleBadge);
+app.get("/badge/:slug.svg", handleBadge);
+app.get("/api/badge/:slug", handleBadge);
+app.get("/api/badge/:slug.svg", handleBadge);
 
 // ── Direct Tool Invocation Handlers (/tool/:slug & /tools/:slug) ───────
 async function handleDirectToolInvoke(c: any) {

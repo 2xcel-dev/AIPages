@@ -30,6 +30,14 @@ describe("UI/UX Pro Max & 21st.dev MCP Redesign Verification Suite", () => {
     assert.ok(html.includes("id=\"flow-showcase\""), "Missing 21st.dev #10025 carousel showcase");
     assert.ok(html.includes("/assets/flow/flow-01-hero-marketplace.jpg"), "Missing Flow slide 1");
     assert.ok(html.includes("/assets/flow/flow-07-scale-workflows.jpg"), "Missing Flow slide 7");
+    assert.ok(html.includes("object-fit: contain;"), "Carousel image sizing must use contain to prevent cutting off top/bottom");
+    assert.ok(html.includes("startFlowAutoPlay();"), "Missing auto-rotation loop for Google Flow carousel");
+
+    // 3b. 3D Tumble Rolodex Tool Deck Showcase
+    assert.ok(html.includes("id=\"rolodex-showcase\""), "Missing 3D Tumble Rolodex showcase section");
+    assert.ok(html.includes("id=\"td-container\""), "Missing 3D Tumble Deck container");
+    assert.ok(html.includes("Autonomous Tool Rolodex"), "Missing Rolodex heading");
+    assert.ok(html.includes("initTumbleRolodex"), "Missing Rolodex client engine script");
 
     // 4. Category Tabs + #5115 Pricing Cards
     assert.ok(html.includes("class=\"category-tabs-bar\""), "Missing 4-tab category switcher");

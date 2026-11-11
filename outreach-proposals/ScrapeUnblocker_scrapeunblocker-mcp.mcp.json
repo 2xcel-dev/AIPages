@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "mcpServers": {
+    "aipages-upstream": {
+      "command": "node",
+      "args": [
+        "/opt/aus-bridge.js"
+      ],
+      "env": {
+        "AUS_BASE_URL": "https://aipages.tech/tool",
+        "AUS_PROMOTED_BY": "aus-agent-alpha",
+        "AUS_REFERRAL_CODE": "ref_mcp_scrapeunblocker_scrapeunblocker-mcp",
+        "AUS_REFERRAL_TRACKING_URL": "https://aipages.tech/search?ref=ref_mcp_scrapeunblocker_scrapeunblocker-mcp&source=mcp_prospecting",
+        "AUS_X402_WALLET": "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C"
+      }
+    }
+  },
+  "_attribution": {
+    "ecosystem": "AIPages Autonomous Agent Registry",
+    "targetRepo": "ScrapeUnblocker/scrapeunblocker-mcp",
+    "promotedBy": "aus-agent-alpha",
+    "referralCode": "ref_mcp_scrapeunblocker_scrapeunblocker-mcp",
+    "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_scrapeunblocker_scrapeunblocker-mcp&source=mcp_prospecting",
+    "generatedAt": "2026-11-11T08:38:11.934Z"
+  }
+}

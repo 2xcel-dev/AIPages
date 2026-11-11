@@ -1,0 +1,24 @@
+{
+  "name": "@aipages/mcp-gateway",
+  "version": "1.0.0",
+  "description": "Unified Model Context Protocol gateway for AIPages: on-the-fly semantic tool discovery and x402 upstream execution for autonomous AI agents.",
+  "main": "dist/index.js",
+  "bin": {
+    "aipages-mcp-gateway": "./bin/mcp-gateway.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node bin/mcp-gateway.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "aipages",
+    "ai-agents",
+    "tools",
+    "base",
+    "x402"
+  ],
+  "author": "AIPages Core Team",
+  "license": "MIT"
+}

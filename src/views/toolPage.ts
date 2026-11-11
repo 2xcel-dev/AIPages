@@ -1729,6 +1729,10 @@ ${aeoGraphScript}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <span>Setup Guide</span>
           </button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" title="Copy GitHub README Verification Badge" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>README Badge</span>
+          </button>
           <a href="#test-console" class="btn btn-test-now" style="cursor: pointer;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <span>Try Live Playground (Free) &darr;</span>
@@ -1915,6 +1919,18 @@ ${aeoGraphScript}
         <div class="code-tab-panel" id="panel-http" style="display: none;">
           <pre><code id="snippet-http">${escapeHtml(requestExample.rawHttp)}</code></pre>
         </div>
+      </div>
+
+      <!-- Viral GitHub Verification Shield for Repository README -->
+      <div style="margin-top: 16px; padding: 12px 16px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-light); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <img src="/badge/${encodeURIComponent(tool.namespace)}.svg" alt="AIPages Verification Shield" style="height: 20px;" loading="lazy" />
+          <span style="font-size: 0.85rem; color: var(--text-muted);">Embed this verification shield in your repository README to show verified on-chain status.</span>
+        </div>
+        <button type="button" class="btn btn-sm btn-ghost" onclick="copyBadgeSnippet('${escapeHtml(tool.namespace)}', this)" style="padding: 6px 12px; font-size: 0.78rem; cursor: pointer;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span class="btn-text">Copy Markdown Badge</span>
+        </button>
       </div>
     </section>
 
@@ -2406,6 +2422,29 @@ Content-Type: application/json</code></pre>
       }
     }
 
+    function copyBadgeSnippet(slug, btn) {
+      var snippet = '[![AIPages Verified](https://aipages.tech/badge/' + encodeURIComponent(slug) + '.svg)](https://aipages.tech/tools/' + encodeURIComponent(slug) + ')';
+      var span = btn.querySelector('.btn-text') || btn.querySelector('span:last-child') || btn;
+      var origText = span.textContent;
+      var updateUi = function() {
+        span.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        showAgentToast('README badge copied to clipboard!');
+        setTimeout(function() {
+          span.textContent = origText;
+          btn.classList.remove('btn-copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(snippet).then(updateUi).catch(function() {
+          fallbackCopy(snippet, updateUi);
+        });
+      } else {
+        fallbackCopy(snippet, updateUi);
+      }
+    }
+
     function copyActiveExample(btn) {
       var codeEl = document.getElementById('snippet-' + activeExampleTab);
       if (!codeEl) return;
@@ -2515,6 +2554,29 @@ Content-Type: application/json</code></pre>
         });
       } else {
         fallbackCopy(config, updateUi);
+      }
+    }
+
+    function copyBadgeSnippet(slug, btn) {
+      var snippet = '[![AIPages Verified](https://aipages.tech/badge/' + encodeURIComponent(slug) + '.svg)](https://aipages.tech/tools/' + encodeURIComponent(slug) + ')';
+      var span = btn.querySelector('.btn-text') || btn.querySelector('span:last-child') || btn;
+      var origText = span.textContent;
+      var updateUi = function() {
+        span.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        showAgentToast('README badge copied to clipboard!');
+        setTimeout(function() {
+          span.textContent = origText;
+          btn.classList.remove('btn-copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(snippet).then(updateUi).catch(function() {
+          fallbackCopy(snippet, updateUi);
+        });
+      } else {
+        fallbackCopy(snippet, updateUi);
       }
     }
 
