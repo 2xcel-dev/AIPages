@@ -1370,8 +1370,6 @@ export function renderDirectoryPage(
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
     }
 
-    .td-deck-btn {
-      background: transparent;
     /* Directory Controls & Category Tabs */
     .directory-section {
       padding: 44px 0 72px;
