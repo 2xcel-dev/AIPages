@@ -1143,7 +1143,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .tool-card-body {
-      padding: 18px 14px 12px;
+      padding: 16px 12px 10px;
       display: flex;
       flex-direction: column;
       flex: 1;
@@ -1151,17 +1151,17 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .card-description {
       font-size: 0.92rem;
-      color: #D4D4D8;
-      line-height: 1.65;
-      margin-bottom: 18px;
+      color: #E2E8F0;
+      line-height: 1.6;
+      margin-bottom: 16px;
       flex-grow: 1;
     }
 
     .card-reliability-strip {
-      background: #10131C;
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 10px;
-      padding: 10px 14px;
+      background: var(--surface-terminal);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -1172,7 +1172,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     .reliability-col, .freshness-col {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
     .freshness-col {
@@ -1183,8 +1183,9 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       font-size: 0.68rem;
       text-transform: uppercase;
       color: var(--text-dim);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .reliability-badge {
@@ -1193,6 +1194,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       gap: 6px;
       font-size: 0.78rem;
       font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .status-dot {
@@ -1216,6 +1218,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       gap: 5px;
       color: var(--text-muted);
       font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
     }
 
     .card-failure-reason {
@@ -1224,7 +1228,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       color: #FCA5A5;
       font-size: 0.78rem;
       padding: 8px 12px;
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       margin-bottom: 14px;
       display: flex;
       align-items: center;
@@ -1243,24 +1247,25 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       align-items: center;
       gap: 5px;
       font-size: 0.74rem;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      color: #D4D4D8;
-      padding: 4px 10px;
-      border-radius: 8px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      color: var(--text-muted);
+      padding: 4px 9px;
+      border-radius: var(--radius-xs);
       text-decoration: none;
       transition: all 0.15s ease;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .card-cap-pill svg {
-      color: var(--primary);
+      color: var(--accent-cyan);
     }
 
     .card-cap-pill:hover,
     .card-cap-selected {
-      border-color: var(--primary);
-      color: var(--primary-bright);
-      background: rgba(245, 158, 11, 0.1);
+      border-color: var(--accent-cyan);
+      color: #FFFFFF;
+      background: rgba(0, 240, 255, 0.1);
       text-decoration: none;
     }
 
@@ -1269,24 +1274,42 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       color: var(--text-dim);
       align-self: center;
       padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .tool-card-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
       font-size: 0.82rem;
     }
 
     .fee-note {
       color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
     }
 
     .card-action-link {
       font-weight: 700;
       color: var(--primary-bright);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xs);
+      background: var(--surface-raised);
+      transition: all 0.18s ease;
+    }
+
+    .card-action-link:hover {
+      border-color: var(--accent-cyan);
+      color: #FFFFFF;
+      background: rgba(0, 240, 255, 0.12);
+      text-decoration: none;
     }
 
     .active-filter-tag {
