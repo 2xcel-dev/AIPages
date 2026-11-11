@@ -1,3 +1,4 @@
+import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -403,7 +404,6 @@ ${payload.body}
     body: JSON.stringify({
       title: payload.title,
       body: payload.body,
-      labels: payload.labels,
     }),
   });
 
@@ -412,7 +412,8 @@ ${payload.body}
     throw new Error(`GitHub issue creation failed: ${resp.status} ${text}`);
   }
 
-  console.log(`[outreach] Issue created successfully on ${payload.owner}/${payload.repo}`);
+  const issueData = await resp.json();
+  console.log(`[outreach] Issue created successfully on ${payload.owner}/${payload.repo}: ${issueData.html_url}`);
   return { live: true };
 }
 

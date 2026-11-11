@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <!-- Container with rounded corners -->
+  <rect width="64" height="64" rx="14" fill="#090D16" />
+
+  <!-- Terminal Controls Minimal -->
+  <circle cx="14" cy="14" r="2.5" fill="#EF4444" />
+  <circle cx="22" cy="14" r="2.5" fill="#FFD000" />
+  <circle cx="30" cy="14" r="2.5" fill="#10B981" />
+
+  <!-- CLI Prompt '>' -->
+  <path d="M 16 32 L 26 40 L 16 48" fill="none" stroke="#FFD000" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Agent Cursor Block -->
+  <rect x="33" y="34" width="12" height="13" rx="2" fill="#FFD000" />
+</svg>

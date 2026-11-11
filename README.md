@@ -1,6 +1,19 @@
-AIPages aipages.tech
+<p align="center">
+  <img src="assets/aipages-banner.svg" alt="AIPages.tech — The AI Agent Directory" width="750" />
+</p>
 
-Machine-native discovery registry and vector search index for autonomous AI agent tools and Agent Utility Services (AUS).
+<p align="center">
+  <a href="https://aipages.tech"><img src="https://img.shields.io/badge/Production-aipages.tech-FFD000?style=for-the-badge" alt="Live Production"></a>
+  <a href="https://github.com/punkpeye/awesome-mcp-servers/pull/19156"><img src="https://img.shields.io/badge/MCP-Awesome--MCP--Servers-blue?style=for-the-badge" alt="Awesome MCP Servers"></a>
+  <a href="https://base.org"><img src="https://img.shields.io/badge/Settlement-Base_L2_(USDC)-0052FF?style=for-the-badge" alt="Base L2"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-slate?style=for-the-badge" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  <strong>Machine-native discovery registry and 3072-dim vector search index for autonomous AI agent tools and Model Context Protocol (MCP) servers.</strong>
+</p>
+
+---
 
 ## What it does
 
