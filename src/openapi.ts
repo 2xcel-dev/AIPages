@@ -15,6 +15,10 @@ export const openapi = {
   },
   servers: [
     {
+      url: "https://aipages.tech",
+      description: "Production AIPages Registry and x402 Execution Gateway (Base Mainnet)",
+    },
+    {
       url: `http://localhost:${config.port}`,
       description: "Local development server",
     },
@@ -95,6 +99,91 @@ export const openapi = {
             content: {
               "application/json": {
                 schema: { type: "object" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/mcp.json": {
+      get: {
+        summary: "Authoritative Model Context Protocol (MCP) server & tool manifest",
+        description:
+          "Returns the complete MCP server discovery manifest and schema-bearing tool definitions for Cursor, Claude Desktop, Cline, and autonomous MCP clients.",
+        responses: {
+          "200": {
+            description: "MCP manifest JSON",
+            content: {
+              "application/json": {
+                schema: { type: "object" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/mcp-actions.json": {
+      get: {
+        summary: "W3C WebMCP declarative and imperative browser agent actions manifest",
+        description:
+          "Declares structured browser actions (search_agent_tools, filter_tools_by_capability, register_agent_tool, execute_tool_*) for WebMCP-enabled browsing agents.",
+        responses: {
+          "200": {
+            description: "WebMCP actions manifest",
+            content: {
+              "application/json": {
+                schema: { type: "object" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/agent-permissions.json": {
+      get: {
+        summary: "Autonomous AI agent & crawler permissions policy",
+        description:
+          "Machine-readable policy specifying allowed AI crawlers, rate limits, sandbox test headers, and Base Mainnet x402 settlement rules.",
+        responses: {
+          "200": {
+            description: "Agent permissions policy JSON",
+            content: {
+              "application/json": {
+                schema: { type: "object" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/llms.txt": {
+      get: {
+        summary: "Token-budgeted Markdown discovery index for LLMs",
+        description:
+          "Concise, prioritized Markdown index of AIPages endpoints, capabilities, and registered tools following the llms.txt specification.",
+        responses: {
+          "200": {
+            description: "Markdown discovery file",
+            content: {
+              "text/markdown": {
+                schema: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/llms-full.txt": {
+      get: {
+        summary: "Complete Markdown catalog with full JSON Schemas and cURL examples",
+        description:
+          "Single-request comprehensive Markdown specification of every registered tool, its input JSON Schema, and HTTP 402 / sandbox invocation examples.",
+        responses: {
+          "200": {
+            description: "Full Markdown catalog",
+            content: {
+              "text/markdown": {
+                schema: { type: "string" },
               },
             },
           },
@@ -331,6 +420,9 @@ export const openapi = {
           required: true,
           content: {
             "application/json": {
+              schema: { $ref: "#/components/schemas/ToolSubmission" },
+            },
+            "application/x-www-form-urlencoded": {
               schema: { $ref: "#/components/schemas/ToolSubmission" },
             },
           },

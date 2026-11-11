@@ -1,5 +1,7 @@
 import { deriveReliability } from "../types.js";
 import { escapeHtml } from "./utils.js";
+import { renderWebMcpRuntimeScript } from "./agentDiscovery.js";
+import { SHARED_DESIGN_SYSTEM_CSS, renderSharedNavbar, renderSharedFooter, } from "./sharedLayout.js";
 export const CAPABILITY_DESCRIPTIONS = {
     "schema-sanitization": "Input sanitization, HTML/XSS stripping, and structured JSON schema normalization for autonomous workflows.",
     "data-cleaning": "Automated data normalization, whitespace stripping, and structured payload sanitization.",
@@ -141,9 +143,7 @@ export function getCapabilityIndex(tools) {
         if (tool.status === "rejected" || tool.status === "pending") {
             continue;
         }
-        const caps = (tool.capabilities && tool.capabilities.length > 0)
-            ? tool.capabilities
-            : [];
+        const caps = tool.capabilities && tool.capabilities.length > 0 ? tool.capabilities : [];
         const health = deriveReliability(tool);
         const isFirstParty = Boolean(tool.isFirstParty ??
             tool.developer?.isFirstParty ??
@@ -163,7 +163,9 @@ export function getCapabilityIndex(tools) {
             if (!cap)
                 continue;
             if (!capMap.has(cap)) {
-                const desc = CAPABILITY_DESCRIPTIONS[cap] || tool.description || `Autonomous agent tools providing ${cap} functionality.`;
+                const desc = CAPABILITY_DESCRIPTIONS[cap] ||
+                    tool.description ||
+                    `Autonomous agent tools providing ${cap} functionality.`;
                 capMap.set(cap, {
                     name: cap,
                     toolCount: 0,
@@ -177,7 +179,6 @@ export function getCapabilityIndex(tools) {
             summary.tools.push(toolEntry);
         }
     }
-    // Sort by toolCount descending, then alphabetically by name
     return Array.from(capMap.values()).sort((a, b) => {
         if (b.toolCount !== a.toolCount) {
             return b.toolCount - a.toolCount;
@@ -186,11 +187,10 @@ export function getCapabilityIndex(tools) {
     });
 }
 /**
- * Render responsive HTML view for /capabilities page.
+ * Render responsive HTML view for /capabilities page using the UI/UX Pro Max & 21st.dev design system.
  */
 export function renderCapabilitiesPage(capabilities, totalToolsCount, baseUrl = "https://aipages.tech") {
     const normalizedBase = baseUrl.replace(/\/+$/, "");
-    // Generate JSON-LD CollectionPage
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
@@ -233,11 +233,11 @@ export function renderCapabilitiesPage(capabilities, totalToolsCount, baseUrl = 
             }
             const priceDisplay = t.pricingModel === "free" || t.costPerCall === 0
                 ? "Free"
-                : `$${t.costPerCall} USDC`;
+                : `${t.costPerCall} USDT`;
             return `
             <a href="/tool/${encodeURIComponent(t.namespace)}" class="cap-tool-pill" title="${escapedNs}">
               <span class="cap-tool-name">${escapedToolName}</span>
-              ${t.isFirstParty ? `<span class="badge-aus" title="First-Party AUS Tool">★ AUS</span>` : ""}
+              ${t.isFirstParty ? `<span class="badge-aus" title="First-Party AUS Tool">AUS</span>` : ""}
               <span class="cap-tool-price">${priceDisplay}</span>
               <span class="badge ${relBadgeClass}">${relLabel}</span>
             </a>
@@ -250,7 +250,9 @@ export function renderCapabilitiesPage(capabilities, totalToolsCount, baseUrl = 
         <article class="cap-card" data-cap="${escapedName}" data-desc="${escapedDesc}">
           <div class="cap-card-header">
             <div class="cap-title-row">
-              <span class="cap-icon">🏷️</span>
+              <span class="cap-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+              </span>
               <h2 class="cap-title">
                 <a href="${cap.directoryUrl}">${escapedName}</a>
               </h2>
@@ -284,239 +286,125 @@ export function renderCapabilitiesPage(capabilities, totalToolsCount, baseUrl = 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
+  <link rel="canonical" href="https://aipages.tech/capabilities">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
+  <link rel="alternate" type="text/markdown" title="Capabilities Index (Markdown)" href="/capabilities?format=md">
   <script type="application/ld+json">
 ${jsonLdScript}
   </script>
   <style>
-    :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --card-surface: #1a2234;
-      --border: #27354f;
-      --border-light: #334466;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --healthy: #10b981;
-      --healthy-bg: rgba(16, 185, 129, 0.12);
-      --healthy-border: rgba(16, 185, 129, 0.3);
-      --degraded: #f59e0b;
-      --degraded-bg: rgba(245, 158, 11, 0.12);
-      --degraded-border: rgba(245, 158, 11, 0.3);
-      --failing: #ef4444;
-      --failing-bg: rgba(239, 68, 68, 0.14);
-      --failing-border: rgba(239, 68, 68, 0.35);
-      --unchecked: #94a3b8;
-      --unchecked-bg: rgba(148, 163, 184, 0.12);
-      --unchecked-border: rgba(148, 163, 184, 0.25);
-      --radius: 12px;
-      --radius-sm: 6px;
-    }
+    ${SHARED_DESIGN_SYSTEM_CSS}
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    a {
-      color: var(--primary);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px 20px;
-    }
-
-    /* Navbar */
-    .nav {
-      border-bottom: 1px solid var(--border);
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-    .nav-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 60px;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-    .brand-badge {
-      font-size: 0.72rem;
-      background: #1e293b;
-      color: var(--primary);
-      border: 1px solid var(--border-light);
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .nav-links {
-      display: flex;
-      gap: 20px;
-      font-size: 0.9rem;
-      align-items: center;
-    }
-    .nav-links a {
-      color: var(--text-muted);
-    }
-    .nav-links a:hover {
-      color: var(--text);
-      text-decoration: none;
-    }
-    .nav-links a.active {
-      color: var(--primary);
-      font-weight: 600;
-    }
-
-    /* Hero */
     .hero {
-      padding: 36px 0 24px;
+      padding: 64px 0 36px;
       text-align: center;
-      max-width: 800px;
+      max-width: 820px;
       margin: 0 auto;
     }
-    .hero-badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--primary);
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      padding: 4px 12px;
-      border-radius: 999px;
-      margin-bottom: 12px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
+
     .hero-title {
-      font-size: 2.2rem;
+      font-size: clamp(2.1rem, 4vw, 3.2rem);
       font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 12px;
-      color: #fff;
-    }
-    .hero-subtitle {
-      font-size: 1.05rem;
-      color: var(--text-muted);
-      line-height: 1.6;
+      color: #FFFFFF;
+      margin-bottom: 14px;
     }
 
-    /* Stats bar */
-    .stats-bar {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin: 24px 0 32px;
-      padding: 16px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+    .hero-subtitle {
+      font-size: 1.08rem;
+      color: var(--text-muted);
+      line-height: 1.7;
     }
+
+    /* 21st.dev #29870 Stats Block */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 24px 0 36px;
+    }
+
     .stat-item {
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
       text-align: center;
     }
+
     .stat-value {
-      font-size: 1.6rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
       font-weight: 800;
-      color: var(--primary);
+      color: var(--primary-bright);
       line-height: 1.2;
     }
+
     .stat-label {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      margin-top: 6px;
     }
 
-    /* Search/filter box */
     .filter-section {
-      margin-bottom: 32px;
+      margin-bottom: 36px;
     }
+
     .search-input-wrapper {
       position: relative;
-      max-width: 600px;
+      max-width: 640px;
       margin: 0 auto;
     }
+
     .search-input {
       width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 20px 14px 44px;
-      color: var(--text);
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 15px 20px 15px 46px;
+      color: #FFFFFF;
       font-size: 0.98rem;
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
+
     .search-input:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
     }
+
     .search-icon {
       position: absolute;
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--text-dim);
-      font-size: 1.1rem;
+      color: var(--primary);
       pointer-events: none;
+      display: flex;
     }
 
-    /* Grid */
     .cap-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 20px;
-      margin-bottom: 48px;
+      gap: 24px;
+      margin-bottom: 64px;
     }
 
-    /* Card */
     .cap-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 18px;
       padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      transition: transform 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.18s ease, border-color 0.18s ease;
     }
+
     .cap-card:hover {
       transform: translateY(-2px);
-      border-color: var(--border-light);
+      border-color: rgba(245, 158, 11, 0.4);
     }
 
     .cap-card-header {
@@ -525,33 +413,47 @@ ${jsonLdScript}
       align-items: flex-start;
       gap: 12px;
     }
+
     .cap-title-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
+
     .cap-icon {
-      font-size: 1.1rem;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--primary-bright);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
+
     .cap-title {
-      font-size: 1.2rem;
+      font-size: 1.18rem;
       font-weight: 700;
       line-height: 1.3;
     }
+
     .cap-title a {
-      color: #fff;
+      color: #FFFFFF;
     }
+
     .cap-title a:hover {
-      color: var(--primary);
+      color: var(--primary-bright);
     }
 
     .cap-count-badge {
       font-size: 0.75rem;
       font-weight: 700;
-      color: var(--primary);
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      padding: 3px 10px;
+      color: var(--primary-bright);
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.32);
+      padding: 4px 10px;
       border-radius: 999px;
       white-space: nowrap;
     }
@@ -559,66 +461,71 @@ ${jsonLdScript}
     .cap-desc {
       font-size: 0.92rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.6;
       flex: 1;
     }
 
-    /* Tools section in card */
     .cap-tools-section {
-      background: var(--card-surface);
-      border: 1px solid rgba(39, 53, 79, 0.6);
-      border-radius: var(--radius-sm);
-      padding: 12px;
+      background: #10131C;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 14px;
     }
+
     .cap-tools-label {
       display: block;
-      font-size: 0.72rem;
-      font-weight: 600;
+      font-size: 0.7rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-dim);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
+
     .cap-tools-list {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
+
     .cap-tool-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #111827;
-      border: 1px solid var(--border);
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 5px 11px;
       font-size: 0.78rem;
-      color: var(--text);
+      color: #FFFFFF;
       text-decoration: none;
-      transition: border-color 0.15s ease, background 0.15s ease;
     }
+
     .cap-tool-pill:hover {
       border-color: var(--primary);
-      background: #1a2234;
       text-decoration: none;
     }
+
     .cap-tool-name {
       font-weight: 600;
-      color: #fff;
+      color: #FFFFFF;
     }
+
     .badge-aus {
       font-size: 0.65rem;
       font-weight: 700;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.18);
+      color: var(--primary-bright);
+      background: rgba(245, 158, 11, 0.18);
       border-radius: 4px;
-      padding: 1px 4px;
+      padding: 1px 5px;
     }
+
     .cap-tool-price {
-      font-size: 0.7rem;
-      color: var(--text-dim);
+      font-size: 0.72rem;
+      color: var(--text-muted);
     }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -627,26 +534,31 @@ ${jsonLdScript}
       padding: 1px 6px;
       border-radius: 999px;
     }
+
     .badge-healthy {
       background: var(--healthy-bg);
       color: var(--healthy);
       border: 1px solid var(--healthy-border);
     }
+
     .badge-degraded {
       background: var(--degraded-bg);
       color: var(--degraded);
       border: 1px solid var(--degraded-border);
     }
+
     .badge-failing {
       background: var(--failing-bg);
       color: var(--failing);
       border: 1px solid var(--failing-border);
     }
+
     .badge-unchecked {
       background: var(--unchecked-bg);
       color: var(--unchecked);
       border: 1px solid var(--unchecked-border);
     }
+
     .cap-more-pill {
       font-size: 0.74rem;
       color: var(--text-dim);
@@ -654,97 +566,46 @@ ${jsonLdScript}
     }
 
     .cap-card-footer {
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
       padding-top: 14px;
     }
+
     .btn-browse {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--primary);
-      transition: gap 0.15s ease;
-    }
-    .btn-browse:hover {
-      text-decoration: none;
-      gap: 10px;
+      font-weight: 700;
+      color: var(--primary-bright);
     }
 
-    /* Empty state */
     .empty-state {
       text-align: center;
       padding: 60px 20px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 18px;
       display: none;
-    }
-    .empty-icon {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-      color: var(--text-dim);
-    }
-    .empty-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .empty-desc {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
-    /* Footer */
-    .footer {
-      margin-top: auto;
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--text-dim);
+      margin-bottom: 64px;
     }
 
     @media (max-width: 768px) {
-      .cap-grid {
-        grid-template-columns: 1fr;
-      }
-      .hero-title {
-        font-size: 1.7rem;
-      }
+      .cap-grid,
       .stats-bar {
-        flex-direction: column;
-        gap: 16px;
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="brand">
-        AIPages
-        <span class="brand-badge">Registry</span>
-      </a>
-      <div class="nav-links">
-        <a href="/tool">Directory</a>
-        <a href="/capabilities" class="active">Capabilities</a>
-        <a href="/search">Vector Search</a>
-        <a href="/api/tools">API Tools</a>
-        <a href="/api/openapi.json">OpenAPI Spec</a>
-      </div>
-    </div>
-  </nav>
+  ${renderSharedNavbar("capabilities", false)}
 
   <main class="container">
     <section class="hero">
-      <span class="hero-badge">Functional Taxonomies</span>
       <h1 class="hero-title">AI Agent Tool Capabilities</h1>
       <p class="hero-subtitle">
         Browse and discover autonomous agent tools by functional capability.
-        Filter directly into the directory to inspect schemas, live endpoints, and x402 payment specifications.
+        Filter directly into the directory to inspect schemas, live endpoints, and HTTP 402 USDT payment specifications.
       </p>
     </section>
 
@@ -764,16 +625,22 @@ ${jsonLdScript}
     </div>
 
     <div class="filter-section">
-      <div class="search-input-wrapper">
-        <span class="search-icon">🔍</span>
+      <form method="GET" action="/tool" class="search-input-wrapper" toolname="filter_tools_by_capability" tooldescription="Browse and filter autonomous AI agent tools by functional capability taxonomy." data-mcp-action="filter-capabilities">
+        <span class="search-icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <label for="cap-filter" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Filter capabilities (e.g. audit, schema, geo, reason)</label>
         <input
           type="text"
           id="cap-filter"
+          name="capability"
           class="search-input"
+          aria-label="Filter capabilities (e.g. audit, schema, geo, reason)"
+          toolparamdescription="Functional capability tag to filter tools by (e.g. schema-sanitization, financial-audit, geospatial)"
           placeholder="Filter capabilities (e.g. audit, schema, geo, reason)..."
           autocomplete="off"
         >
-      </div>
+      </form>
     </div>
 
     <div class="cap-grid" id="cap-grid">
@@ -781,17 +648,15 @@ ${jsonLdScript}
     </div>
 
     <div class="empty-state" id="empty-state">
-      <div class="empty-icon">🔍</div>
+      <div class="empty-icon" aria-hidden="true">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
       <h3 class="empty-title">No matching capabilities found</h3>
       <p class="empty-desc">Try searching for terms like "audit", "sanitizer", "oracle", or "code".</p>
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <p>AIPages: Machine-native discovery registry and vector search index for autonomous AI agent tools.</p>
-    </div>
-  </footer>
+  ${renderSharedFooter()}
 
   <script>
     (function() {
@@ -827,7 +692,31 @@ ${jsonLdScript}
       });
     })();
   </script>
+  ${renderWebMcpRuntimeScript({ pageType: "capabilities" })}
 </body>
 </html>`;
+}
+/**
+ * Generate a token-budgeted clean Markdown representation of the Capabilities Index
+ * for AI crawlers and agents requesting /capabilities?format=md or Accept: text/markdown.
+ */
+export function generateCapabilitiesMarkdown(capabilities, totalToolsCount, baseUrl = "https://aipages.tech") {
+    const normalizedBase = baseUrl.replace(/\/+$/, "");
+    const lines = [
+        "# AIPages Functional Capabilities Index",
+        "",
+        `> Machine-readable capability taxonomy indexing ${capabilities.length} distinct capabilities across ${totalToolsCount} verified autonomous agent tools.`,
+        "",
+        "## Capabilities Taxonomy",
+        "",
+    ];
+    for (const cap of capabilities) {
+        const toolNames = cap.tools
+            .map((t) => `[${t.name}](${normalizedBase}/tool/${t.namespace})`)
+            .join(", ");
+        lines.push(`- **[${cap.name}](${normalizedBase}${cap.directoryUrl})** (${cap.toolCount} ${cap.toolCount === 1 ? "tool" : "tools"}): ${cap.description} Tools: ${toolNames}`);
+    }
+    lines.push("");
+    return lines.join("\n");
 }
 //# sourceMappingURL=capabilitiesPage.js.map

@@ -34,7 +34,7 @@ export function formatFeedItem(tool, baseUrl = FEED_HOME_PAGE) {
         tool.namespace?.startsWith("net.2xcel.aus"));
     const pricingModel = tool.pricing?.model ?? "free";
     const costPerCall = tool.pricing?.costPerCall ?? 0;
-    const slug = tool.name ? slugify(tool.name) : slugify(tool.namespace);
+    const slug = tool.namespace ? encodeURIComponent(tool.namespace) : slugify(tool.name);
     const canonicalUrl = `${baseUrl.replace(/\/+$/, "")}/tool/${slug}`;
     const publishedDate = tool.createdAt instanceof Date
         ? tool.createdAt.toISOString()

@@ -1,6 +1,14 @@
 import { type Tool, deriveReliability } from "../types.js";
 import { type ToolStore } from "../db.js";
 import { escapeHtml } from "./utils.js";
+import { renderWebMcpRuntimeScript } from "./agentDiscovery.js";
+import {
+  SHARED_DESIGN_SYSTEM_CSS,
+  formatHumanToolTitle,
+  getFlowArtworkForTool,
+  renderSharedNavbar,
+  renderSharedFooter,
+} from "./sharedLayout.js";
 
 function formatTimestamp(date: Date | null | undefined): string {
   if (!date) return "None recorded";
@@ -535,6 +543,73 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   const lastCheckedFormatted = formatTimestamp(lastCheckedDate);
   const relativeTime = formatRelativeTime(lastCheckedDate);
   const lastCheckedDisplay = relativeTime ? `${lastCheckedFormatted} (${relativeTime})` : lastCheckedFormatted;
+  const canonicalToolUrl = `https://aipages.tech/tool/${encodeURIComponent(tool.namespace)}`;
+  const markdownToolUrl = `/tool/${encodeURIComponent(tool.namespace)}.md`;
+
+  const aeoGraphSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "HowTo",
+        name: `How to integrate and invoke ${tool.name} (${tool.namespace}) in autonomous AI agents`,
+        description: `Step-by-step instructions to connect ${tool.name} via Model Context Protocol (MCP) in Cursor or Claude Desktop, or invoke directly over HTTP with Base Mainnet x402 settlement.`,
+        step: [
+          {
+            "@type": "HowToStep",
+            position: 1,
+            name: "Configure MCP Server or HTTP Endpoint",
+            text: `Add the ${tool.namespace} MCP server entry to .cursor/mcp.json or claude_desktop_config.json, or target POST ${requestExample.endpoint}.`,
+          },
+          {
+            "@type": "HowToStep",
+            position: 2,
+            name: "Validate Request Payload Against JSON Schema",
+            text: `Format your JSON request body matching the required properties: ${(tool.schema?.required || []).join(", ") || "see JSON Schema"}.`,
+          },
+          {
+            "@type": "HowToStep",
+            position: 3,
+            name: "Execute in 0-Friction Sandbox or Settle via Base x402",
+            text: requestExample.isX402
+              ? `Include header 'x-playground-test: true' for free sandbox testing, or attach a settled Base Mainnet (Chain ID 8453) USDC transaction hash in 'x-payment-receipt' (${requestExample.costDisplay}).`
+              : "Send a POST request with Content-Type: application/json (free public endpoint, no payment required).",
+          },
+        ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: `What does ${tool.name} (${tool.namespace}) do?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: `${tool.description || tool.name} Capabilities: ${(tool.capabilities || []).join(", ") || "general agent utility"}.`,
+            },
+          },
+          {
+            "@type": "Question",
+            name: `How much does ${tool.name} cost to execute and what payment protocol does it use?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: requestExample.authDescription,
+            },
+          },
+          {
+            "@type": "Question",
+            name: `Can I test ${tool.name} without paying on-chain fees first?`,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: `Yes. Send POST /tool/${tool.namespace} with header 'x-playground-test: true' and 'x-agent-id: browser-playground' to execute a 0-friction test, or fetch GET /tool/${tool.namespace}.md for the clean Markdown specification.`,
+            },
+          },
+        ],
+      },
+    ],
+  };
+  const aeoGraphScript = JSON.stringify(aeoGraphSchema, null, 2).replace(/</g, "\\u003c");
+  const humanTitle = escapeHtml(formatHumanToolTitle(tool.name));
+  const flowArtwork = getFlowArtworkForTool(tool.name) || getFlowArtworkForTool(tool.namespace);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -542,117 +617,64 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapedName} - AIPages Agent Tool Registry</title>
+  <meta name="description" content="${escapedDescription}">
+  <link rel="canonical" href="${canonicalToolUrl}">
+  <link rel="alternate" type="text/markdown" title="${escapedName} Markdown Specification" href="${markdownToolUrl}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">
 ${jsonLdScript}
   </script>
+  <script type="application/ld+json" id="aeo-howto-faq-schema">
+${aeoGraphScript}
+  </script>
   <style>
-    :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --card-surface: #1a2234;
-      --border: #27354f;
-      --border-light: #334466;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --healthy: #10b981;
-      --healthy-bg: rgba(16, 185, 129, 0.12);
-      --healthy-border: rgba(16, 185, 129, 0.35);
-      --degraded: #f59e0b;
-      --degraded-bg: rgba(245, 158, 11, 0.12);
-      --degraded-border: rgba(245, 158, 11, 0.35);
-      --failing: #ef4444;
-      --failing-bg: rgba(239, 68, 68, 0.14);
-      --failing-border: rgba(239, 68, 68, 0.4);
-      --unchecked: #94a3b8;
-      --unchecked-bg: rgba(148, 163, 184, 0.12);
-      --unchecked-border: rgba(148, 163, 184, 0.3);
-      --code-bg: #0d131f;
-      --radius: 12px;
-      --radius-sm: 6px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    a {
-      color: var(--primary);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
+    ${SHARED_DESIGN_SYSTEM_CSS}
 
     .container {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 20px;
+      padding: 28px 24px;
     }
 
-    /* Navbar */
-    .nav {
-      border-bottom: 1px solid var(--border);
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-    .nav-inner {
-      display: flex;
-      justify-content: space-between;
+    .tool-hero-banner {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(10, 12, 18, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 22px;
+      padding: 36px;
+      margin: 28px 0 32px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 28px;
       align-items: center;
-      height: 60px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--text);
-      letter-spacing: -0.02em;
+
+    .tool-hero-art {
+      width: 240px;
+      height: 240px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: #050507;
+      flex-shrink: 0;
     }
-    .brand-badge {
-      font-size: 0.72rem;
-      background: #1e293b;
-      color: var(--primary);
-      border: 1px solid var(--border-light);
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+
+    .tool-hero-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
-    .nav-links {
-      display: flex;
-      gap: 20px;
-      font-size: 0.9rem;
-    }
-    .nav-links a {
-      color: var(--text-muted);
-    }
-    .nav-links a:hover {
-      color: var(--text);
-      text-decoration: none;
+
+    @media (max-width: 860px) {
+      .tool-hero-banner {
+        grid-template-columns: 1fr;
+        padding: 24px;
+      }
+      .tool-hero-art {
+        width: 100%;
+        height: 200px;
+      }
     }
 
     /* Hero Section */
@@ -1673,57 +1695,47 @@ ${jsonLdScript}
   </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="brand">
-        AIPages
-        <span class="brand-badge">Registry</span>
-      </a>
-      <div class="nav-links">
-        <a href="/tool">Directory</a>
-        <a href="/capabilities">Capabilities</a>
-        <a href="/search">Vector Search</a>
-        <a href="/api/tools">Tools API</a>
-        <a href="/api/openapi.json">OpenAPI Spec</a>
-      </div>
-    </div>
-  </nav>
+  ${renderSharedNavbar("tool", false)}
 
   <main class="container">
-    <div class="hero">
-      <div class="hero-top">
-        <h1 class="tool-title">${escapedName}</h1>
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          ${isFirstParty ? `<span class="badge badge-first-party"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First-Party AUS Tool</span>` : ""}
-          ${statusBadgeHtml}
+    <div class="hero tool-hero-banner" style="${flowArtwork ? "" : "grid-template-columns: 1fr;"}">
+      <div>
+        <div class="hero-top">
+          <h1 class="tool-title">${humanTitle !== escapedName ? `${humanTitle} <span style="font-size: 1.05rem; font-family: var(--font-mono); color: #A1A1AA; font-weight: 500;">(${escapedName})</span>` : escapedName}</h1>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            ${isFirstParty ? `<span class="badge badge-first-party"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First-Party AUS Tool</span>` : ""}
+            ${statusBadgeHtml}
+          </div>
+        </div>
+        <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span class="namespace-tag">${escapedNamespace}</span>
+          ${pricingModel === "free" ? `<span class="badge badge-healthy" style="font-family: var(--font-mono);">0.00 USDT</span>` : `<span class="badge badge-first-party" style="font-family: var(--font-mono);">${costPerCall} USDT ($${costPerCall} USDC)</span>`}
+        </div>
+        <p class="tool-description">${escapedDescription}</p>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-agent btn-claude" onclick="copyClientConfig('claude', this)" title="1-Click copy Claude Desktop MCP config">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
+            <span class="btn-text">Add to Claude</span>
+          </button>
+          <button type="button" class="btn btn-agent btn-cursor" onclick="copyClientConfig('cursor', this)" title="1-Click copy Cursor .cursor/mcp.json config">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span class="btn-text">Add to Cursor</span>
+          </button>
+          <button type="button" class="btn btn-agent btn-cline" onclick="copyClientConfig('cline', this)" title="1-Click copy Cline cline_mcp_settings.json config">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
+            <span class="btn-text">Add to Cline</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Setup Guide</span>
+          </button>
+          <a href="#test-console" class="btn btn-test-now" style="cursor: pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>Try Live Playground (Free) &darr;</span>
+          </a>
         </div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <span class="namespace-tag">${escapedNamespace}</span>
-      </div>
-      <p class="tool-description">${escapedDescription}</p>
-      <div class="hero-actions">
-        <button type="button" class="btn btn-agent btn-claude" onclick="copyClientConfig('claude', this)" title="1-Click copy Claude Desktop MCP config">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
-          <span class="btn-text">Add to Claude</span>
-        </button>
-        <button type="button" class="btn btn-agent btn-cursor" onclick="copyClientConfig('cursor', this)" title="1-Click copy Cursor .cursor/mcp.json config">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          <span class="btn-text">Add to Cursor</span>
-        </button>
-        <button type="button" class="btn btn-agent btn-cline" onclick="copyClientConfig('cline', this)" title="1-Click copy Cline cline_mcp_settings.json config">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
-          <span class="btn-text">Add to Cline</span>
-        </button>
-        <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 0.8rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>Setup Guide</span>
-        </button>
-        <a href="#test-console" class="btn btn-test-now" style="cursor: pointer;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <span>Try Live Playground (Free) &darr;</span>
-        </a>
-      </div>
+      ${flowArtwork ? `<div class="tool-hero-art"><img src="${flowArtwork}" alt="${humanTitle} promotional visual" loading="eager" /></div>` : ""}
     </div>
 
     <!-- Interactive Live Test Console (SURFACED FRONT-AND-CENTER) -->
@@ -1767,13 +1779,13 @@ ${jsonLdScript}
 
       <div class="playground-grid">
         <!-- Request Editor Column -->
-        <div class="playground-panel">
+        <form id="playground-form" class="playground-panel" method="POST" action="/tool/${escapedNamespace}?test=true" toolname="execute_tool_${tool.name.replace(/[^a-zA-Z0-9_-]/g, "_")}" tooldescription="Execute or test ${escapedName} (${escapedNamespace}) with a JSON payload in 0-Friction Sandbox Mode or Base USDC x402 mode." onsubmit="event.preventDefault(); executePlaygroundTool('${escapedNamespace}');" data-mcp-action="invoke-tool" data-mcp-namespace="${escapedNamespace}" data-mcp-method="POST" data-mcp-endpoint="/tool/${escapedNamespace}">
           <div class="playground-panel-header">
-            <span>Request Payload (JSON)</span>
+            <label for="playground-payload" style="cursor: pointer;">Request Payload (JSON)</label>
             <span class="panel-badge">POST</span>
           </div>
           <div class="playground-editor-wrapper">
-            <textarea id="playground-payload" class="playground-textarea" spellcheck="false" rows="10">${escapeHtml(requestExample.bodyJson)}</textarea>
+            <textarea id="playground-payload" name="payload" class="playground-textarea" aria-label="Request Payload (JSON)" toolparamdescription="JSON object matching the tool input schema" spellcheck="false" rows="10">${escapeHtml(requestExample.bodyJson)}</textarea>
           </div>
 
           ${
@@ -1783,9 +1795,10 @@ ${jsonLdScript}
             <label for="playground-payment-header" class="playground-input-label">
               x-payment-receipt Header <span style="color: var(--text-dim); font-size: 0.72rem;">(Base USDC tx receipt)</span>
             </label>
-            <input type="text" id="playground-payment-header" class="playground-input" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
-            <div id="playground-mode-hint" style="font-size: 0.76rem; color: #34d399; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
-              <span>⚡</span> <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>
+            <input type="text" id="playground-payment-header" name="x-payment-receipt" class="playground-input" toolparamdescription="Optional Base Mainnet 0x transaction receipt hash for HTTP 402 production settlement" placeholder="0x... or Leave blank to inspect 402 Settlement Directive" />
+            <div id="playground-mode-hint" style="font-size: 0.76rem; color: #34d399; margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>
             </div>
           </div>
           `
@@ -1798,13 +1811,13 @@ ${jsonLdScript}
           }
 
           <div class="playground-actions">
-            <button type="button" id="btn-execute-playground" class="btn-execute" onclick="executePlaygroundTool('${escapedNamespace}')">
+            <button type="submit" id="btn-execute-playground" class="btn-execute" data-mcp-trigger="invoke-tool" onclick="event.preventDefault(); executePlaygroundTool('${escapedNamespace}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <span class="btn-label">Run 0-Friction Test</span>
             </button>
             <span id="playground-status-pill" class="playground-status-pill" style="display: none;"></span>
           </div>
-        </div>
+        </form>
 
         <!-- Response Column -->
         <div class="playground-panel">
@@ -2287,16 +2300,7 @@ Content-Type: application/json</code></pre>
     </div>
   </div>
 
-  <footer>
-    <div class="container footer-inner">
-      <div>AIPages: Autonomous AI Agent Registry &amp; Vector Index. Base Mainnet.</div>
-      <div>
-        <a href="/api/tools">API Tools</a> &bull; 
-        <a href="/api/openapi.json">OpenAPI 3.1</a> &bull; 
-        <a href="https://github.com/2xcel-dev/AIPages" target="_blank" rel="noopener">GitHub</a>
-      </div>
-    </div>
-  </footer>
+  ${renderSharedFooter()}
 
   <script>
     var activeExampleTab = 'curl';
@@ -2540,14 +2544,14 @@ Content-Type: application/json</code></pre>
       if (mode === 'sandbox') {
         if (execLabel) execLabel.textContent = 'Run 0-Friction Test';
         if (hintEl) {
-          hintEl.innerHTML = '<span>⚡</span> <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>';
+          hintEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> <span><strong>0-Friction Test Mode:</strong> Live engine executes with zero required transaction fee.</span>';
           hintEl.style.color = '#34d399';
         }
       } else {
         if (execLabel) execLabel.textContent = 'Execute Tool (x402)';
         if (hintEl) {
-          hintEl.innerHTML = '<span>💎</span> <span><strong>Base x402 Settlement Mode:</strong> Microtransactions settle in Base USDC via HTTP 402.</span>';
-          hintEl.style.color = '#c084fc';
+          hintEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg> <span><strong>Base x402 Settlement Mode:</strong> Microtransactions settle in Base USDT via HTTP 402.</span>';
+          hintEl.style.color = '#F59E0B';
         }
       }
     }
@@ -2718,6 +2722,7 @@ Content-Type: application/json</code></pre>
       }
     }
   </script>
+  ${renderWebMcpRuntimeScript({ pageType: "tool", tool })}
 </body>
 </html>`;
 }
@@ -2732,9 +2737,9 @@ export function renderNotFoundPage(slug: string): string {
   <title>Tool Not Found - AIPages</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #090d16;
-      color: #f1f5f9;
+      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #060608;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2743,46 +2748,48 @@ export function renderNotFoundPage(slug: string): string {
       padding: 20px;
     }
     .card {
-      background: #111827;
-      border: 1px solid #27354f;
-      border-radius: 12px;
-      padding: 36px;
+      background: #0A0C12;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 40px;
       max-width: 520px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
     }
     h1 {
-      font-size: 1.75rem;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 1.85rem;
       margin-bottom: 12px;
-      color: #ef4444;
+      color: #F59E0B;
     }
     p {
-      color: #94a3b8;
+      color: #A1A1AA;
       margin-bottom: 24px;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
     }
     code {
-      background: #0d131f;
-      color: #38bdf8;
+      background: #050507;
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.3);
       padding: 3px 8px;
-      border-radius: 4px;
-      font-family: monospace;
+      border-radius: 6px;
+      font-family: "JetBrains Mono", monospace;
       word-break: break-all;
     }
     .btn {
       display: inline-block;
-      background: #38bdf8;
-      color: #090d16;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 6px;
+      background: #F59E0B;
+      color: #060608;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 999px;
       text-decoration: none;
-      transition: background 0.15s;
+      transition: background 0.18s ease;
     }
     .btn:hover {
-      background: #0284c7;
-      color: #fff;
+      background: #FFD000;
+      color: #060608;
     }
   </style>
 </head>

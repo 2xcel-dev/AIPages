@@ -1,3 +1,21 @@
+/**
+ * AIPages Backend: main application entry point.
+ *
+ * Hono API with route groups:
+ *   - Public:  GET /              health + pricing manifest
+ *   - Public:  GET /health        store connectivity
+ *   - Admin:   POST /ingest       bulk ingest (admin key)
+ *   - Admin:   POST /scrape       trigger GitHub+npm scrape (admin key)
+ *   - Public:  GET /search        semantic vector search (free, ungated)
+ *   - Public:  POST /api/tools/submit  self-serve tool submission (free)
+ *   - Public:  GET /api/tools/:namespace  full tool detail (schema + pricing)
+ *   - Public:  GET /api/openapi.json  OpenAPI 3.1 spec
+ *   - Paid:    POST /api/invoke/:namespace  tool invocation proxy (flat $0.25 platform take-rate, collected on success only)
+ *
+ * Run:  npm run dev   (tsx watch)
+ *       npm run start (compiled)
+ */
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
@@ -18,8 +36,10 @@ import { default as agentScraperRouter } from "./routes/agentScraper.js";
 import { findToolBySlug, renderToolPage, renderNotFoundPage, findRelatedTools } from "./views/toolPage.js";
 import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
-import { generateLlmsTxt } from "./views/llmsTxt.js";
-import { getCapabilityIndex, renderCapabilitiesPage } from "./views/capabilitiesPage.js";
+import { generateLlmsTxt, generateLlmsFullTxt, generateToolMarkdown } from "./views/llmsTxt.js";
+import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdown } from "./views/capabilitiesPage.js";
+import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
+import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { DISCOVERED_GEMINI_TOOLS } from "./data/discoveredTools.js";
 import { assertValidFirstPartyTools } from "./validation/toolValidator.js";
@@ -29,11 +49,56 @@ export { formatToolRecord };
 export const app = new Hono();
 // ── Globals ─────────────────────────────────────────────────
 let store;
+let invokeRoutesMounted = false;
+function ensureInvokeRoutesMounted() {
+    if (invokeRoutesMounted)
+        return;
+    invokeRoutesMounted = true;
+    app.use("/api/invoke/:namespace", async (c, next) => {
+        await getActiveStore();
+        if (c.req.method === "POST") {
+            const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+            if (paymentHeader) {
+                return x402PaymentMiddleware(c, next);
+            }
+        }
+        await next();
+    });
+    app.use("/api/invoke/:namespace/*", async (c, next) => {
+        await getActiveStore();
+        if (c.req.method === "POST") {
+            const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+            if (paymentHeader) {
+                return x402PaymentMiddleware(c, next);
+            }
+        }
+        await next();
+    });
+    app.route("/api/invoke", ingestionRouter);
+}
+async function getActiveStore() {
+    if (!store) {
+        store = await createStore();
+        const count = await store.count();
+        if (count === 0) {
+            for (const raw of CANONICAL_AUS_TOOLS) {
+                await store.upsert({ ...raw, updatedAt: new Date() });
+            }
+        }
+        setStore(store);
+    }
+    return store;
+}
+export function isAiOrSearchCrawler(userAgent) {
+    if (!userAgent)
+        return false;
+    return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Googlebot|Bingbot|DuckDuckBot|YandexBot)/i.test(userAgent);
+}
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
 app.use("*", async (c, next) => {
     await next();
-    metrics.recordHttpRequest(c.req.method, c.req.path, c.res.status);
+    metrics.recordHttpRequest(c.req.method, c.req.path, c.res.status, c.req.header("user-agent"));
 });
 // ── Public routes ───────────────────────────────────────────
 export const DISCOVERY_MANIFEST = {
@@ -58,6 +123,11 @@ export const DISCOVERY_MANIFEST = {
         capabilities: "GET /capabilities (functional capability index)",
         sitemap: "GET /sitemap.xml (XML sitemap)",
         llms: "GET /llms.txt (Standard Markdown manifest for LLM crawlers)",
+        llmsFull: "GET /llms-full.txt (Full Markdown reference with JSON Schemas and invocation payloads)",
+        mcpManifest: "GET /mcp.json (Authoritative MCP discovery manifest)",
+        mcpActions: "GET /mcp-actions.json (WebMCP structured action declarations)",
+        agentPermissions: "GET /agent-permissions.json (Autonomous crawler and agent permissions policy)",
+        agentsMd: "GET /AGENTS.md (Repository and API guide for autonomous coding agents)",
         openapi: "GET /api/openapi.json",
         metrics: "GET /metrics (Prometheus line metrics)",
         ingest: "POST /ingest (admin key required)",
@@ -75,6 +145,7 @@ export const DISCOVERY_MANIFEST = {
 };
 app.get("/", async (c) => {
     const accept = c.req.header("Accept") ?? "";
+    const userAgent = c.req.header("user-agent") ?? "";
     const format = c.req.query("format");
     const searchQuery = c.req.query("q") ?? c.req.query("search");
     const reliability = c.req.query("reliability");
@@ -82,18 +153,28 @@ app.get("/", async (c) => {
     const pricingModel = c.req.query("pricingModel");
     const capability = c.req.query("capability") ?? c.req.query("cap");
     const hasSearchParams = Boolean(searchQuery || reliability || connectionType || pricingModel || capability);
-    // Preserve JSON discovery manifest for API/curl clients when no search parameters are supplied
+    if (format === "md" || format === "markdown" || accept.includes("text/markdown")) {
+        const activeStore = await getActiveStore();
+        const allTools = await activeStore.list();
+        c.header("Content-Type", "text/markdown; charset=utf-8");
+        return c.body(generateLlmsTxt(allTools));
+    }
+    // Preserve JSON discovery manifest for API/curl clients when no search parameters are supplied,
+    // while serving full SSR HTML directory to AI and search crawlers that send Accept: */*
     if (!hasSearchParams) {
+        const isCrawler = isAiOrSearchCrawler(userAgent);
         if (format === "json" ||
-            (!accept.includes("text/html") && (accept.includes("application/json") || accept === "*/*" || !accept))) {
+            (!accept.includes("text/html") &&
+                (accept.includes("application/json") || (!isCrawler && (accept === "*/*" || !accept))))) {
             return c.json(DISCOVERY_MANIFEST);
         }
     }
     return handleDirectoryRequest(c, "/");
 });
 app.get("/health", async (c) => {
-    const ok = await store.ping();
-    const total = await store.count().catch(() => 0);
+    const activeStore = await getActiveStore();
+    const ok = await activeStore.ping();
+    const total = await activeStore.count().catch(() => 0);
     const mem = process.memoryUsage();
     return c.json({
         status: ok ? "healthy" : "degraded",
@@ -110,12 +191,16 @@ app.get("/health", async (c) => {
     });
 });
 app.get("/metrics", async (c) => {
-    const total = await store.count().catch(() => 0);
+    const activeStore = await getActiveStore();
+    const total = await activeStore.count().catch(() => 0);
     const body = metrics.formatPrometheus(total);
     c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
     return c.text(body);
 });
 app.get("/api/openapi.json", (c) => c.json(openapi));
+app.get("/openapi.json", (c) => c.json(openapi));
+app.get("/.well-known/openapi.json", (c) => c.json(openapi));
+app.get("/.well-known/ai-plugin.json", (c) => c.json(generateAiPluginManifest()));
 // ── Admin routes (key-gated) ────────────────────────────────
 function requireAdminKey(c) {
     const key = c.req.header("X-ADMIN-KEY");
@@ -176,8 +261,9 @@ app.get("/search", async (c) => {
     if (!query)
         return c.json({ error: "Missing query parameter: q" }, 400);
     const limit = Math.min(Number(c.req.query("limit") ?? 10), 50);
+    const activeStore = await getActiveStore();
     const queryEmbedding = await embed(query);
-    const results = await store.search(queryEmbedding, limit);
+    const results = await activeStore.search(queryEmbedding, limit);
     trackSearch({ query, resultCount: results.length });
     return c.json({
         query,
@@ -196,7 +282,42 @@ app.post("/api/tools/submit", async (c) => {
         c.header("Retry-After", String(limitRes.retryAfterSec || 1));
         return c.json({ error: "Rate limit exceeded. Tool submission is limited to 15 requests per minute per IP." }, 429);
     }
-    const body = await c.req.json().catch(() => null);
+    const contentType = (c.req.header("content-type") ?? "").toLowerCase();
+    let body = null;
+    if (contentType.includes("application/x-www-form-urlencoded") ||
+        contentType.includes("multipart/form-data")) {
+        const formData = await c.req.parseBody().catch(() => null);
+        if (formData) {
+            let parsedSchema;
+            if (typeof formData.schema === "string" && formData.schema.trim()) {
+                try {
+                    parsedSchema = JSON.parse(formData.schema);
+                }
+                catch {
+                    return c.json({ error: "schema must be a JSON Schema object" }, 400);
+                }
+            }
+            body = {
+                name: typeof formData.name === "string" ? formData.name.trim() : undefined,
+                description: typeof formData.description === "string" ? formData.description.trim() : undefined,
+                connectionType: typeof formData.connectionType === "string" ? formData.connectionType.trim() : undefined,
+                endpointUrl: typeof formData.endpointUrl === "string" && formData.endpointUrl.trim()
+                    ? formData.endpointUrl.trim()
+                    : undefined,
+                pricingModel: typeof formData.pricingModel === "string"
+                    ? formData.pricingModel.trim()
+                    : undefined,
+                costPerCall: formData.costPerCall !== undefined && formData.costPerCall !== ""
+                    ? Number(formData.costPerCall)
+                    : undefined,
+                developerAddress: typeof formData.developerAddress === "string" ? formData.developerAddress.trim() : undefined,
+                schema: parsedSchema,
+            };
+        }
+    }
+    else {
+        body = await c.req.json().catch(() => null);
+    }
     if (!body) {
         return c.json({ error: "Invalid JSON body" }, 400);
     }
@@ -268,7 +389,8 @@ app.post("/api/tools/submit", async (c) => {
     const embedding = await embed(description, "RETRIEVAL_DOCUMENT");
     tool.embedding = embedding;
     // Persist to Atlas (or in-memory dev store)
-    await store.upsert(tool);
+    const activeStore = await getActiveStore();
+    await activeStore.upsert(tool);
     // PostHog analytics
     trackSubmission({
         namespace: tool.namespace,
@@ -295,20 +417,22 @@ app.post("/api/tools/submit", async (c) => {
 });
 // ── Public route: list tools (with source, search, active, pagination, and health) ──
 app.get("/api/tools", async (c) => {
-    return handleGetTools(c, store);
+    const activeStore = await getActiveStore();
+    return handleGetTools(c, activeStore);
 });
 // ── Public route: standard JSON syndication feed (JSON Feed v1.1) ──
-app.get("/api/feed.json", async (c) => handleSyndicationFeed(c, store));
-app.get("/api/syndication", async (c) => handleSyndicationFeed(c, store));
-app.get("/api/syndication/feed.json", async (c) => handleSyndicationFeed(c, store));
-app.get("/feed.json", async (c) => handleSyndicationFeed(c, store));
+app.get("/api/feed.json", async (c) => handleSyndicationFeed(c, await getActiveStore()));
+app.get("/api/syndication", async (c) => handleSyndicationFeed(c, await getActiveStore()));
+app.get("/api/syndication/feed.json", async (c) => handleSyndicationFeed(c, await getActiveStore()));
+app.get("/feed.json", async (c) => handleSyndicationFeed(c, await getActiveStore()));
 // ── Public route: single-tool specification API endpoint ─────────
 async function handleApiToolDetail(c) {
     const slug = c.req.param("slug") || c.req.param("namespace");
     if (!slug) {
         return c.json({ error: "Missing tool identifier" }, 400);
     }
-    const tool = await findToolBySlug(store, slug);
+    const activeStore = await getActiveStore();
+    const tool = await findToolBySlug(activeStore, slug);
     if (!tool) {
         return c.json({ error: "Tool not found", slug }, 404);
     }
@@ -405,11 +529,14 @@ app.get("/tools", async (c) => {
 });
 // ── Public route: human-facing tool page (responsive detail + reliability) ──
 async function handleToolDetail(c) {
-    const slug = c.req.param("slug");
-    if (!slug) {
+    const rawSlug = c.req.param("slug");
+    if (!rawSlug) {
         return c.html(renderNotFoundPage(""), 404);
     }
-    const tool = await findToolBySlug(store, slug);
+    const isMdExtension = rawSlug.endsWith(".md");
+    const slug = isMdExtension ? rawSlug.slice(0, -3) : rawSlug;
+    const activeStore = await getActiveStore();
+    const tool = await findToolBySlug(activeStore, slug);
     if (!tool) {
         const accept = c.req.header("Accept") ?? "";
         const format = c.req.query("format");
@@ -418,13 +545,19 @@ async function handleToolDetail(c) {
         }
         return c.html(renderNotFoundPage(slug), 404);
     }
-    // Content negotiation: return JSON if requested explicitly, otherwise responsive HTML
+    // Content negotiation: return JSON or Markdown if requested explicitly, otherwise responsive HTML
     const accept = c.req.header("Accept") ?? "";
     const format = c.req.query("format");
     if (format === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
         return c.json(formatToolRecord(tool));
     }
-    const relatedTools = await findRelatedTools(store, tool, 3);
+    const relatedTools = await findRelatedTools(activeStore, tool, 3);
+    if (isMdExtension || format === "md" || format === "markdown" || accept.includes("text/markdown")) {
+        const markdown = generateToolMarkdown(tool, relatedTools);
+        c.header("Content-Type", "text/markdown; charset=utf-8");
+        c.header("Cache-Control", "public, max-age=3600");
+        return c.body(markdown);
+    }
     return c.html(renderToolPage(tool, relatedTools));
 }
 app.get("/tool/:slug", handleToolDetail);
@@ -435,7 +568,9 @@ async function handleDirectToolInvoke(c) {
     if (!slug) {
         return c.json({ error: "Missing tool identifier parameter" }, 400);
     }
-    const tool = await findToolBySlug(store, slug);
+    const activeStore = await getActiveStore();
+    ensureInvokeRoutesMounted();
+    const tool = await findToolBySlug(activeStore, slug);
     if (!tool) {
         return c.json({ error: `Tool with identifier '${slug}' not found.` }, 404);
     }
@@ -444,6 +579,32 @@ async function handleDirectToolInvoke(c) {
     const forwardHeaders = new Headers(c.req.raw.headers);
     if (!forwardHeaders.has("x-agent-id")) {
         forwardHeaders.set("x-agent-id", "browser-playground");
+    }
+    if (c.req.query("test") === "true" || c.req.query("sandbox") === "true") {
+        forwardHeaders.set("x-playground-test", "true");
+    }
+    const reqContentType = (c.req.header("content-type") ?? "").toLowerCase();
+    if (reqContentType.includes("application/x-www-form-urlencoded") ||
+        reqContentType.includes("multipart/form-data")) {
+        const formData = await c.req.parseBody().catch(() => ({}));
+        const rawPayload = typeof formData.payload === "string" && formData.payload.trim()
+            ? formData.payload.trim()
+            : "{}";
+        const receipt = (typeof formData["x-payment-receipt"] === "string" && formData["x-payment-receipt"].trim()) ||
+            (typeof formData.paymentReceipt === "string" && formData.paymentReceipt.trim()) ||
+            "";
+        if (receipt) {
+            forwardHeaders.set("x-payment-receipt", receipt);
+            forwardHeaders.set("X-Payment", receipt);
+        }
+        forwardHeaders.set("content-type", "application/json");
+        forwardHeaders.delete("content-length");
+        const forwardReq = new Request(invokeUrl.toString(), {
+            method: "POST",
+            headers: forwardHeaders,
+            body: rawPayload,
+        });
+        return app.fetch(forwardReq);
     }
     const forwardReq = new Request(invokeUrl.toString(), {
         method: "POST",
@@ -457,18 +618,64 @@ app.post("/tool/:slug", handleDirectToolInvoke);
 app.post("/tools/:slug", handleDirectToolInvoke);
 // ── Public route: XML sitemap for search engines & crawler discovery ──
 app.get("/sitemap.xml", async (c) => {
-    const allTools = await store.list();
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
     const xml = generateSitemapXml(allTools);
     c.header("Content-Type", "application/xml; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
     return c.body(xml);
 });
 // ── Public route: robots.txt crawler directives ──
+export const ROBOTS_TXT = [
+    "# AI Crawler Access Policy - AIPages (https://aipages.tech)",
+    "# Last updated: 2026-11-10",
+    "",
+    "# --- AI Search & Citation Crawlers (Allow - drives agent & developer citations) ---",
+    "User-agent: OAI-SearchBot",
+    "Allow: /",
+    "",
+    "User-agent: ChatGPT-User",
+    "Allow: /",
+    "",
+    "User-agent: PerplexityBot",
+    "Allow: /",
+    "",
+    "User-agent: Claude-Web",
+    "Allow: /",
+    "",
+    "# --- AI Foundation Model & Coding Assistant Crawlers (Allow - indexes tool schemas) ---",
+    "User-agent: GPTBot",
+    "Allow: /",
+    "",
+    "User-agent: ClaudeBot",
+    "Allow: /",
+    "",
+    "User-agent: Google-Extended",
+    "Allow: /",
+    "",
+    "User-agent: Applebot-Extended",
+    "Allow: /",
+    "",
+    "User-agent: CCBot",
+    "Allow: /",
+    "",
+    "# --- Aggressive Unwanted Scrapers (Block) ---",
+    "User-agent: Bytespider",
+    "Disallow: /",
+    "",
+    "# --- Default Rule ---",
+    "User-agent: *",
+    "Allow: /",
+    "",
+    "Sitemap: https://aipages.tech/sitemap.xml",
+    "# LLM Discovery: https://aipages.tech/llms.txt",
+    "# Full LLM Schema Dump: https://aipages.tech/llms-full.txt",
+    "",
+].join("\n");
 app.get("/robots.txt", (c) => {
-    const robots = "User-agent: *\nAllow: /\n\nSitemap: https://aipages.tech/sitemap.xml\n# LLM Discovery: https://aipages.tech/llms.txt\n";
     c.header("Content-Type", "text/plain; charset=utf-8");
     c.header("Cache-Control", "public, max-age=86400");
-    return c.text(robots);
+    return c.text(ROBOTS_TXT);
 });
 // ── Public route: IndexNow & Search Engine Verification Key ──
 app.get("/:key([a-f0-9]{32}).txt", (c) => {
@@ -476,17 +683,186 @@ app.get("/:key([a-f0-9]{32}).txt", (c) => {
     c.header("Content-Type", "text/plain; charset=utf-8");
     return c.text(key);
 });
-// ── Public route: llms.txt standard manifest for AI crawlers & agents ──
+// ── Public route: llms.txt & llms-full.txt standard manifests for AI crawlers & agents ──
 app.get("/llms.txt", async (c) => {
-    const allTools = await store.list();
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
     const markdown = generateLlmsTxt(allTools);
     c.header("Content-Type", "text/markdown; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
     return c.body(markdown);
 });
+app.get("/llms-full.txt", async (c) => {
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
+    const markdown = generateLlmsFullTxt(allTools);
+    c.header("Content-Type", "text/markdown; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600, s-maxage=3600");
+    return c.body(markdown);
+});
+app.get("/AGENTS.md", (c) => {
+    let content = "# AGENTS.md\n\nSee https://aipages.tech/llms.txt and https://aipages.tech/llms-full.txt\n";
+    try {
+        const agentsPath = path.resolve(process.cwd(), "AGENTS.md");
+        if (fs.existsSync(agentsPath)) {
+            content = fs.readFileSync(agentsPath, "utf8");
+        }
+    }
+    catch {
+        // fallback
+    }
+    c.header("Content-Type", "text/markdown; charset=utf-8");
+    c.header("Cache-Control", "public, max-age=3600");
+    return c.body(content);
+});
+// ── Public route: Authoritative MCP Discovery Manifest (/mcp.json) ──
+async function handleMcpManifest(c) {
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
+    const manifest = generateMcpManifest(allTools);
+    return c.json({
+        ...manifest,
+        documentationUrl: "https://aipages.tech/llms-full.txt",
+        openApiUrl: "https://aipages.tech/api/openapi.json",
+        syndicationFeedUrl: "https://aipages.tech/api/feed.json",
+    });
+}
+app.get("/mcp.json", handleMcpManifest);
+app.get("/.well-known/mcp.json", handleMcpManifest);
+// ── Public route: Agent Permissions & WebMCP Action Declarations ──
+export const AGENT_PERMISSIONS_MANIFEST = {
+    schemaVersion: "0.1.0",
+    site: "https://aipages.tech",
+    name: "AIPages Autonomous Agent Tool Registry",
+    defaultPolicy: "allow",
+    crawlers: {
+        allow: [
+            "OAI-SearchBot",
+            "ChatGPT-User",
+            "GPTBot",
+            "ClaudeBot",
+            "Claude-Web",
+            "PerplexityBot",
+            "Google-Extended",
+            "Applebot-Extended",
+            "CCBot",
+            "Googlebot",
+            "Bingbot",
+        ],
+        disallow: ["Bytespider"],
+    },
+    discoveryFiles: {
+        llmsTxt: "https://aipages.tech/llms.txt",
+        llmsFullTxt: "https://aipages.tech/llms-full.txt",
+        agentsMd: "https://aipages.tech/AGENTS.md",
+        mcpManifest: "https://aipages.tech/mcp.json",
+        mcpActions: "https://aipages.tech/mcp-actions.json",
+        openApi: "https://aipages.tech/api/openapi.json",
+        jsonFeed: "https://aipages.tech/api/feed.json",
+        sitemap: "https://aipages.tech/sitemap.xml",
+    },
+    authentication: {
+        discovery: "none (100% free and ungated)",
+        sandboxTest: "Include header 'x-playground-test: true' and 'x-agent-id: browser-playground' for zero-cost test execution",
+        productionInvoke: "HTTP 402 (x402 protocol) on Base Mainnet (Chain ID 8453, eip155:8453) in USDC via 'x-payment-receipt' or 'X-Payment' header",
+    },
+    rateLimits: {
+        "/search": "60 requests per 60 seconds per IP",
+        "/api/tools": "100 requests per 60 seconds per IP",
+        "/api/tools/submit": "15 requests per 60 seconds per IP",
+        "/api/invoke/:namespace": "100 requests per 60 seconds per IP",
+    },
+};
+app.get("/agent-permissions.json", (c) => c.json(AGENT_PERMISSIONS_MANIFEST));
+app.get("/.well-known/agent-permissions.json", (c) => c.json(AGENT_PERMISSIONS_MANIFEST));
+export const MCP_ACTIONS_MANIFEST = {
+    schemaVersion: "0.1.0",
+    site: "https://aipages.tech",
+    actions: [
+        {
+            id: "search-tools",
+            name: "Search Autonomous Agent Tools",
+            description: "Perform semantic vector search (3072-dim Gemini embeddings) across indexed agent tools.",
+            method: "GET",
+            endpoint: "https://aipages.tech/search",
+            selector: 'form[data-mcp-action="search-tools"]',
+            authentication: "none",
+            parameters: {
+                q: { type: "string", required: true, description: "Natural-language capability or intent query" },
+                limit: { type: "integer", required: false, default: 10, maximum: 50 },
+            },
+        },
+        {
+            id: "list-tools",
+            name: "List Tools Registry",
+            description: "Retrieve paginated tool records with health, freshness, and reliability status.",
+            method: "GET",
+            endpoint: "https://aipages.tech/api/tools",
+            authentication: "none",
+            parameters: {
+                search: { type: "string", required: false },
+                capability: { type: "string", required: false },
+                source: { type: "string", required: false },
+                active: { type: "boolean", required: false },
+                limit: { type: "integer", required: false, default: 20 },
+                page: { type: "integer", required: false, default: 1 },
+            },
+        },
+        {
+            id: "get-tool-markdown",
+            name: "Get Token-Budgeted Tool Markdown Specification",
+            description: "Fetch clean Markdown documentation and JSON Schema for a specific tool.",
+            method: "GET",
+            endpoint: "https://aipages.tech/tool/{namespace}.md",
+            authentication: "none",
+            parameters: {
+                namespace: { type: "string", required: true, description: "Tool namespace or slug" },
+            },
+        },
+        {
+            id: "submit-tool",
+            name: "Submit Tool to AIPages Registry",
+            description: "Self-serve registration of a new MCP server or HTTP tool schema (free).",
+            method: "POST",
+            endpoint: "https://aipages.tech/api/tools/submit",
+            authentication: "none",
+            bodySchema: {
+                type: "object",
+                required: ["name", "description", "connectionType", "pricingModel", "costPerCall", "developerAddress"],
+                properties: {
+                    name: { type: "string" },
+                    description: { type: "string" },
+                    connectionType: { type: "string", enum: ["sse", "stdio", "http", "websocket"] },
+                    endpointUrl: { type: "string" },
+                    pricingModel: { type: "string", enum: ["free", "freemium", "paid"] },
+                    costPerCall: { type: "number" },
+                    developerAddress: { type: "string" },
+                    schema: { type: "object" },
+                },
+            },
+        },
+        {
+            id: "invoke-tool",
+            name: "Invoke Autonomous Agent Tool",
+            description: "Execute a registered tool via the hardened AIPages gateway. Supports 0-friction sandbox testing ('x-playground-test: true') and Base Mainnet x402 USDC settlement ('x-payment-receipt').",
+            method: "POST",
+            endpoint: "https://aipages.tech/tool/{namespace}",
+            selector: 'form[data-mcp-action="invoke-tool"]',
+            authentication: "x402 or sandbox header",
+            headers: {
+                "Content-Type": "application/json",
+                "x-playground-test": "Optional: set to 'true' for free 0-friction sandbox execution",
+                "x-payment-receipt": "Required for production paid tools: settled Base USDC tx hash",
+            },
+        },
+    ],
+};
+app.get("/mcp-actions.json", (c) => c.json(MCP_ACTIONS_MANIFEST));
+app.get("/.well-known/mcp-actions.json", (c) => c.json(MCP_ACTIONS_MANIFEST));
 // ── Public route: Capabilities index for directory discovery ──
 app.get("/capabilities", async (c) => {
-    const allTools = await store.list();
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
     const publicTools = allTools.filter((t) => t.status !== "rejected" && t.status !== "pending");
     const capabilities = getCapabilityIndex(publicTools);
     const accept = c.req.header("Accept") ?? "";
@@ -499,7 +875,80 @@ app.get("/capabilities", async (c) => {
             capabilities,
         });
     }
+    if (format === "md" || format === "markdown" || accept.includes("text/markdown")) {
+        const markdown = generateCapabilitiesMarkdown(capabilities, publicTools.length);
+        c.header("Content-Type", "text/markdown; charset=utf-8");
+        c.header("Cache-Control", "public, max-age=3600");
+        return c.body(markdown);
+    }
     return c.html(renderCapabilitiesPage(capabilities, publicTools.length));
+});
+// ── Public routes: Authorized Governance, Policies, Submit Portal & Google Flow Assets ──
+app.get("/privacy", (c) => {
+    const accept = c.req.header("Accept") ?? "";
+    if (c.req.query("format") === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+        return c.json({
+            policy: "Privacy Policy",
+            effectiveDate: "2026-11-10",
+            dataRetention: "ephemeral-zero-retention",
+            payloadStorage: false,
+            walletCustody: "non-custodial",
+            url: "https://aipages.tech/privacy",
+        });
+    }
+    return c.html(renderPrivacyPolicyPage());
+});
+app.get("/refund-policy", (c) => {
+    const accept = c.req.header("Accept") ?? "";
+    if (c.req.query("format") === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+        return c.json({
+            policy: "24-Hour USDT Refund Policy",
+            effectiveDate: "2026-11-10",
+            settlementCurrency: "USDT",
+            network: "Base Mainnet (Chain ID 8453)",
+            chargeOnFailure: false,
+            refundWindowHours: 24,
+            url: "https://aipages.tech/refund-policy",
+        });
+    }
+    return c.html(renderRefundPolicyPage());
+});
+app.get("/refunds", (c) => c.html(renderRefundPolicyPage()));
+app.get("/terms", (c) => {
+    const accept = c.req.header("Accept") ?? "";
+    if (c.req.query("format") === "json" || (accept.includes("application/json") && !accept.includes("text/html"))) {
+        return c.json({
+            policy: "Terms of Service",
+            effectiveDate: "2026-11-10",
+            settlementProtocol: "HTTP 402 (x402) Base Mainnet USDT",
+            listingFee: "0.00 USDT",
+            url: "https://aipages.tech/terms",
+        });
+    }
+    return c.html(renderTermsPage());
+});
+app.get("/submit", (c) => {
+    return c.html(renderSubmitToolPage());
+});
+app.get("/assets/flow/:file", (c) => {
+    const rawFile = c.req.param("file") || "";
+    const safeFile = path.basename(rawFile);
+    if (!safeFile.endsWith(".jpg") && !safeFile.endsWith(".jpeg") && !safeFile.endsWith(".png")) {
+        return c.text("Not found", 404);
+    }
+    const filePath = path.resolve(process.cwd(), "assets", "flow", safeFile);
+    try {
+        if (!fs.existsSync(filePath)) {
+            return c.text("Asset not found", 404);
+        }
+        const buf = fs.readFileSync(filePath);
+        c.header("Content-Type", safeFile.endsWith(".png") ? "image/png" : "image/jpeg");
+        c.header("Cache-Control", "public, max-age=86400");
+        return c.body(buf);
+    }
+    catch {
+        return c.text("Failed to read asset", 500);
+    }
 });
 // ── x402 Base Payment Test Route ─────────────────────────────
 app.get("/api/x402-test", x402PaymentMiddleware, (c) => {
@@ -509,7 +958,8 @@ app.get("/api/x402-test", x402PaymentMiddleware, (c) => {
         timestamp: new Date().toISOString(),
     });
 });
-// ── Agent Scraper Route ──────────────────────────────────────
+// ── Agent Scraper & Invoke Routes ────────────────────────────
+ensureInvokeRoutesMounted();
 app.route("/", agentScraperRouter);
 // ── App Initialization & Startup ──────────────────────────
 export async function initApp() {
@@ -554,26 +1004,7 @@ export async function initApp() {
             total = await store.count();
         }
         console.log(`[db] Tools in store: ${total}`);
-        // Intercept POST /api/invoke/:namespace with strict x402 Base ERC-20 payment middleware
-        app.use("/api/invoke/:namespace", async (c, next) => {
-            if (c.req.method === "POST") {
-                const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
-                if (paymentHeader) {
-                    return x402PaymentMiddleware(c, next);
-                }
-            }
-            await next();
-        });
-        app.use("/api/invoke/:namespace/*", async (c, next) => {
-            if (c.req.method === "POST") {
-                const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
-                if (paymentHeader) {
-                    return x402PaymentMiddleware(c, next);
-                }
-            }
-            await next();
-        });
-        app.route("/api/invoke", ingestionRouter);
+        ensureInvokeRoutesMounted();
     }
     return { store, app };
 }

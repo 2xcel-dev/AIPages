@@ -19,13 +19,27 @@ class MetricsRegistry {
     latencies = new Map();
     // Errors: type -> count
     errors = new Map();
-    recordHttpRequest(method, path, statusCode) {
+    // AI Crawler visits: bot|path|status -> count
+    aiCrawlers = new Map();
+    static detectAiCrawler(userAgent) {
+        if (!userAgent)
+            return null;
+        const match = userAgent.match(/(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Bytespider|Googlebot|Bingbot|DuckDuckBot|YandexBot)/i);
+        return match ? match[1] : null;
+    }
+    recordHttpRequest(method, path, statusCode, userAgent) {
         const normPath = path.startsWith("/tool/") ? "/tool/:slug"
-            : path.startsWith("/api/tools/") ? "/api/tools/:param"
-                : path.startsWith("/api/invoke/") ? "/api/invoke/:namespace"
-                    : path;
+            : path.startsWith("/tools/") ? "/tools/:slug"
+                : path.startsWith("/api/tools/") ? "/api/tools/:param"
+                    : path.startsWith("/api/invoke/") ? "/api/invoke/:namespace"
+                        : path;
         const key = `${method.toUpperCase()}|${normPath}|${statusCode}`;
         this.httpRequests.set(key, (this.httpRequests.get(key) || 0) + 1);
+        const bot = MetricsRegistry.detectAiCrawler(userAgent);
+        if (bot) {
+            const botKey = `${bot}|${normPath}|${statusCode}`;
+            this.aiCrawlers.set(botKey, (this.aiCrawlers.get(botKey) || 0) + 1);
+        }
     }
     recordInvocation(namespace, status, latencyMs, feeUsdc) {
         // 1. Invocation Counter
@@ -114,6 +128,13 @@ class MetricsRegistry {
         lines.push("# TYPE aipages_errors_total counter");
         for (const [errType, count] of this.errors.entries()) {
             lines.push(`aipages_errors_total{type="${errType}"} ${count}`);
+        }
+        // ── AI Crawler Activity Counter ───────────────────────────────────────
+        lines.push("# HELP aipages_ai_crawler_requests_total Total HTTP requests from known AI and search crawlers.");
+        lines.push("# TYPE aipages_ai_crawler_requests_total counter");
+        for (const [botKey, count] of this.aiCrawlers.entries()) {
+            const [bot, path, status] = botKey.split("|");
+            lines.push(`aipages_ai_crawler_requests_total{bot="${bot}",path="${path}",status="${status}"} ${count}`);
         }
         return lines.join("\n") + "\n";
     }

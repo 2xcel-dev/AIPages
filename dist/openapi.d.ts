@@ -110,6 +110,96 @@ export declare const openapi: {
                 };
             };
         };
+        "/mcp.json": {
+            get: {
+                summary: string;
+                description: string;
+                responses: {
+                    "200": {
+                        description: string;
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        "/mcp-actions.json": {
+            get: {
+                summary: string;
+                description: string;
+                responses: {
+                    "200": {
+                        description: string;
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        "/agent-permissions.json": {
+            get: {
+                summary: string;
+                description: string;
+                responses: {
+                    "200": {
+                        description: string;
+                        content: {
+                            "application/json": {
+                                schema: {
+                                    type: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        "/llms.txt": {
+            get: {
+                summary: string;
+                description: string;
+                responses: {
+                    "200": {
+                        description: string;
+                        content: {
+                            "text/markdown": {
+                                schema: {
+                                    type: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        "/llms-full.txt": {
+            get: {
+                summary: string;
+                description: string;
+                responses: {
+                    "200": {
+                        description: string;
+                        content: {
+                            "text/markdown": {
+                                schema: {
+                                    type: string;
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
         "/api/tools": {
             get: {
                 summary: string;
@@ -358,6 +448,11 @@ export declare const openapi: {
                     required: boolean;
                     content: {
                         "application/json": {
+                            schema: {
+                                $ref: string;
+                            };
+                        };
+                        "application/x-www-form-urlencoded": {
                             schema: {
                                 $ref: string;
                             };

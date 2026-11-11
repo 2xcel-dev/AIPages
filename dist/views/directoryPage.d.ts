@@ -1,4 +1,9 @@
 import { type Tool } from "../types.js";
+export declare function classifyToolGroup(tool: Tool): "core" | "mesh" | "framework";
+/**
+ * Render an individual tool card using the 21st.dev #5115 Pricing Card glass-header architecture
+ * while preserving all reliability, freshness, and capability hooks required by the test suite.
+ */
 export declare function renderToolCard(tool: Tool, baseUrl?: string, activeCapability?: string): string;
 export interface DirectoryFilterParams {
     search?: string;

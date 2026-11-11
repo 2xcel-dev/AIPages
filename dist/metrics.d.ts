@@ -13,7 +13,9 @@ declare class MetricsRegistry {
     private httpRequests;
     private latencies;
     private errors;
-    recordHttpRequest(method: string, path: string, statusCode: number): void;
+    private aiCrawlers;
+    static detectAiCrawler(userAgent?: string | null): string | null;
+    recordHttpRequest(method: string, path: string, statusCode: number, userAgent?: string | null): void;
     recordInvocation(namespace: string, status: string, latencyMs: number, feeUsdc: number): void;
     recordError(errorType: string): void;
     formatPrometheus(toolsTotal?: number): string;
