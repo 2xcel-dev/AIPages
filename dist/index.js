@@ -93,7 +93,7 @@ async function getActiveStore() {
 export function isAiOrSearchCrawler(userAgent) {
     if (!userAgent)
         return false;
-    return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Googlebot|Bingbot|DuckDuckBot|YandexBot)/i.test(userAgent);
+    return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Googlebot|Google-Site-Verification|Google-InspectionTool|Google-Search-Console|Feedfetcher-Google|Google|Bingbot|DuckDuckBot|YandexBot|bot|crawler|spider)/i.test(userAgent);
 }
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
@@ -161,12 +161,15 @@ app.get("/", async (c) => {
         return c.body(generateLlmsTxt(allTools));
     }
     // Preserve JSON discovery manifest for API/curl clients when no search parameters are supplied,
-    // while serving full SSR HTML directory to AI and search crawlers that send Accept: */*
+    // while serving full SSR HTML directory to AI, search crawlers, and verification bots
     if (!hasSearchParams) {
         const isCrawler = isAiOrSearchCrawler(userAgent);
         if (format === "json" ||
             (!accept.includes("text/html") &&
                 (accept.includes("application/json") || (!isCrawler && (accept === "*/*" || !accept))))) {
+            if (/google|verification|crawler|bot/i.test(userAgent)) {
+                return handleDirectoryRequest(c, "/");
+            }
             return c.json(DISCOVERY_MANIFEST);
         }
     }
