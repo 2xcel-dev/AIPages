@@ -22,6 +22,11 @@ export declare const CAPABILITY_DESCRIPTIONS: Record<string, string>;
  */
 export declare function getCapabilityIndex(tools: Tool[]): CapabilitySummary[];
 /**
+ * Classify functional capability into high-level use-case categories
+ * for clean 4-tab filtering in the 3D TumbleDeck.
+ */
+export declare function classifyCapabilityGroup(name: string): "security" | "finance" | "reasoning";
+/**
  * Render responsive HTML view for /capabilities page using the UI/UX Pro Max & 21st.dev design system.
  */
 export declare function renderCapabilitiesPage(capabilities: CapabilitySummary[], totalToolsCount: number, baseUrl?: string): string;

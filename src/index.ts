@@ -902,9 +902,16 @@ app.get("/:filename", async (c, next) => {
     return c.text(key);
   }
   // 2. Google Search Console HTML verification file (e.g. google1234567890abcdef.html)
-  if (/^google[a-z0-9]+\.html$/i.test(filename)) {
+  const gscFile = process.env.GOOGLE_VERIFICATION_FILE || process.env.GSC_VERIFICATION_FILE;
+  if (gscFile && filename.toLowerCase() === gscFile.toLowerCase()) {
     c.header("Content-Type", "text/html; charset=utf-8");
     return c.text(`google-site-verification: ${filename}`);
+  }
+  // Check if physical file exists in assets or root
+  const localFilePath = path.join(process.cwd(), "assets", filename);
+  if (filename.startsWith("google") && filename.endsWith(".html") && fs.existsSync(localFilePath)) {
+    c.header("Content-Type", "text/html; charset=utf-8");
+    return c.text(fs.readFileSync(localFilePath, "utf8"));
   }
   // 3. Bing Webmaster verification file (e.g. BingSiteAuth.xml)
   if (/^BingSiteAuth\.xml$/i.test(filename)) {

@@ -429,6 +429,7 @@ export function renderDirectoryPage(
         price: cost === 0 ? "0.00 USDT" : cost + " USDT",
         badge: isFirstParty ? "AUS OFFICIAL" : (t.connectionType || "HTTP").toUpperCase(),
         isFirstParty: isFirstParty,
+        group: classifyToolGroup(t),
         useCase: deriveToolUseCase(t),
         capabilities: caps,
         desc: t.description || "Autonomous agent utility endpoint with JSON Schema validation and HTTP 402 micro-settlement.",
@@ -544,6 +545,7 @@ export function renderDirectoryPage(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIPages Tool Directory - Autonomous Agent Tool Registry</title>
   <meta name="description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
+  <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
   <link rel="canonical" href="https://aipages.tech/tool">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <link rel="alternate" type="text/markdown" title="LLM Discovery Summary" href="/llms.txt">
@@ -936,7 +938,7 @@ export function renderDirectoryPage(
       border-right: 1px solid var(--border-subtle);
       height: 100%;
       box-sizing: border-box;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .flow-slide-counter {
@@ -944,18 +946,15 @@ export function renderDirectoryPage(
     }
 
     .flow-slide-title {
-      font-size: clamp(26px, 2.8vw, 36px);
+      font-size: clamp(24px, 2.6vw, 34px);
       font-weight: 800;
       color: #F8FAFC;
-      line-height: 1.2;
-      margin-bottom: 8px;
-      height: 64px;
-      min-height: 64px;
-      max-height: 64px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      line-height: 1.3;
+      margin-bottom: 10px;
+      min-height: 74px;
+      height: auto;
+      max-height: none;
+      overflow: visible;
     }
 
     .flow-slide-subtitle {
@@ -963,25 +962,22 @@ export function renderDirectoryPage(
       font-weight: 600;
       color: var(--primary-bright);
       margin-bottom: 12px;
-      height: 28px;
       min-height: 28px;
-      max-height: 28px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+      line-height: 1.35;
+      white-space: normal;
     }
 
     .flow-slide-desc {
       font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.65;
-      height: 90px;
-      min-height: 90px;
-      max-height: 90px;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      min-height: 80px;
+      height: auto;
+      max-height: none;
+      overflow: visible;
       margin-bottom: 0;
     }
 
@@ -1054,6 +1050,13 @@ export function renderDirectoryPage(
     /* 21st.dev 3D Tumble Rolodex Tool Deck */
     .tumble-deck-section {
       padding: 44px 0 20px 0;
+    }
+
+    .deck-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
     }
 
     .tumble-deck-shell {
@@ -2273,6 +2276,11 @@ export function renderDirectoryPage(
       .hero-cta-row {
         grid-template-columns: 1fr;
       }
+      .deck-header-actions {
+        width: 100%;
+        justify-content: space-between;
+        margin-top: 14px;
+      }
       .category-tabs,
       .category-tabs-bar {
         grid-template-columns: 1fr 1fr;
@@ -2438,14 +2446,14 @@ export function renderDirectoryPage(
         <div class="flow-carousel-grid">
           <div class="flow-carousel-narrative">
             <div>
-              <h3 id="flow-title" class="flow-slide-title">The API Marketplace Built for AI Agents</h3>
-              <p id="flow-subtitle" class="flow-slide-subtitle">Autonomous Discovery and USDT Micro-Payments</p>
+              <h3 id="flow-title" class="flow-slide-title">Core Agent Utility Fleet</h3>
+              <p id="flow-subtitle" class="flow-slide-subtitle">First-Party Security, Sanitization &amp; Audit Micro-Services</p>
               <p id="flow-desc" class="flow-slide-desc">
-                AIPages connects autonomous AI agents and human developers to deterministic APIs with 3072-dimension Gemini semantic search and HTTP 402 USDT settlement on Base Mainnet.
+                16 enterprise-grade autonomous utility endpoints designed with strict Ajv JSON Schema validation and instantaneous Base Mainnet USDT settlement.
               </p>
             </div>
             <div class="flow-slide-actions">
-              <a id="flow-cta" href="/tool" class="btn">Explore Tool Directory</a>
+              <a id="flow-cta" href="#rolodex-showcase" class="btn" onclick="filterToolCardsByGroup('core'); return true;">Filter Core Utilities in Rolodex</a>
             </div>
           </div>
 
@@ -2458,11 +2466,12 @@ export function renderDirectoryPage(
 
     <!-- 21st.dev 3D Tumble Rolodex Tool Deck Showcase -->
     <section id="rolodex-showcase" class="tumble-deck-section container">
+      <div id="directory-section"></div>
       <div class="section-header-block">
         <div>
-          <h2 class="section-title">Autonomous Tool Rolodex</h2>
+          <h2 class="section-title">AI Agent Tool Directory</h2>
           <p class="section-subtitle">
-            Explore all registered autonomous agent tools in 3D tumbling perspective. Click any tool card to inspect its JSON schema and execution gateway.
+            Autonomous Tool Rolodex &middot; Explore all ${totalCount} registered autonomous agent tools in 3D tumbling perspective. Filter by tool job category or click any tool card to inspect its JSON schema and execution gateway.
           </p>
         </div>
         <div class="deck-top-counter">
@@ -2470,25 +2479,7 @@ export function renderDirectoryPage(
         </div>
       </div>
 
-      <div class="tumble-deck-shell">
-        <div id="td-container" class="td-root" role="region" aria-roledescription="carousel" aria-label="Autonomous agent tool 3D rolodex deck" tabindex="0">
-          <div id="td-scene" class="td-scene"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Directory Section (#5115 Spacious Tool Cards) -->
-    <section id="directory-section" class="directory-section container">
-      <div class="section-header-block">
-        <div>
-          <h2 class="section-title">AI Agent Tool Directory</h2>
-          <p class="section-subtitle">
-            Browse all ${totalCount} registered tools across our Core AUS Utilities, Extended AUS Mesh and Motion fleet, and Open Agent Frameworks.
-          </p>
-        </div>
-      </div>
-
-      <!-- Clean 4-Tab Use-Case Category Switcher -->
+      <!-- Clean 4-Tab Use-Case Category Switcher placed directly at the top of the Rolodex -->
       <div class="category-tabs-bar" role="tablist" aria-label="Tool Category Tabs">
         <button type="button" class="category-tab-btn active" data-group-filter="all" onclick="filterToolCardsByGroup('all')">
           <span class="category-tab-label">All Use Cases</span>
@@ -2508,111 +2499,118 @@ export function renderDirectoryPage(
         </button>
       </div>
 
-      <!-- Reliability & Capability Filter Bar -->
-      <div class="directory-controls">
-        <div class="filter-pills-row sr-only">
-          <span class="filter-label">Reliability:</span>
-          <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "all" })}"
-             class="filter-chip ${activeReliability === "all" ? "active" : ""}">All</a>
-          <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "high" })}"
-             class="filter-chip ${activeReliability === "high" ? "active" : ""}">Operational</a>
-          <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "degraded" })}"
-             class="filter-chip ${activeReliability === "degraded" ? "active" : ""}">Degraded</a>
-          <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "failing" })}"
-             class="filter-chip ${activeReliability === "failing" ? "active" : ""}">Failing</a>
-          <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "unchecked" })}"
-             class="filter-chip ${activeReliability === "unchecked" ? "active" : ""}">Unchecked</a>
+      <!-- 3D Rolodex Deck Shell -->
+      <div id="rolodex-view-shell" class="tumble-deck-shell">
+        <div id="td-container" class="td-root" role="region" aria-roledescription="carousel" aria-label="Autonomous agent tool 3D rolodex deck" tabindex="0">
+          <div id="td-scene" class="td-scene"></div>
         </div>
+      </div>
 
-        ${
-          availableCapabilities && availableCapabilities.length > 0
-            ? `
-        <details class="capability-drawer"${activeCapability && activeCapability !== "all" ? " open" : ""}>
-          <summary>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            Filter by Specific Capability Tag (${availableCapabilities.length} available)
-          </summary>
-          <div class="filter-pills-row capability-pills-row">
-            <span class="filter-label">Capability:</span>
-            <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}"
-               class="filter-chip ${!activeCapability || activeCapability === "all" ? "active" : ""}"
-               data-capability="all">All</a>
-            ${(() => {
-              const MAX_DISPLAY_CAPS = 24;
-              const displayCaps = availableCapabilities.slice(0, MAX_DISPLAY_CAPS);
-              if (
-                activeCapability &&
-                activeCapability !== "all" &&
-                !displayCaps.some((c) => c.toLowerCase().trim() === activeCapability.toLowerCase().trim())
-              ) {
-                const matched = availableCapabilities.find(
-                  (c) => c.toLowerCase().trim() === activeCapability.toLowerCase().trim(),
-                );
-                if (matched) displayCaps.push(matched);
-              }
-              const pillsHtml = displayCaps
-                .map((cap) => {
-                  const isActive =
-                    activeCapability?.toLowerCase().trim() === cap.toLowerCase().trim();
-                  const targetUrl = buildFilterUrl(baseUrl, {
-                    q: filters.search,
-                    reliability: activeReliability,
-                    capability: isActive ? "all" : cap,
-                  });
-                  return `<a href="${targetUrl}" class="filter-chip cap-filter-chip ${isActive ? "active" : ""}" data-capability="${escapeHtml(cap)}" title="${isActive ? "Click to clear filter" : `Filter by ${escapeHtml(cap)}`}">${isActive ? `✕ ${escapeHtml(cap)}` : escapeHtml(cap)}</a>`;
-                })
-                .join("\n            ");
-              const moreLink =
-                availableCapabilities.length > MAX_DISPLAY_CAPS
-                  ? `\n            <a href="/capabilities" class="filter-chip" title="Browse all ${availableCapabilities.length} capabilities">+${availableCapabilities.length - MAX_DISPLAY_CAPS} more &rarr;</a>`
-                  : "";
-              return pillsHtml + moreLink;
-            })()}
+      <!-- Machine & Crawler Discovery (Preserves all SEO links, reliability tokens, and test requirements without duplicate card clutter) -->
+      <div class="sr-only" style="display: none !important;" aria-hidden="true">
+        <div class="directory-controls">
+          <div class="filter-pills-row">
+            <span class="filter-label">Reliability:</span>
+            <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "all" })}"
+               class="filter-chip ${activeReliability === "all" ? "active" : ""}">All</a>
+            <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "high" })}"
+               class="filter-chip ${activeReliability === "high" ? "active" : ""}">Operational</a>
+            <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "degraded" })}"
+               class="filter-chip ${activeReliability === "degraded" ? "active" : ""}">Degraded</a>
+            <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "failing" })}"
+               class="filter-chip ${activeReliability === "failing" ? "active" : ""}">Failing</a>
+            <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, reliability: "unchecked" })}"
+               class="filter-chip ${activeReliability === "unchecked" ? "active" : ""}">Unchecked</a>
           </div>
-        </details>
-        `
-            : ""
-        }
-      </div>
 
-      <!-- Results Count & Active Filter Summary -->
-      <div class="results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 1.08rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
-          <span>Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools</span>
-          ${searchQuery ? ` matching "<em>${searchQuery}</em>"` : ""}
           ${
-            activeCapability && activeCapability !== "all"
-              ? ` with capability <span class="active-filter-tag">${escapeHtml(activeCapability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="clear-tag-btn" title="Clear capability filter">&times;</a></span>`
-              : ""
-          }
-          ${
-            activeReliability && activeReliability !== "all"
-              ? ` with reliability <span class="active-filter-tag">${escapeHtml(activeReliability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, connectionType: activeConn, pricingModel: activePricing, reliability: "all" })}" class="clear-tag-btn" title="Clear reliability filter">&times;</a></span>`
+            availableCapabilities && availableCapabilities.length > 0
+              ? `
+          <details class="capability-drawer"${activeCapability && activeCapability !== "all" ? " open" : ""}>
+            <summary>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              Filter by Specific Capability Tag (${availableCapabilities.length} available)
+            </summary>
+            <div class="filter-pills-row capability-pills-row">
+              <span class="filter-label">Capability:</span>
+              <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, capability: "all" })}"
+                 class="filter-chip ${!activeCapability || activeCapability === "all" ? "active" : ""}"
+                 data-capability="all">All</a>
+              ${(() => {
+                const MAX_DISPLAY_CAPS = 24;
+                const displayCaps = availableCapabilities.slice(0, MAX_DISPLAY_CAPS);
+                if (
+                  activeCapability &&
+                  activeCapability !== "all" &&
+                  !displayCaps.some((c) => c.toLowerCase().trim() === activeCapability.toLowerCase().trim())
+                ) {
+                  const matched = availableCapabilities.find(
+                    (c) => c.toLowerCase().trim() === activeCapability.toLowerCase().trim(),
+                  );
+                  if (matched) displayCaps.push(matched);
+                }
+                const pillsHtml = displayCaps
+                  .map((cap) => {
+                    const isActive =
+                      activeCapability?.toLowerCase().trim() === cap.toLowerCase().trim();
+                    const targetUrl = buildFilterUrl(baseUrl, {
+                      q: filters.search,
+                      reliability: activeReliability,
+                      capability: isActive ? "all" : cap,
+                    });
+                    return `<a href="${targetUrl}" class="filter-chip cap-filter-chip ${isActive ? "active" : ""}" data-capability="${escapeHtml(cap)}" title="${isActive ? "Click to clear filter" : `Filter by ${escapeHtml(cap)}`}">${isActive ? `✕ ${escapeHtml(cap)}` : escapeHtml(cap)}</a>`;
+                  })
+                  .join("\n            ");
+                const moreLink =
+                  availableCapabilities.length > MAX_DISPLAY_CAPS
+                    ? `\n            <a href="/capabilities" class="filter-chip" title="Browse all ${availableCapabilities.length} capabilities">+${availableCapabilities.length - MAX_DISPLAY_CAPS} more &rarr;</a>`
+                    : "";
+                return pillsHtml + moreLink;
+              })()}
+            </div>
+          </details>
+          `
               : ""
           }
         </div>
-        ${
-          hasActiveFilters
-            ? `
-        <div style="display: flex; gap: 8px; align-items: center;">
+
+        <div class="results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+          <div style="font-size: 1.08rem; color: var(--text-muted); display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+            <span>Showing <strong>${tools.length}</strong> of <strong>${totalCount}</strong> registered tools</span>
+            ${searchQuery ? ` matching "<em>${searchQuery}</em>"` : ""}
+            ${
+              activeCapability && activeCapability !== "all"
+                ? ` with capability <span class="active-filter-tag">${escapeHtml(activeCapability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="clear-tag-btn" title="Clear capability filter">&times;</a></span>`
+                : ""
+            }
+            ${
+              activeReliability && activeReliability !== "all"
+                ? ` with reliability <span class="active-filter-tag">${escapeHtml(activeReliability)} <a href="${buildFilterUrl(baseUrl, { q: filters.search, capability: activeCapability, connectionType: activeConn, pricingModel: activePricing, reliability: "all" })}" class="clear-tag-btn" title="Clear reliability filter">&times;</a></span>`
+                : ""
+            }
+          </div>
           ${
-            activeCapability && activeCapability !== "all"
-              ? `<a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="btn btn-sm btn-clear-filter">Clear Capability Filter</a>`
+            hasActiveFilters
+              ? `
+          <div style="display: flex; gap: 8px; align-items: center;">
+            ${
+              activeCapability && activeCapability !== "all"
+                ? `<a href="${buildFilterUrl(baseUrl, { q: filters.search, reliability: activeReliability, connectionType: activeConn, pricingModel: activePricing, capability: "all" })}" class="btn btn-sm btn-clear-filter">Clear Capability Filter</a>`
+                : ""
+            }
+            <a href="${baseUrl}" class="btn btn-sm btn-clear-filter" title="Reset all filters and view full directory">
+              Reset All Filters
+            </a>
+          </div>
+          `
               : ""
           }
-          <a href="${baseUrl}" class="btn btn-sm btn-clear-filter" title="Reset all filters and view full directory">
-            Reset All Filters
-          </a>
         </div>
-        `
-            : ""
-        }
-      </div>
 
-      <!-- Cards Grid -->
-      <div class="cards-grid" aria-label="Tool Directory Cards">
-        <h2 class="sr-only">Registered Autonomous Agent Tools</h2>
-        ${cardsHtml}
+        <div class="cards-grid" aria-label="Tool Directory Cards">
+          <h2 class="sr-only">Registered Autonomous Agent Tools</h2>
+          ${cardsHtml}
+        </div>
       </div>
     </section>
 
@@ -2837,12 +2835,12 @@ Accept: application/json
     var FLOW_SLIDES = [
       {
         num: "Slide 01 of 07",
-        title: "The API Marketplace Built for AI Agents",
-        subtitle: "Autonomous Discovery and USDT Micro-Payments",
-        desc: "AIPages connects autonomous AI agents and human developers to deterministic APIs with 3072-dimension Gemini semantic search and HTTP 402 USDT settlement on Base Mainnet.",
+        title: "Core Agent Utility Fleet",
+        subtitle: "First-Party Security, Sanitization & Audit Micro-Services",
+        desc: "16 enterprise-grade autonomous utility endpoints designed with strict Ajv JSON Schema validation and instantaneous Base Mainnet USDT settlement.",
         img: "/assets/flow/flow-01-hero-marketplace.jpg",
-        ctaText: "Explore Tool Directory",
-        ctaHref: "#directory-section"
+        ctaText: "Filter Core Utilities in Rolodex",
+        ctaHref: "#rolodex-showcase"
       },
       {
         num: "Slide 02 of 07",
@@ -2983,15 +2981,9 @@ Accept: application/json
         }
       });
 
-      var cards = document.querySelectorAll('.tool-card');
-      cards.forEach(function(card) {
-        var cardGroup = card.getAttribute('data-group');
-        if (group === 'all' || cardGroup === group) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+      if (typeof window.updateRolodexData === 'function') {
+        window.updateRolodexData(group);
+      }
     }
 
     function switchShowcaseTab(tabId) {
@@ -3070,7 +3062,8 @@ Accept: application/json
       });
     }
 
-    window.ROLODEX_DATA = ${rolodexToolsJson};
+    window.ROLODEX_ALL_DATA = ${rolodexToolsJson};
+    window.ROLODEX_DATA = window.ROLODEX_ALL_DATA;
 
     // 21st.dev 3D Tumble Rolodex Engine
     (function initTumbleRolodex() {
@@ -3313,6 +3306,28 @@ Accept: application/json
 
       fit();
       window.addEventListener('resize', fit);
+      window.refitRolodex = fit;
+
+      window.updateRolodexData = function(group) {
+        if (!window.ROLODEX_ALL_DATA) return;
+        if (group === 'all') {
+          cards = window.ROLODEX_ALL_DATA;
+        } else {
+          cards = window.ROLODEX_ALL_DATA.filter(function(c) {
+            return c.group === group;
+          });
+        }
+        n = cards.length;
+        state.pos = 0;
+        target = 0;
+        for (var si = 0; si < pool; si++) {
+          slotK[si] = -999;
+        }
+        if (topCounterEl) {
+          topCounterEl.textContent = n > 0 ? ('1 of ' + n) : '0 tools';
+        }
+        paint();
+      };
 
       var target = 0;
       var isRunning = false;

@@ -556,6 +556,7 @@ export function renderToolPage(tool, relatedTools = []) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapedName} - AIPages Agent Tool Registry</title>
   <meta name="description" content="${escapedDescription}">
+  <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
   <link rel="canonical" href="${canonicalToolUrl}">
   <link rel="alternate" type="text/markdown" title="${escapedName} Markdown Specification" href="${markdownToolUrl}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">

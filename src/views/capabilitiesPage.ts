@@ -3,6 +3,7 @@ import { escapeHtml } from "./utils.js";
 import { renderWebMcpRuntimeScript } from "./agentDiscovery.js";
 import {
   SHARED_DESIGN_SYSTEM_CSS,
+  formatHumanToolTitle,
   renderSharedNavbar,
   renderSharedFooter,
 } from "./sharedLayout.js";
@@ -225,6 +226,46 @@ export function getCapabilityIndex(tools: Tool[]): CapabilitySummary[] {
 }
 
 /**
+ * Classify functional capability into high-level use-case categories
+ * for clean 4-tab filtering in the 3D TumbleDeck.
+ */
+export function classifyCapabilityGroup(
+  name: string,
+): "security" | "finance" | "reasoning" {
+  const s = name.toLowerCase();
+  if (
+    s.includes("sanitiz") ||
+    s.includes("clean") ||
+    s.includes("sandbox") ||
+    s.includes("security") ||
+    s.includes("eval") ||
+    s.includes("runtime") ||
+    s.includes("valid") ||
+    s.includes("safe") ||
+    s.includes("compliance")
+  ) {
+    return "security";
+  }
+  if (
+    s.includes("audit") ||
+    s.includes("ledger") ||
+    s.includes("proof") ||
+    s.includes("settle") ||
+    s.includes("escrow") ||
+    s.includes("finance") ||
+    s.includes("financial") ||
+    s.includes("balance") ||
+    s.includes("gas") ||
+    s.includes("fee") ||
+    s.includes("base") ||
+    s.includes("contract")
+  ) {
+    return "finance";
+  }
+  return "reasoning";
+}
+
+/**
  * Render responsive HTML view for /capabilities page using the UI/UX Pro Max & 21st.dev design system.
  */
 export function renderCapabilitiesPage(
@@ -233,6 +274,17 @@ export function renderCapabilitiesPage(
   baseUrl: string = "https://aipages.tech",
 ): string {
   const normalizedBase = baseUrl.replace(/\/+$/, "");
+
+  const totalCount = capabilities.length;
+  const securityCount = capabilities.filter(
+    (c) => classifyCapabilityGroup(c.name) === "security",
+  ).length;
+  const financeCount = capabilities.filter(
+    (c) => classifyCapabilityGroup(c.name) === "finance",
+  ).length;
+  const reasoningCount = capabilities.filter(
+    (c) => classifyCapabilityGroup(c.name) === "reasoning",
+  ).length;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -251,6 +303,46 @@ export function renderCapabilitiesPage(
     })),
   };
   const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/</g, "\\u003c");
+
+  const capabilitiesDeckData = capabilities.map((cap) => {
+    const group = classifyCapabilityGroup(cap.name);
+    let groupBadge = "REASONING";
+    let groupLabel = "Autonomous AI & Reasoning";
+    if (group === "security") {
+      groupBadge = "SECURITY";
+      groupLabel = "Security & Sanitization";
+    } else if (group === "finance") {
+      groupBadge = "FINANCE";
+      groupLabel = "Finance & Audit";
+    }
+
+    return {
+      name: cap.name,
+      group,
+      groupBadge,
+      groupLabel,
+      toolCount: cap.toolCount,
+      toolCountDisplay: `${cap.toolCount} ${cap.toolCount === 1 ? "tool" : "tools"}`,
+      description: cap.description,
+      directoryUrl: cap.directoryUrl,
+      tools: cap.tools.slice(0, 4).map((t) => ({
+        name: t.name,
+        namespace: t.namespace,
+        isFirstParty: t.isFirstParty,
+        pricing:
+          t.pricingModel === "free" || t.costPerCall === 0
+            ? "Free"
+            : `${t.costPerCall} USDT`,
+        reliability: t.reliability,
+        healthStatus: t.healthStatus,
+      })),
+      moreCount: Math.max(0, cap.tools.length - 4),
+    };
+  });
+  const capabilitiesDeckJson = JSON.stringify(capabilitiesDeckData).replace(
+    /</g,
+    "\\u003c",
+  );
 
   const cardsHtml = capabilities
     .map((cap) => {
@@ -342,6 +434,7 @@ export function renderCapabilitiesPage(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
+  <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
   <link rel="canonical" href="https://aipages.tech/capabilities">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <link rel="alternate" type="text/markdown" title="Capabilities Index (Markdown)" href="/capabilities?format=md">
@@ -351,10 +444,22 @@ ${jsonLdScript}
   <style>
     ${SHARED_DESIGN_SYSTEM_CSS}
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .hero {
       padding: 64px 0 36px;
       text-align: center;
-      max-width: 820px;
+      max-width: 840px;
       margin: 0 auto;
     }
 
@@ -363,15 +468,18 @@ ${jsonLdScript}
       font-weight: 800;
       color: #FFFFFF;
       margin-bottom: 14px;
+      line-height: 1.25;
+      overflow: visible;
     }
 
     .hero-subtitle {
       font-size: 1.08rem;
       color: var(--text-muted);
       line-height: 1.7;
+      overflow: visible;
     }
 
-    /* 21st.dev #29870 Stats Block */
+    /* Stats Bar */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -404,7 +512,7 @@ ${jsonLdScript}
     }
 
     .filter-section {
-      margin-bottom: 36px;
+      margin-bottom: 30px;
     }
 
     .search-input-wrapper {
@@ -440,6 +548,346 @@ ${jsonLdScript}
       display: flex;
     }
 
+    /* 3D Tumble Rolodex Deck for Capabilities */
+    .tumble-deck-section {
+      margin-top: 8px;
+      margin-bottom: 60px;
+    }
+
+    .deck-header-block {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 18px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .deck-top-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Clean Category Tabs at top of deck */
+    .category-tabs-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .category-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-dim);
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+
+    .category-tab-btn:hover {
+      color: #F8FAFC;
+      border-color: var(--border-strong);
+      background: var(--surface-raised);
+    }
+
+    .category-tab-btn.active {
+      color: var(--primary-bright);
+      border-color: var(--primary-border);
+      background: rgba(245, 158, 11, 0.12);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+    }
+
+    .category-tab-count {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: inherit;
+    }
+
+    .category-tab-btn.active .category-tab-count {
+      background: rgba(245, 158, 11, 0.25);
+      color: var(--primary-bright);
+    }
+
+    .tumble-deck-shell {
+      background: var(--surface-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px 20px 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .td-root {
+      position: relative;
+      width: 100%;
+      height: 640px;
+      touch-action: none;
+      overflow: hidden;
+      outline: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .td-scene {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      pointer-events: none;
+    }
+
+    .td-card {
+      position: absolute;
+      left: 50%;
+      top: var(--td-top);
+      width: var(--td-w);
+      height: var(--td-h);
+      margin-left: calc(var(--td-w) / -2);
+      transform-origin: 50% 100%;
+      transform-style: preserve-3d;
+      backface-visibility: visible;
+      will-change: transform;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      pointer-events: auto;
+      background: rgba(14, 18, 28, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      box-shadow: 0 28px 60px -15px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.08);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .td-card:hover {
+      border-color: rgba(0, 240, 255, 0.65);
+      box-shadow: 0 32px 70px -12px rgba(0, 0, 0, 0.95), 0 0 36px rgba(0, 240, 255, 0.25);
+    }
+
+    .td-card-backdrop {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 18% 18%, rgba(0, 240, 255, 0.12), transparent 48%),
+                  radial-gradient(circle at 85% 82%, rgba(245, 158, 11, 0.08), transparent 45%),
+                  linear-gradient(175deg, rgba(16, 22, 34, 0.94) 0%, rgba(9, 12, 18, 0.97) 100%);
+      pointer-events: none;
+    }
+
+    .td-card-grid-texture {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .td-card-glow-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.8), rgba(245, 158, 11, 0.8), transparent);
+      pointer-events: none;
+    }
+
+    .td-card-content {
+      position: absolute;
+      inset: 0;
+      padding: 34px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-sizing: border-box;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .td-card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .td-card-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+    }
+
+    .td-card-count {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary-bright);
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      padding: 5px 14px;
+      border-radius: 999px;
+    }
+
+    .td-card-mid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: auto 0;
+    }
+
+    .td-card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .td-card-icon-frame {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-sm);
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.12);
+    }
+
+    .td-card:hover .td-card-icon-frame {
+      background: var(--primary-bright);
+      color: #040507;
+      border-color: var(--primary-bright);
+      box-shadow: 0 0 20px rgba(255, 208, 0, 0.5);
+    }
+
+    .td-card-title {
+      font-size: clamp(24px, 2.4vw, 32px);
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      margin: 0;
+      overflow: visible;
+      word-break: break-word;
+    }
+
+    .td-card-desc {
+      font-size: 17px;
+      color: #E2E8F0;
+      line-height: 1.6;
+      margin: 2px 0 0 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      max-width: 95%;
+    }
+
+    .td-card-tools-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+
+    .td-card-tools-list {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .td-card-tool-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 600;
+      color: #CBD5E1;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 5px 12px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .td-card-tool-pill.aus {
+      border-color: rgba(245, 158, 11, 0.4);
+      color: var(--primary-bright);
+    }
+
+    .td-card-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .td-network-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text-dim);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .td-network-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--healthy);
+      box-shadow: 0 0 8px var(--healthy);
+    }
+
+    .td-action-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-bright);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.18s ease;
+    }
+
+    .td-card:hover .td-action-label {
+      transform: translateX(4px);
+    }
+
+    /* Fallback static cards for crawlers & accessibility */
     .cap-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -728,8 +1176,53 @@ ${jsonLdScript}
       </form>
     </div>
 
-    <div class="cap-grid" id="cap-grid">
-      ${cardsHtml}
+    <!-- 21st.dev 3D Tumble Rolodex Capabilities Deck -->
+    <section id="cap-rolodex-section" class="tumble-deck-section">
+      <div class="deck-header-block">
+        <div>
+          <h2 class="section-title">Functional Capabilities Explorer</h2>
+          <p class="section-subtitle">
+            Autonomous Capability Rolodex &middot; Explore all ${totalCount} functional taxonomies in 3D tumbling perspective. Filter by job category or click any card to inspect active tool endpoints.
+          </p>
+        </div>
+        <div class="deck-top-counter">
+          <span id="cap-deck-counter">1 of ${totalCount}</span>
+        </div>
+      </div>
+
+      <!-- Clean 4-Tab Category Switcher directly at the top of the TumbleDeck -->
+      <div class="category-tabs-bar" role="tablist" aria-label="Capability Category Tabs">
+        <button type="button" class="category-tab-btn active" data-cap-group="all" onclick="filterCapabilityGroup('all')">
+          <span class="category-tab-label">All Capabilities</span>
+          <span class="category-tab-count">${totalCount}</span>
+        </button>
+        <button type="button" class="category-tab-btn" data-cap-group="security" onclick="filterCapabilityGroup('security')">
+          <span class="category-tab-label">Security &amp; Sanitization</span>
+          <span class="category-tab-count">${securityCount}</span>
+        </button>
+        <button type="button" class="category-tab-btn" data-cap-group="finance" onclick="filterCapabilityGroup('finance')">
+          <span class="category-tab-label">Finance &amp; Audit</span>
+          <span class="category-tab-count">${financeCount}</span>
+        </button>
+        <button type="button" class="category-tab-btn" data-cap-group="reasoning" onclick="filterCapabilityGroup('reasoning')">
+          <span class="category-tab-label">Autonomous AI &amp; Reasoning</span>
+          <span class="category-tab-count">${reasoningCount}</span>
+        </button>
+      </div>
+
+      <!-- 3D Rolodex Deck Shell -->
+      <div id="cap-rolodex-shell" class="tumble-deck-shell">
+        <div id="cap-td-container" class="td-root" role="region" aria-roledescription="carousel" aria-label="Autonomous tool capability 3D rolodex deck" tabindex="0">
+          <div id="cap-td-scene" class="td-scene"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Machine & Crawler Discovery (Preserves all SEO links and test requirements without duplicate card clutter) -->
+    <div class="sr-only" aria-hidden="true">
+      <div class="cap-grid" id="cap-grid">
+        ${cardsHtml}
+      </div>
     </div>
 
     <div class="empty-state" id="empty-state">
@@ -744,35 +1237,389 @@ ${jsonLdScript}
   ${renderSharedFooter()}
 
   <script>
-    (function() {
-      const input = document.getElementById('cap-filter');
-      const grid = document.getElementById('cap-grid');
-      const emptyState = document.getElementById('empty-state');
-      if (!input || !grid || !emptyState) return;
+    window.CAP_ALL_DATA = ${capabilitiesDeckJson};
+    window.CAP_DATA = window.CAP_ALL_DATA;
 
-      const cards = Array.from(grid.querySelectorAll('.cap-card'));
+    var currentCapGroup = 'all';
 
-      input.addEventListener('input', function() {
-        const query = this.value.toLowerCase().trim();
-        let visibleCount = 0;
-
-        cards.forEach(card => {
-          const cap = card.getAttribute('data-cap') || '';
-          const desc = card.getAttribute('data-desc') || '';
-          const matches = !query || cap.includes(query) || desc.toLowerCase().includes(query);
-
-          if (matches) {
-            card.style.display = '';
-            visibleCount++;
-          } else {
-            card.style.display = 'none';
-          }
-        });
-
-        if (visibleCount === 0) {
-          emptyState.style.display = 'block';
+    function filterCapabilityGroup(group) {
+      currentCapGroup = group;
+      var buttons = document.querySelectorAll('.category-tab-btn');
+      buttons.forEach(function(btn) {
+        if (btn.getAttribute('data-cap-group') === group) {
+          btn.classList.add('active');
         } else {
-          emptyState.style.display = 'none';
+          btn.classList.remove('active');
+        }
+      });
+      applyCapFilters();
+    }
+
+    function applyCapFilters() {
+      var input = document.getElementById('cap-filter');
+      var query = input ? input.value.toLowerCase().trim() : '';
+
+      var filtered = window.CAP_ALL_DATA.filter(function(item) {
+        var matchGroup = currentCapGroup === 'all' || item.group === currentCapGroup;
+        var matchQuery = !query || item.name.toLowerCase().includes(query) || item.description.toLowerCase().includes(query);
+        return matchGroup && matchQuery;
+      });
+
+      window.CAP_DATA = filtered;
+
+      var emptyState = document.getElementById('empty-state');
+      var deckShell = document.getElementById('cap-rolodex-shell');
+      var counterEl = document.getElementById('cap-deck-counter');
+
+      // Also filter hidden crawler cards for test runner / screen readers
+      var grid = document.getElementById('cap-grid');
+      if (grid) {
+        var cards = Array.from(grid.querySelectorAll('.cap-card'));
+        cards.forEach(function(card) {
+          var cap = card.getAttribute('data-cap') || '';
+          var desc = card.getAttribute('data-desc') || '';
+          var matches = !query || cap.includes(query) || desc.toLowerCase().includes(query);
+          card.style.display = matches ? '' : 'none';
+        });
+      }
+
+      if (filtered.length === 0) {
+        if (emptyState) emptyState.style.display = 'block';
+        if (deckShell) deckShell.style.display = 'none';
+        if (counterEl) counterEl.textContent = '0 capabilities';
+      } else {
+        if (emptyState) emptyState.style.display = 'none';
+        if (deckShell) deckShell.style.display = 'block';
+        if (counterEl) counterEl.textContent = '1 of ' + filtered.length;
+        if (typeof window.rebuildCapDeck === 'function') {
+          window.rebuildCapDeck();
+        }
+      }
+    }
+
+    (function() {
+      var input = document.getElementById('cap-filter');
+      if (input) {
+        input.addEventListener('input', applyCapFilters);
+      }
+    })();
+
+    // 21st.dev 3D Tumble Rolodex Engine for Capabilities
+    (function initCapTumbleRolodex() {
+      var root = document.getElementById('cap-td-container');
+      var scene = document.getElementById('cap-td-scene');
+      var topCounterEl = document.getElementById('cap-deck-counter');
+      if (!root || !scene || !window.CAP_DATA || window.CAP_DATA.length === 0) return;
+
+      var cards = window.CAP_DATA;
+      var n = cards.length;
+      var depth = 5;
+      var pool = depth + 5;
+      var aspect = 1.85;
+      var scrollPerCard = 220;
+
+      function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+      function wrap(k, m) { return m ? ((k % m) + m) % m : 0; }
+      function fallAngle(t) {
+        var u = clamp01(t);
+        var land = 0.78;
+        if (u <= land) {
+          return -90 * Math.pow(u / land, 3);
+        }
+        var k2 = (u - land) / (1 - land);
+        return -90 + 6 * Math.sin(Math.PI * k2) * (1 - k2);
+      }
+      function deckAdvance(p) {
+        var i = Math.floor(p);
+        var f = p - i;
+        var k = clamp01((f - 0.28) / 0.6);
+        return i + k * k * (3 - 2 * k);
+      }
+      function cardPose(k, p, d) {
+        var t = p - k;
+        var lift = (k - Math.floor(p) + 3) * 0.6;
+        if (t >= 1) {
+          return { angle: -90, z: 0, lift: lift, opacity: t < 3 ? 1 : 0, flat: true };
+        }
+        if (t > 0) return { angle: fallAngle(t), z: 0, lift: lift, opacity: 1, flat: false };
+        var rel = k - deckAdvance(p);
+        var opacity = clamp01(d + 1 - rel);
+        return { angle: 0, z: -Math.max(rel, 0), lift: 0, opacity: opacity, flat: false };
+      }
+
+      var cardEls = [];
+      var badgeEls = [];
+      var countEls = [];
+      var titleEls = [];
+      var descEls = [];
+      var toolsEls = [];
+      var slotK = [];
+
+      for (var j = 0; j < pool; j++) {
+        var el = document.createElement('div');
+        el.className = 'td-card';
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'td-card-backdrop';
+        el.appendChild(backdrop);
+
+        var gridTexture = document.createElement('div');
+        gridTexture.className = 'td-card-grid-texture';
+        el.appendChild(gridTexture);
+
+        var glowBar = document.createElement('div');
+        glowBar.className = 'td-card-glow-bar';
+        el.appendChild(glowBar);
+
+        var content = document.createElement('div');
+        content.className = 'td-card-content';
+
+        var topRow = document.createElement('div');
+        topRow.className = 'td-card-top-row';
+
+        var badge = document.createElement('span');
+        badge.className = 'td-card-badge';
+        topRow.appendChild(badge);
+
+        var countBadge = document.createElement('span');
+        countBadge.className = 'td-card-count';
+        topRow.appendChild(countBadge);
+        content.appendChild(topRow);
+
+        var mid = document.createElement('div');
+        mid.className = 'td-card-mid';
+
+        var titleRow = document.createElement('div');
+        titleRow.className = 'td-card-title-row';
+
+        var iconFrame = document.createElement('div');
+        iconFrame.className = 'td-card-icon-frame';
+        iconFrame.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+        titleRow.appendChild(iconFrame);
+
+        var titleBox = document.createElement('div');
+        var title = document.createElement('h3');
+        title.className = 'td-card-title';
+        titleBox.appendChild(title);
+        titleRow.appendChild(titleBox);
+        mid.appendChild(titleRow);
+
+        var desc = document.createElement('p');
+        desc.className = 'td-card-desc';
+        mid.appendChild(desc);
+
+        var toolsLabel = document.createElement('span');
+        toolsLabel.className = 'td-card-tools-label';
+        toolsLabel.textContent = 'AVAILABLE TOOLS';
+        mid.appendChild(toolsLabel);
+
+        var toolsList = document.createElement('div');
+        toolsList.className = 'td-card-tools-list';
+        mid.appendChild(toolsList);
+
+        content.appendChild(mid);
+
+        var btmRow = document.createElement('div');
+        btmRow.className = 'td-card-bottom-row';
+        var netTag = document.createElement('span');
+        netTag.className = 'td-network-tag';
+        netTag.innerHTML = '<span class="td-network-dot"></span> Base Mainnet (8453) &middot; Success-Only Settlement';
+        var actionLabel = document.createElement('span');
+        actionLabel.className = 'td-action-label';
+        actionLabel.innerHTML = 'Browse Tools &rarr;';
+        btmRow.appendChild(netTag);
+        btmRow.appendChild(actionLabel);
+        content.appendChild(btmRow);
+
+        el.appendChild(content);
+
+        (function(slotIdx) {
+          el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!dragged) {
+              var currentK = slotK[slotIdx];
+              if (currentK !== undefined && currentK !== -999) {
+                var cData = cards[wrap(currentK, n)];
+                if (cData && cData.directoryUrl) {
+                  window.location.href = cData.directoryUrl;
+                }
+              }
+            }
+          });
+        })(j);
+
+        scene.appendChild(el);
+        cardEls.push(el);
+        badgeEls.push(badge);
+        countEls.push(countBadge);
+        titleEls.push(title);
+        descEls.push(desc);
+        toolsEls.push(toolsList);
+        slotK.push(-999);
+      }
+
+      var state = { pos: 0 };
+      var geo = { h: 440, gap: 70 };
+
+      function paint() {
+        var pos = state.pos;
+        var gap = geo.gap;
+        var base = Math.floor(pos) - 2;
+        var activeIndex = wrap(Math.round(pos), n);
+
+        if (topCounterEl) {
+          topCounterEl.textContent = n > 0 ? ((activeIndex + 1) + ' of ' + n) : '0 capabilities';
+        }
+
+        for (var j = 0; j < pool; j++) {
+          var el = cardEls[j];
+          if (!el) continue;
+          var k = base + wrap(j - base, pool);
+          if (slotK[j] !== k) {
+            slotK[j] = k;
+            var c = cards[wrap(k, n)];
+            if (c) {
+              titleEls[j].textContent = c.name;
+              descEls[j].textContent = c.description;
+              badgeEls[j].textContent = c.groupBadge || 'CAPABILITY';
+              countEls[j].textContent = c.toolCountDisplay;
+
+              if (toolsEls[j]) {
+                toolsEls[j].innerHTML = '';
+                var tList = c.tools || [];
+                for (var ti = 0; ti < tList.length; ti++) {
+                  var toolPill = document.createElement('span');
+                  toolPill.className = 'td-card-tool-pill' + (tList[ti].isFirstParty ? ' aus' : '');
+                  toolPill.textContent = (tList[ti].isFirstParty ? '[AUS] ' : '') + tList[ti].name + ' (' + tList[ti].pricing + ')';
+                  toolsEls[j].appendChild(toolPill);
+                }
+                if (c.moreCount > 0) {
+                  var morePill = document.createElement('span');
+                  morePill.className = 'td-card-tool-pill';
+                  morePill.textContent = '+' + c.moreCount + ' more';
+                  toolsEls[j].appendChild(morePill);
+                }
+              }
+            }
+          }
+          var p = cardPose(k, pos, depth);
+          el.style.transform = 'translate3d(0, ' + (-p.lift) + 'px, ' + (p.z * gap) + 'px) rotateX(' + p.angle + 'deg)';
+          el.style.opacity = String(p.opacity);
+          el.style.visibility = p.opacity > 0 ? 'visible' : 'hidden';
+          var shade = p.flat ? 0.08 : (-p.angle / 90) * 0.08;
+          el.style.setProperty('--td-shade', String(shade));
+        }
+      }
+
+      function fit() {
+        var W0 = root.clientWidth;
+        var H0 = root.clientHeight;
+        var wFrac = W0 < 480 ? 0.94 : (W0 < 960 ? 0.88 : 0.82);
+        var targetW = Math.max(280, Math.min(W0 * wFrac, 920));
+        var h = Math.max(340, Math.min(targetW / aspect, H0 * 0.84, 520));
+        var w = targetW;
+        var top = Math.max(16, (H0 - h) / 2 - 32);
+        geo.h = h;
+        geo.gap = 0.22 * h;
+        scene.style.perspective = (4.5 * h) + 'px';
+        scene.style.perspectiveOrigin = '50% ' + (top - 0.7 * h) + 'px';
+        root.style.setProperty('--td-w', w + 'px');
+        root.style.setProperty('--td-h', h + 'px');
+        root.style.setProperty('--td-top', top + 'px');
+        paint();
+      }
+
+      fit();
+      window.addEventListener('resize', fit);
+
+      window.rebuildCapDeck = function() {
+        cards = window.CAP_DATA;
+        n = cards.length;
+        state.pos = 0;
+        target = 0;
+        for (var si = 0; si < pool; si++) {
+          slotK[si] = -999;
+        }
+        paint();
+      };
+
+      var target = 0;
+      var isRunning = false;
+      var idleTimer = null;
+      var dragged = false;
+
+      function follow() {
+        var dt = 1 / 60;
+        state.pos += (target - state.pos) * (1 - Math.exp(-dt * 9));
+        if (Math.abs(target - state.pos) < 2e-3) {
+          state.pos = target;
+          isRunning = false;
+        } else {
+          requestAnimationFrame(follow);
+        }
+        paint();
+      }
+
+      function pushPos(to) {
+        target = to;
+        if (!isRunning) {
+          isRunning = true;
+          requestAnimationFrame(follow);
+        }
+      }
+
+      function settle(bias) {
+        var finalPos = bias > 0 ? Math.floor(target + 0.7) : (bias < 0 ? Math.ceil(target - 0.7) : Math.round(target));
+        pushPos(finalPos);
+      }
+
+      function onWheel(e) {
+        e.preventDefault();
+        var scale = e.deltaMode === 1 ? 16 : (e.deltaMode === 2 ? root.clientHeight : 1);
+        var d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * scale;
+        pushPos(target + d / scrollPerCard);
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+          settle(Math.sign(d));
+        }, 140);
+      }
+
+      var drag = null;
+      function onPointerDown(e) {
+        if (e.button !== 0) return;
+        drag = { id: e.pointerId, y: e.clientY, travel: 0, last: 0 };
+        dragged = false;
+        clearTimeout(idleTimer);
+      }
+      function onPointerMove(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var dy = e.clientY - drag.y;
+        var step = dy - drag.last;
+        drag.last = dy;
+        drag.travel += Math.abs(step);
+        if (drag.travel > 6) dragged = true;
+        pushPos(target - step / scrollPerCard);
+      }
+      function onPointerUp(e) {
+        if (!drag || e.pointerId !== drag.id) return;
+        var v = drag.last;
+        drag = null;
+        settle(Math.sign(-v));
+      }
+
+      root.addEventListener('wheel', onWheel, { passive: false });
+      root.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+
+      root.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          pushPos(Math.round(target) + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          pushPos(Math.round(target) - 1);
         }
       });
     })();

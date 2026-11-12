@@ -7,6 +7,7 @@ export declare const config: {
     readonly port: number;
     readonly MONGODB_URI: string | null;
     readonly VECTOR_INDEX_NAME: string;
+    readonly googleSiteVerification: string;
     readonly geminiApiKey: string | null;
     readonly geminiEmbeddingModel: string;
     readonly geminiSchemaModel: string;

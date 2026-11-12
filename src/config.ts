@@ -56,6 +56,11 @@ export const config = {
   MONGODB_URI: process.env.MONGODB_URI ?? null, // null = in-memory fallback for dev
   VECTOR_INDEX_NAME: optional("VECTOR_INDEX_NAME", "vector_index"),
 
+  // Google Search Console & SEO verification
+  googleSiteVerification:
+    process.env.GOOGLE_SITE_VERIFICATION ||
+    "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E",
+
   // Gemini embeddings (via google/genai REST or SDK)
 geminiApiKey: process.env.GEMINI_API_KEY ?? null,
   geminiEmbeddingModel: optional("GEMINI_EMBEDDING_MODEL", "gemini-embedding-001"),
