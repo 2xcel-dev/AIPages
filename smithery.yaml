@@ -1,0 +1,18 @@
+# Smithery configuration for AIPages Model Context Protocol Gateway
+# https://smithery.ai/docs/config
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      AIPAGES_BASE_URL:
+        type: string
+        description: AIPages Registry Base URL
+        default: https://aipages.tech
+      AIPAGES_API_KEY:
+        type: string
+        description: Optional AIPages API Key
+  commandFunction:
+    command: node
+    args:
+      - packages/mcp-gateway/bin/mcp-gateway.js

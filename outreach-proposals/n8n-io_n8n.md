@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/n8n-io/n8n
 **Referral Code:** `ref_mcp_n8n-io_n8n`
-**Generated At:** 2026-11-11T09:18:30.805Z
+**Generated At:** 2026-11-12T07:30:15.312Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_n8n-io_n8n",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_n8n-io_n8n&source=mcp_prospecting",
-    "generatedAt": "2026-11-11T09:18:30.804Z"
+    "generatedAt": "2026-11-12T07:30:15.312Z"
   }
 }
 ```
