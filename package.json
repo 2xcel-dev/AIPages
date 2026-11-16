@@ -26,6 +26,7 @@
     "check:tools": "tsx scripts/validate-catalog.ts",
     "test": "tsx --import ./tests/setup.ts --test tests/**/*.test.ts",
     "publish:pypi": "tsx scripts/publish-pypi.ts",
+    "publish:reddit": "tsx scripts/publish-reddit.ts",
     "content:weekly": "tsx scripts/weekly-content.ts",
     "scripts/validate-catalog.ts": "tsx scripts/validate-catalog.ts",
     "loop": "tsx scripts/agency-loop.ts pipeline",
