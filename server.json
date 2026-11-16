@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.2xcel-dev/aipages-mcp-gateway",
+  "title": "AIPages MCP Gateway",
+  "description": "Dynamic 3072-dimensional vector tool discovery and Base Mainnet x402 upstream execution for autonomous AI agents.",
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registry_type": "npm",
+      "identifier": "aipages-mcp-gateway",
+      "transport_type": "stdio"
+    }
+  ],
+  "homepage": "https://aipages.tech",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2xcel-dev/AIPages"
+  }
+}
