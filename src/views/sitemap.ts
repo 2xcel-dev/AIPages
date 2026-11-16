@@ -80,6 +80,12 @@ export function generateSitemapXml(
       priority: 0.9,
     },
     {
+      loc: `${normalizedBase}/playground`,
+      lastmod: directoryLastmod,
+      changefreq: "daily",
+      priority: 0.9,
+    },
+    {
       loc: `${normalizedBase}/submit`,
       lastmod: directoryLastmod,
       changefreq: "weekly",

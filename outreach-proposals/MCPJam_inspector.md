@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/MCPJam/inspector
 **Referral Code:** `ref_mcp_mcpjam_inspector`
-**Generated At:** 2026-11-12T07:30:02.453Z
+**Generated At:** 2026-11-16T20:45:11.453Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_mcpjam_inspector",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_mcpjam_inspector&source=mcp_prospecting",
-    "generatedAt": "2026-11-12T07:30:02.453Z"
+    "generatedAt": "2026-11-16T20:45:11.452Z"
   }
 }
 ```

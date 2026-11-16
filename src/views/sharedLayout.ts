@@ -513,7 +513,7 @@ export function renderBrandLogoSvg(): string {
  * Render the 21st.dev #8948 Fixed SaaS Navigation Bar with Solar Icons.
  * Preserves exact `<a href="/capabilities">Capabilities</a>` for test suite compatibility.
  */
-export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "submit" | "legal" | "tool" = "directory", showMcpButton: boolean = true): string {
+export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "submit" | "legal" | "tool" | "playground" = "directory", showMcpButton: boolean = true): string {
   return `
   <nav class="nav" aria-label="Primary Navigation">
     <div class="container nav-inner">
@@ -525,6 +525,7 @@ export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "
       </a>
       <div class="nav-links">
         <a href="/tool"${activeRoute === "directory" ? ' class="active"' : ""}>Tool Directory</a>
+        <a href="/playground"${activeRoute === "playground" ? ' class="active"' : ""}>Playground</a>
         <a href="/capabilities"${activeRoute === "capabilities" ? ' class="active"' : ""}>Capabilities</a>
         <a href="/#flow-showcase">Core Utilities</a>
         <a href="/#agent-human-section">Human &amp; Agent Access</a>

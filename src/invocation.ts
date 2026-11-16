@@ -55,6 +55,7 @@ import {
   enrichCompanyLead,
   executeBrowserStealth,
   compressContext,
+  chunkSemanticText,
 } from "./services/index.js";
 
 // ── x402 payment verification ─────────────────────────────────────────
@@ -609,6 +610,7 @@ const FIRST_PARTY_HANDLERS: Record<string, FirstPartyHandler> = {
   "net.2xcel.aus.lead-enrich": enrichCompanyLead,
   "net.2xcel.aus.browser-stealth": executeBrowserStealth,
   "net.2xcel.aus.context-compressor": compressContext,
+  "net.2xcel.aus.semantic-chunker": chunkSemanticText,
 };
 
 /**

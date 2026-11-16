@@ -39,6 +39,7 @@ import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt, generateLlmsFullTxt, generateToolMarkdown } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdown } from "./views/capabilitiesPage.js";
+import { renderPlaygroundPage } from "./views/playgroundPage.js";
 import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
 import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
 import { generateBadgeSvg } from "./views/badge.js";
@@ -1153,6 +1154,17 @@ app.get("/capabilities", async (c) => {
   }
 
   return c.html(renderCapabilitiesPage(capabilities, publicTools.length));
+});
+
+// ── Public route: Interactive Tool Playground ──
+app.get("/playground", async (c) => {
+  const activeStore = await getActiveStore();
+  const allTools = await activeStore.list();
+  const publicTools = allTools.filter(
+    (t) => t.status !== "rejected" && t.status !== "pending",
+  );
+  const selectedTool = c.req.query("tool");
+  return c.html(renderPlaygroundPage(publicTools, selectedTool));
 });
 
 // ── Public routes: Authorized Governance, Policies, Submit Portal & Google Flow Assets ──
