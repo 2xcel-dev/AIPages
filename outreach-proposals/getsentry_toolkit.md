@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/getsentry/toolkit
 **Referral Code:** `ref_mcp_getsentry_toolkit`
-**Generated At:** 2026-11-11T09:18:31.990Z
+**Generated At:** 2026-11-16T21:42:16.948Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_getsentry_toolkit",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_getsentry_toolkit&source=mcp_prospecting",
-    "generatedAt": "2026-11-11T09:18:31.990Z"
+    "generatedAt": "2026-11-16T21:42:16.948Z"
   }
 }
 ```
