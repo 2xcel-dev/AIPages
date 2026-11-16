@@ -4,8 +4,8 @@
   "description": "Unified Model Context Protocol gateway for AIPages: on-the-fly semantic tool discovery and Base Mainnet x402 execution for autonomous AI agents.",
   "main": "bin/mcp-gateway.js",
   "bin": {
-    "aipages-mcp-gateway": "./bin/mcp-gateway.js",
-    "aipages": "./bin/mcp-gateway.js"
+    "aipages-mcp-gateway": "bin/mcp-gateway.js",
+    "aipages": "bin/mcp-gateway.js"
   },
   "type": "module",
   "files": [
@@ -29,7 +29,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/2xcel-dev/AIPages.git",
+    "url": "git+https://github.com/2xcel-dev/AIPages.git",
     "directory": "packages/mcp-gateway"
   },
   "homepage": "https://aipages.tech",

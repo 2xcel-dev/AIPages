@@ -7,3 +7,7 @@ storage/
 agentskills/
 generate-wallet.ts
 test-gemini.ts
+dist/
+*.egg-info/
+build/
+*.tgz
