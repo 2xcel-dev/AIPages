@@ -86,24 +86,6 @@ export function generateSitemapXml(
       priority: 0.8,
     },
     {
-      loc: `${normalizedBase}/llms.txt`,
-      lastmod: directoryLastmod,
-      changefreq: "daily",
-      priority: 0.9,
-    },
-    {
-      loc: `${normalizedBase}/llms-full.txt`,
-      lastmod: directoryLastmod,
-      changefreq: "daily",
-      priority: 0.9,
-    },
-    {
-      loc: `${normalizedBase}/mcp.json`,
-      lastmod: directoryLastmod,
-      changefreq: "daily",
-      priority: 0.9,
-    },
-    {
       loc: `${normalizedBase}/privacy`,
       lastmod: directoryLastmod,
       changefreq: "monthly",

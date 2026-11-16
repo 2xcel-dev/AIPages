@@ -879,6 +879,7 @@ export const ROBOTS_TXT = [
   "# --- Default Rule ---",
   "User-agent: *",
   "Allow: /",
+  "Disallow: /api/",
   "",
   "Sitemap: https://aipages.tech/sitemap.xml",
   "# LLM Discovery: https://aipages.tech/llms.txt",
