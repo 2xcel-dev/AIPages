@@ -41,6 +41,7 @@ import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdow
 import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
 import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
 import { generateBadgeSvg } from "./views/badge.js";
+import { notifyIndexNow } from "./services/seoNotifier.js";
 import { CANONICAL_AUS_TOOLS } from "./data/ausTools.js";
 import { DISCOVERED_GEMINI_TOOLS } from "./data/discoveredTools.js";
 import { assertValidFirstPartyTools } from "./validation/toolValidator.js";
@@ -451,6 +452,12 @@ app.post("/api/tools/submit", async (c) => {
     // Persist to Atlas (or in-memory dev store)
     const activeStore = await getActiveStore();
     await activeStore.upsert(tool);
+    // Real-time IndexNow delta notification (Bing, Microsoft Copilot, Yandex)
+    notifyIndexNow([
+        `https://aipages.tech/tool/${encodeURIComponent(tool.namespace)}`,
+        "https://aipages.tech/",
+        "https://aipages.tech/capabilities",
+    ]).catch(() => { });
     // PostHog analytics
     trackSubmission({
         namespace: tool.namespace,
