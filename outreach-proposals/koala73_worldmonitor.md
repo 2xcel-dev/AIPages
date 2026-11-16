@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/koala73/worldmonitor
 **Referral Code:** `ref_mcp_koala73_worldmonitor`
-**Generated At:** 2026-11-12T07:30:03.545Z
+**Generated At:** 2026-11-16T09:09:15.625Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_koala73_worldmonitor",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_koala73_worldmonitor&source=mcp_prospecting",
-    "generatedAt": "2026-11-12T07:30:03.545Z"
+    "generatedAt": "2026-11-16T09:09:15.625Z"
   }
 }
 ```

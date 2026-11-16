@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aipages"
+version = "0.1.0"
+description = "Python client and LangChain/CrewAI adapter for the AIPages machine-native agent tool registry and x402 Base settlement gateway."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "AIPages Core Team", email = "engineering@aipages.tech" }
+]
+keywords = ["ai", "agents", "mcp", "tools", "langchain", "crewai", "base", "x402", "vector-search"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+langchain = ["langchain-core>=0.1.0"]
+crewai = ["crewai>=0.28.0"]
+all = ["langchain-core>=0.1.0", "crewai>=0.28.0"]
+
+[project.urls]
+Homepage = "https://aipages.tech"
+Repository = "https://github.com/2xcel-dev/AIPages"
+Documentation = "https://aipages.tech/llms.txt"
+"Bug Tracker" = "https://github.com/2xcel-dev/AIPages/issues"
