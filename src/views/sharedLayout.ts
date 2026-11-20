@@ -764,5 +764,35 @@ export function renderSharedFooter(): string {
       }
       requestAnimationFrame(render);
     })();
+  </script>
+  <!-- AIPages Live Analytics & Agent Telemetry Beacon -->
+  <script>
+    (function() {
+      try {
+        var vid = localStorage.getItem('aipages_vid');
+        if (!vid) {
+          vid = 'v_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+          localStorage.setItem('aipages_vid', vid);
+        }
+        var payload = {
+          visitorId: vid,
+          path: window.location.pathname || '/',
+          referrer: document.referrer || null,
+          screen: window.innerWidth + 'x' + window.innerHeight,
+          timestamp: new Date().toISOString()
+        };
+        var bodyStr = JSON.stringify(payload);
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/telemetry', new Blob([bodyStr], { type: 'application/json' }));
+        } else {
+          fetch('/api/telemetry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: bodyStr,
+            keepalive: true
+          }).catch(function() {});
+        }
+      } catch (e) {}
+    })();
   </script>`;
 }

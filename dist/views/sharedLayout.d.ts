@@ -19,7 +19,7 @@ export declare function renderBrandLogoSvg(): string;
  * Render the 21st.dev #8948 Fixed SaaS Navigation Bar with Solar Icons.
  * Preserves exact `<a href="/capabilities">Capabilities</a>` for test suite compatibility.
  */
-export declare function renderSharedNavbar(activeRoute?: "directory" | "capabilities" | "submit" | "legal" | "tool", showMcpButton?: boolean): string;
+export declare function renderSharedNavbar(activeRoute?: "directory" | "capabilities" | "submit" | "legal" | "tool" | "playground", showMcpButton?: boolean): string;
 /**
  * Render the 21st.dev #7264 Minimal Footer component by efferd.
  */

@@ -21,4 +21,5 @@ export * from "./leadEnrich.js";
 export * from "./browserStealth.js";
 export * from "./agentScraper.js";
 export * from "./contextCompressor.js";
+export * from "./semanticChunker.js";
 //# sourceMappingURL=index.d.ts.map

@@ -778,6 +778,60 @@ export const CANONICAL_AUS_TOOLS = [
             name: "2XceL AUS Fleet",
         },
     },
+    {
+        namespace: "net.2xcel.aus.semantic-chunker",
+        name: "semantic_chunker",
+        description: "Agent Utility Service (AUS) Semantic Chunker: Token-budgeted text and markdown chunking engine for AI agents and RAG pipelines, preserving sentence boundaries and metadata.",
+        schema: {
+            type: "object",
+            properties: {
+                text: { type: "string", description: "Raw text or markdown document to chunk" },
+                max_tokens: {
+                    type: "integer",
+                    default: 500,
+                    maximum: 4000,
+                    description: "Maximum approximate tokens per chunk (default: 500)",
+                },
+                overlap_tokens: {
+                    type: "integer",
+                    default: 50,
+                    description: "Token overlap between consecutive chunks (default: 50)",
+                },
+                preserve_sentences: {
+                    type: "boolean",
+                    default: true,
+                    description: "Avoid splitting within sentence boundaries",
+                },
+                metadata: {
+                    type: "object",
+                    description: "Optional metadata object to attach to every generated chunk",
+                },
+            },
+            required: ["text"],
+        },
+        connectionType: "http",
+        endpointUrl: `${AUS_BASE_URL}/tool/semantic-chunker`,
+        healthStatus: "unknown",
+        lastChecked: undefined,
+        failureReason: null,
+        status: "active",
+        isFirstParty: true,
+        capabilities: ["semantic-chunking", "rag-optimization", "token-budgeting", "nlp"],
+        pricing: {
+            model: "paid",
+            costPerCall: 0.002,
+        },
+        authentication: AUS_AUTH_SPEC,
+        rateLimit: AUS_STANDARD_RATE_LIMIT,
+        protocolDetails: AUS_PROTOCOL_DETAILS,
+        developer: {
+            address: AUS_DEVELOPER_ADDRESS,
+            listingFeePaid: true,
+            listingFeeAmount: 0,
+            isFirstParty: true,
+            name: "2XceL AUS Fleet",
+        },
+    },
 ];
 export function normalizeScrapedTool(raw) {
     const isFirstParty = raw.namespace.startsWith("net.2xcel.aus");

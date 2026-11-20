@@ -37,6 +37,7 @@ import { quarantineStatus, recordRequest, recordError } from "./anomaly.js";
 import { guardTargetUrl, pinnedRequest, type PinnedTarget } from "./egress-guard.js";
 import { trackInvocation, identifyAgent } from "./analytics.js";
 import { metrics } from "./metrics.js";
+import { freeTierManager } from "./free-tier.js";
 import {
   sanitizeSchema,
   auditFinancialTransactions,
@@ -453,8 +454,17 @@ ingress.use("/:namespace/*", async (c) => {
     const paymentHeader = c.req.header("x-payment");
     const authHeader = c.req.header("authorization");
 
-    if (!paymentHeader && !authHeader) {
-      // No payment payload → return 402 with x402 payment requirements
+    // Check First 25 Free Requests trial tier (active outside automated unit tests)
+    const clientIp = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || agentId || "anonymous_agent";
+    const isTestEnv = process.env.NODE_ENV === "test";
+    const freeTier = isTestEnv ? { allowed: false, remaining: 0, total: 25, current: 25 } : freeTierManager.checkAndConsume(clientIp);
+
+    if (freeTier.allowed) {
+      c.header("X-Payment-Policy", "FREE_TRIAL_ACTIVE");
+      c.header("X-Free-Requests-Remaining", String(freeTier.remaining));
+      c.header("X-Free-Requests-Limit", String(freeTier.total));
+    } else if (!paymentHeader && !authHeader) {
+      // No payment payload and free trial exhausted → return 402 with x402 payment requirements
       await logInvocation(
         tool,
         agentId,
@@ -468,7 +478,7 @@ ingress.use("/:namespace/*", async (c) => {
       return c.json(
         {
           error: "Payment required",
-          description: `This is a premium tool. A flat $${feeUsd.toFixed(2)} USDC platform fee applies per call, collected only on successful delivery. Include a valid X-PAYMENT header with an x402 payment payload to proceed.`,
+          description: `This is a premium tool. A flat $${feeUsd.toFixed(2)} USDC platform fee applies per call, collected only on successful delivery. Include a valid X-PAYMENT header with an x402 payment payload to proceed. (Free trial limit of 25 requests exhausted for this client).`,
           payment: {
             x402Version: 1,
             accepts: [

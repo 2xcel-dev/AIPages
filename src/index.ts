@@ -216,6 +216,68 @@ app.get("/health", async (c) => {
   });
 });
 
+// ── Live Visitor & Agent Telemetry ───────────────────────────
+app.post("/api/telemetry", async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const ua = c.req.header("user-agent") || "";
+    const rawIp = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
+    const clientIp = rawIp.split(",")[0].trim();
+
+    const event = {
+      ...body,
+      ip: clientIp,
+      userAgent: ua,
+      isAgent: isAiOrSearchCrawler(ua),
+      receivedAt: new Date().toISOString(),
+    };
+
+    const logDir = path.join(process.cwd(), ".data");
+    if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+    fs.appendFileSync(path.join(logDir, "analytics_events.jsonl"), JSON.stringify(event) + "\n", "utf-8");
+
+    metrics.recordHttpRequest("POST", "/api/telemetry", 200, ua);
+    return c.json({ ok: true });
+  } catch (err) {
+    return c.json({ ok: false }, 500);
+  }
+});
+
+app.get("/api/analytics/stats", async (c) => {
+  const logFile = path.join(process.cwd(), ".data", "analytics_events.jsonl");
+  let totalHits = 0;
+  let humanHits = 0;
+  let agentHits = 0;
+  const paths: Record<string, number> = {};
+  const referrers: Record<string, number> = {};
+  const recentEvents: any[] = [];
+
+  if (fs.existsSync(logFile)) {
+    const lines = fs.readFileSync(logFile, "utf-8").split("\n").filter(Boolean);
+    totalHits = lines.length;
+    for (const line of lines) {
+      try {
+        const ev = JSON.parse(line);
+        if (ev.isAgent) agentHits++;
+        else humanHits++;
+        if (ev.path) paths[ev.path] = (paths[ev.path] || 0) + 1;
+        if (ev.referrer) referrers[ev.referrer] = (referrers[ev.referrer] || 0) + 1;
+        if (recentEvents.length < 15) recentEvents.push(ev);
+      } catch {}
+    }
+  }
+
+  return c.json({
+    totalHits,
+    humanHits,
+    agentHits,
+    paths,
+    referrers,
+    recentEvents: recentEvents.slice(-10),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get("/metrics", async (c) => {
   const activeStore = await getActiveStore();
   const total = await activeStore.count().catch(() => 0);

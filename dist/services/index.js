@@ -24,4 +24,5 @@ export * from "./browserStealth.js";
 // Crawling & Indexing Utilities
 export * from "./agentScraper.js";
 export * from "./contextCompressor.js";
+export * from "./semanticChunker.js";
 //# sourceMappingURL=index.js.map

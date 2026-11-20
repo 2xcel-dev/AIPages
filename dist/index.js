@@ -38,6 +38,7 @@ import { renderDirectoryPage } from "./views/directoryPage.js";
 import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt, generateLlmsFullTxt, generateToolMarkdown } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdown } from "./views/capabilitiesPage.js";
+import { renderPlaygroundPage } from "./views/playgroundPage.js";
 import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
 import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
 import { generateBadgeSvg } from "./views/badge.js";
@@ -193,6 +194,69 @@ app.get("/health", async (c) => {
             heapTotalMb: Number((mem.heapTotal / 1024 / 1024).toFixed(2)),
             rssMb: Number((mem.rss / 1024 / 1024).toFixed(2)),
         },
+    });
+});
+// ── Live Visitor & Agent Telemetry ───────────────────────────
+app.post("/api/telemetry", async (c) => {
+    try {
+        const body = await c.req.json().catch(() => ({}));
+        const ua = c.req.header("user-agent") || "";
+        const rawIp = c.req.header("cf-connecting-ip") || c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
+        const clientIp = rawIp.split(",")[0].trim();
+        const event = {
+            ...body,
+            ip: clientIp,
+            userAgent: ua,
+            isAgent: isAiOrSearchCrawler(ua),
+            receivedAt: new Date().toISOString(),
+        };
+        const logDir = path.join(process.cwd(), ".data");
+        if (!fs.existsSync(logDir))
+            fs.mkdirSync(logDir, { recursive: true });
+        fs.appendFileSync(path.join(logDir, "analytics_events.jsonl"), JSON.stringify(event) + "\n", "utf-8");
+        metrics.recordHttpRequest("POST", "/api/telemetry", 200, ua);
+        return c.json({ ok: true });
+    }
+    catch (err) {
+        return c.json({ ok: false }, 500);
+    }
+});
+app.get("/api/analytics/stats", async (c) => {
+    const logFile = path.join(process.cwd(), ".data", "analytics_events.jsonl");
+    let totalHits = 0;
+    let humanHits = 0;
+    let agentHits = 0;
+    const paths = {};
+    const referrers = {};
+    const recentEvents = [];
+    if (fs.existsSync(logFile)) {
+        const lines = fs.readFileSync(logFile, "utf-8").split("\n").filter(Boolean);
+        totalHits = lines.length;
+        for (const line of lines) {
+            try {
+                const ev = JSON.parse(line);
+                if (ev.isAgent)
+                    agentHits++;
+                else
+                    humanHits++;
+                if (ev.path)
+                    paths[ev.path] = (paths[ev.path] || 0) + 1;
+                if (ev.referrer)
+                    referrers[ev.referrer] = (referrers[ev.referrer] || 0) + 1;
+                if (recentEvents.length < 15)
+                    recentEvents.push(ev);
+            }
+            catch { }
+        }
+    }
+    return c.json({
+        totalHits,
+        humanHits,
+        agentHits,
+        paths,
+        referrers,
+        recentEvents: recentEvents.slice(-10),
+        timestamp: new Date().toISOString(),
     });
 });
 app.get("/metrics", async (c) => {
@@ -1000,6 +1064,14 @@ app.get("/capabilities", async (c) => {
         return c.body(markdown);
     }
     return c.html(renderCapabilitiesPage(capabilities, publicTools.length));
+});
+// ── Public route: Interactive Tool Playground ──
+app.get("/playground", async (c) => {
+    const activeStore = await getActiveStore();
+    const allTools = await activeStore.list();
+    const publicTools = allTools.filter((t) => t.status !== "rejected" && t.status !== "pending");
+    const selectedTool = c.req.query("tool");
+    return c.html(renderPlaygroundPage(publicTools, selectedTool));
 });
 // ── Public routes: Authorized Governance, Policies, Submit Portal & Google Flow Assets ──
 app.get("/privacy", (c) => {
