@@ -54,6 +54,22 @@ export const app = new Hono();
 // ── Globals ─────────────────────────────────────────────────
 let store;
 let invokeRoutesMounted = false;
+let cachedAllTools = null;
+let cachedAllToolsExpiry = 0;
+export function invalidateCatalogCache() {
+    cachedAllTools = null;
+    cachedAllToolsExpiry = 0;
+}
+export async function getAllCachedTools(storeInstance) {
+    const now = Date.now();
+    if (cachedAllTools && now < cachedAllToolsExpiry) {
+        return cachedAllTools;
+    }
+    const tools = await storeInstance.list();
+    cachedAllTools = tools;
+    cachedAllToolsExpiry = now + 60_000;
+    return tools;
+}
 function ensureInvokeRoutesMounted() {
     if (invokeRoutesMounted)
         return;
@@ -296,6 +312,7 @@ app.post("/ingest", async (c) => {
         return c.json({ error: "Expected { tools: [...] }" }, 400);
     }
     const count = await ingestManifests(store, body.tools);
+    invalidateCatalogCache();
     return c.json({ ingested: count });
 });
 app.post("/scrape", async (c) => {
@@ -526,6 +543,7 @@ app.post("/api/tools/submit", async (c) => {
     // Persist to Atlas (or in-memory dev store)
     const activeStore = await getActiveStore();
     await activeStore.upsert(tool);
+    invalidateCatalogCache();
     // Real-time IndexNow delta notification (Bing, Microsoft Copilot, Yandex)
     notifyIndexNow([
         `https://aipages.tech/tool/${encodeURIComponent(tool.namespace)}`,
@@ -583,7 +601,7 @@ app.get("/api/tools/:slug", handleApiToolDetail);
 app.get("/api/tool/:slug", handleApiToolDetail);
 // ── Human-facing directory handler (responsive cards + reliability & freshness) ──
 export async function handleDirectoryRequest(c, baseUrl = "/", targetStore) {
-    const currentStore = targetStore ?? store ?? (await createStore());
+    const currentStore = targetStore ?? (await getActiveStore());
     const searchQuery = c.req.query("q") ?? c.req.query("search");
     const reliability = c.req.query("reliability");
     const connectionType = c.req.query("connectionType");
@@ -593,12 +611,16 @@ export async function handleDirectoryRequest(c, baseUrl = "/", targetStore) {
     const offsetParam = c.req.query("offset") ?? c.req.query("skip");
     const limit = Math.min(Math.max(1, Number(limitParam ?? 50)), 100);
     const offset = Math.max(0, Number(offsetParam ?? 0));
-    let tools = await currentStore.list({
-        connectionType,
-        pricingModel,
-        capability: capabilityParam,
-        q: searchQuery,
-    });
+    const allStoreTools = await getAllCachedTools(currentStore);
+    let tools = allStoreTools;
+    // Filter by connection type
+    if (connectionType) {
+        tools = tools.filter((t) => t.connectionType === connectionType);
+    }
+    // Filter by pricing model
+    if (pricingModel) {
+        tools = tools.filter((t) => t.pricing?.model === pricingModel);
+    }
     // Filter by reliability if specified (high, degraded, failing, unchecked)
     if (reliability && reliability !== "all") {
         tools = tools.filter((t) => {
@@ -631,7 +653,6 @@ export async function handleDirectoryRequest(c, baseUrl = "/", targetStore) {
     // Collect all unique capabilities across tools for the filter controls.
     // When a search query is active, facet capabilities reflect matching tools;
     // otherwise, all catalog capabilities are displayed for discovery.
-    const allStoreTools = await currentStore.list();
     const facetTools = (searchQuery && searchQuery.trim()) ? tools : allStoreTools;
     const capabilitySet = new Set();
     for (const t of facetTools) {

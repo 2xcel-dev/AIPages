@@ -136,7 +136,7 @@ export class MongoToolStore implements ToolStore {
   }
 
   async getByNamespace(namespace: string): Promise<Tool | null> {
-    return this.collection.findOne({ namespace }) as Promise<Tool | null>;
+    return this.collection.findOne({ namespace }, { projection: { embedding: 0 } }) as Promise<Tool | null>;
   }
 
   async list(filter?: ToolListFilter): Promise<Tool[]> {
@@ -187,7 +187,7 @@ export class MongoToolStore implements ToolStore {
         ];
       }
     }
-    let cursor = this.collection.find(query);
+    let cursor = this.collection.find(query).project({ embedding: 0 });
     if (filter?.offset && filter.offset > 0) {
       cursor = cursor.skip(filter.offset);
     }

@@ -61,7 +61,7 @@ export class MongoToolStore {
         return this.client;
     }
     async getByNamespace(namespace) {
-        return this.collection.findOne({ namespace });
+        return this.collection.findOne({ namespace }, { projection: { embedding: 0 } });
     }
     async list(filter) {
         const query = {};
@@ -112,7 +112,7 @@ export class MongoToolStore {
                 ];
             }
         }
-        let cursor = this.collection.find(query);
+        let cursor = this.collection.find(query).project({ embedding: 0 });
         if (filter?.offset && filter.offset > 0) {
             cursor = cursor.skip(filter.offset);
         }

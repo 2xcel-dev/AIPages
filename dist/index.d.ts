@@ -1,8 +1,11 @@
 import { Hono } from "hono";
 import { type ToolStore } from "./db.js";
+import { type Tool } from "./types.js";
 import { formatToolRecord } from "./api/tools.js";
 export { formatToolRecord };
 export declare const app: Hono<import("hono/types").BlankEnv, import("hono/types").BlankSchema, "/">;
+export declare function invalidateCatalogCache(): void;
+export declare function getAllCachedTools(storeInstance: ToolStore): Promise<Tool[]>;
 export declare function isAiOrSearchCrawler(userAgent?: string | null): boolean;
 export declare const DISCOVERY_MANIFEST: {
     name: string;
