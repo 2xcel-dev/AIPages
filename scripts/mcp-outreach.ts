@@ -4,6 +4,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generatePromotionalSnippet, generateReadyToMergeConfig, type ReadyToMergeMcpConfig } from "./aus-snippet.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, "..");
+
+export function logToFile(msg: string): void {
+  try {
+    const logPath = path.resolve(ROOT_DIR, "outreach-cron.log");
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`, "utf-8");
+  } catch {}
+}
+
 /**
  * Outbound Autonomous Prospecting Loop for MCP & Agent Tool Repositories
  *
@@ -173,7 +184,7 @@ export const CURATED_MCP_TARGETS: GitHubRepo[] = [
  * Load or initialize the prospecting state file.
  */
 export function loadProspectingState(stateFilePath?: string): ProspectingState {
-  const defaultPath = path.resolve(process.cwd(), ".data/mcp-prospecting-state.json");
+  const defaultPath = path.resolve(ROOT_DIR, ".data/mcp-prospecting-state.json");
   const targetPath = stateFilePath || defaultPath;
 
   try {
@@ -196,7 +207,7 @@ export function loadProspectingState(stateFilePath?: string): ProspectingState {
  * Save prospecting state to disk.
  */
 export function saveProspectingState(state: ProspectingState, stateFilePath?: string): void {
-  const defaultPath = path.resolve(process.cwd(), ".data/mcp-prospecting-state.json");
+  const defaultPath = path.resolve(ROOT_DIR, ".data/mcp-prospecting-state.json");
   const targetPath = stateFilePath || defaultPath;
   const dir = path.dirname(targetPath);
 
@@ -319,7 +330,7 @@ export async function createTargetedProposal(
   body: string;
 }> {
   const promotedBy = options?.promotedBy || "aus-agent-alpha";
-  const outDir = options?.outDir || path.resolve(process.cwd(), "outreach-proposals");
+  const outDir = options?.outDir || path.resolve(ROOT_DIR, "outreach-proposals");
 
   if (!fs.existsSync(outDir)) {
     fs.mkdirSync(outDir, { recursive: true });
@@ -373,7 +384,7 @@ export async function sendOutreachIssue(
 ): Promise<{ live: boolean; path?: string }> {
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
-    const outDir = path.resolve(process.cwd(), "outreach-proposals");
+    const outDir = path.resolve(ROOT_DIR, "outreach-proposals");
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
     }
@@ -429,11 +440,12 @@ export async function runMcpProspectingLoop(
   const cycle = options?.cycle || 1;
   const limit = options?.limit || 10;
   const promotedBy = options?.promotedBy || "aus-agent-alpha";
-  const outDir = options?.outDir || path.resolve(process.cwd(), "outreach-proposals");
+  const outDir = options?.outDir || path.resolve(ROOT_DIR, "outreach-proposals");
   const stateFilePath = options?.stateFile;
 
   console.log(`\n[outreach-loop] === Cycle ${cycle} === ${new Date().toISOString()}`);
   console.log(`[outreach-loop] Scanning for 5-10 MCP & agent-tool repositories (Limit: ${limit})...`);
+  logToFile(`[outreach-loop] === Cycle ${cycle} === Started scan (Limit: ${limit})`);
 
   const state = loadProspectingState(stateFilePath);
   const repos = await searchForMcpRepos(limit, false, state);
@@ -473,8 +485,8 @@ export async function runMcpProspectingLoop(
         `[outreach-loop] [PROPOSAL CREATED] ${repo.full_name} -> ${path.basename(proposal.mdPath)} & ${path.basename(proposal.jsonPath)} (Ref: ${proposal.referralCode})`
       );
 
-      // If live token is present and dryRun is false, dispatch issue
-      if (process.env.GITHUB_TOKEN && !options?.dryRun) {
+      // Safety gate: NEVER post unsolicited issues to third-party repos unless explicitly opted in
+      if (process.env.DISPATCH_LIVE_GITHUB_ISSUES === "true" && !options?.dryRun) {
         try {
           await sendOutreachIssue({
             owner: repo.owner.login,
@@ -486,6 +498,8 @@ export async function runMcpProspectingLoop(
         } catch (issueErr: any) {
           console.warn(`[outreach-loop] Live issue dispatch failed for ${repo.full_name}: ${issueErr.message}`);
         }
+      } else {
+        console.log(`[outreach-loop] [SAFETY MODE] Proposal generated locally to ${proposal.mdPath}. Live GitHub issue dispatch is disabled to prevent spam blocking.`);
       }
     } catch (err: any) {
       console.error(`[outreach-loop] Error processing repo ${repo.full_name}:`, err.message);
@@ -499,6 +513,7 @@ export async function runMcpProspectingLoop(
   console.log(
     `[outreach-loop] Cycle ${cycle} finished: Generated ${generatedFiles.length} proposals (${newProspects.length} new prospects recorded).\n`
   );
+  logToFile(`[outreach-loop] Cycle ${cycle} finished: Generated ${generatedFiles.length} proposals (${newProspects.length} new prospects recorded)`);
 
   return {
     cycle,

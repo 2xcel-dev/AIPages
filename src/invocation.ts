@@ -463,137 +463,139 @@ ingress.use("/:namespace/*", async (c) => {
       c.header("X-Payment-Policy", "FREE_TRIAL_ACTIVE");
       c.header("X-Free-Requests-Remaining", String(freeTier.remaining));
       c.header("X-Free-Requests-Limit", String(freeTier.total));
-    } else if (!paymentHeader && !authHeader) {
-      // No payment payload and free trial exhausted → return 402 with x402 payment requirements
-      await logInvocation(
-        tool,
-        agentId,
-        "payment_required",
-        0,
-        402,
-        feeUsd,
-        "not_collected",
-        `Missing payment header for $${feeUsd.toFixed(2)} platform fee`,
-      );
-      return c.json(
-        {
-          error: "Payment required",
-          description: `This is a premium tool. A flat $${feeUsd.toFixed(2)} USDC platform fee applies per call, collected only on successful delivery. Include a valid X-PAYMENT header with an x402 payment payload to proceed. (Free trial limit of 25 requests exhausted for this client).`,
-          payment: {
-            x402Version: 1,
-            accepts: [
-              {
-                scheme: "exact",
-                network: config.x402Network,
-                asset: "USDC",
-                amount: String(PLATFORM_FEE_USDC * 1_000_000),
-                payTo: config.x402WalletAddress,
-                maxTimeoutSeconds: 60,
-                extra: {},
-              },
-            ],
+    } else {
+      if (!paymentHeader && !authHeader) {
+        // No payment payload and free trial exhausted → return 402 with x402 payment requirements
+        await logInvocation(
+          tool,
+          agentId,
+          "payment_required",
+          0,
+          402,
+          feeUsd,
+          "not_collected",
+          `Missing payment header for $${feeUsd.toFixed(2)} platform fee`,
+        );
+        return c.json(
+          {
+            error: "Payment required",
+            description: `This is a premium tool. A flat $${feeUsd.toFixed(2)} USDC platform fee applies per call, collected only on successful delivery. Include a valid X-PAYMENT header with an x402 payment payload to proceed. (Free trial limit of 25 requests exhausted for this client).`,
+            payment: {
+              x402Version: 1,
+              accepts: [
+                {
+                  scheme: "exact",
+                  network: config.x402Network,
+                  asset: "USDC",
+                  amount: String(PLATFORM_FEE_USDC * 1_000_000),
+                  payTo: config.x402WalletAddress,
+                  maxTimeoutSeconds: 60,
+                  extra: {},
+                },
+              ],
+            },
           },
-        },
-        402,
-      );
-    }
+          402,
+        );
+      }
 
-    // Parse the payment payload from the header
-    let paymentPayload: PaymentPayload;
-    try {
-      const raw = paymentHeader ?? authHeader!;
-      paymentPayload = JSON.parse(raw) as PaymentPayload;
-    } catch {
-      await logInvocation(
-        tool,
-        agentId,
-        "payment_required",
-        0,
-        402,
-        feeUsd,
-        "not_collected",
-        "Invalid payment payload — not valid JSON",
-      );
-      return c.json(
-        { error: "Payment required", description: "X-PAYMENT header must contain a valid x402 payment payload" },
-        402,
-      );
-    }
+      // Parse the payment payload from the header
+      let paymentPayload: PaymentPayload;
+      try {
+        const raw = paymentHeader ?? authHeader!;
+        paymentPayload = JSON.parse(raw) as PaymentPayload;
+      } catch {
+        await logInvocation(
+          tool,
+          agentId,
+          "payment_required",
+          0,
+          402,
+          feeUsd,
+          "not_collected",
+          "Invalid payment payload — not valid JSON",
+        );
+        return c.json(
+          { error: "Payment required", description: "X-PAYMENT header must contain a valid x402 payment payload" },
+          402,
+        );
+      }
 
-    // Verify payment with the facilitator
-    x402Server = await ensureX402Server();
-    const requirements = await x402Server!.buildPaymentRequirements({
-      scheme: "exact",
-      payTo: config.x402WalletAddress,
-      price: `$${PLATFORM_FEE_USDC}`,
-      network: config.x402Network as Network,
-    });
-    const matching = x402Server!.findMatchingRequirements(requirements, paymentPayload);
-    if (!matching) {
-      await logInvocation(
-        tool,
-        agentId,
-        "payment_required",
-        0,
-        402,
-        feeUsd,
-        "not_collected",
-        "Payment payload does not match any accepted requirements",
-      );
-      return c.json(
-        {
-          error: "Payment required",
-          description: "Payment payload does not match accepted requirements for this tool",
-        },
-        402,
-      );
-    }
+      // Verify payment with the facilitator
+      x402Server = await ensureX402Server();
+      const requirements = await x402Server!.buildPaymentRequirements({
+        scheme: "exact",
+        payTo: config.x402WalletAddress,
+        price: `$${PLATFORM_FEE_USDC}`,
+        network: config.x402Network as Network,
+      });
+      const matching = x402Server!.findMatchingRequirements(requirements, paymentPayload);
+      if (!matching) {
+        await logInvocation(
+          tool,
+          agentId,
+          "payment_required",
+          0,
+          402,
+          feeUsd,
+          "not_collected",
+          "Payment payload does not match any accepted requirements",
+        );
+        return c.json(
+          {
+            error: "Payment required",
+            description: "Payment payload does not match accepted requirements for this tool",
+          },
+          402,
+        );
+      }
 
-    let verifyResult;
-    try {
-      verifyResult = await x402Server!.verifyPayment(paymentPayload, matching);
-    } catch (err: any) {
-      await logInvocation(
-        tool,
-        agentId,
-        "payment_required",
-        0,
-        402,
-        feeUsd,
-        "not_collected",
-        `Facilitator verify failed: ${err?.message ?? String(err)}`,
-      );
-      return c.json(
-        {
-          error: "Payment verification failed",
-          description: `The facilitator rejected the payment: ${err?.message ?? "unknown error"}`,
-        },
-        402,
-      );
-    }
+      let verifyResult;
+      try {
+        verifyResult = await x402Server!.verifyPayment(paymentPayload, matching);
+      } catch (err: any) {
+        await logInvocation(
+          tool,
+          agentId,
+          "payment_required",
+          0,
+          402,
+          feeUsd,
+          "not_collected",
+          `Facilitator verify failed: ${err?.message ?? String(err)}`,
+        );
+        return c.json(
+          {
+            error: "Payment verification failed",
+            description: `The facilitator rejected the payment: ${err?.message ?? "unknown error"}`,
+          },
+          402,
+        );
+      }
 
-    if (!verifyResult.isValid) {
-      await logInvocation(
-        tool,
-        agentId,
-        "payment_required",
-        0,
-        402,
-        feeUsd,
-        "not_collected",
-        `Payment invalid: ${verifyResult.invalidReason ?? "unspecified"}`,
-      );
-      return c.json(
-        {
-          error: "Payment required",
-          description: `Payment verification failed: ${verifyResult.invalidReason ?? "invalid payment"}`,
-        },
-        402,
-      );
-    }
+      if (!verifyResult.isValid) {
+        await logInvocation(
+          tool,
+          agentId,
+          "payment_required",
+          0,
+          402,
+          feeUsd,
+          "not_collected",
+          `Payment invalid: ${verifyResult.invalidReason ?? "unspecified"}`,
+        );
+        return c.json(
+          {
+            error: "Payment required",
+            description: `Payment verification failed: ${verifyResult.invalidReason ?? "invalid payment"}`,
+          },
+          402,
+        );
+      }
 
-    // Payment verified — store context for settlement in executeAndLog
-    paymentCtx = { payload: paymentPayload, requirements: matching };
+      // Payment verified — store context for settlement in executeAndLog
+      paymentCtx = { payload: paymentPayload, requirements: matching };
+    }
   }
 
   // ── 6–8. Egress guard + proxy + collect ──────────────────────────────────

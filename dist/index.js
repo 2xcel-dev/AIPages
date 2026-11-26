@@ -29,7 +29,7 @@ import { openapi } from "./openapi.js";
 import { setStore, default as ingestionRouter } from "./invocation.js";
 import { setRateLimitStore, MongoRateStore, startRateLimitCleanup, tokenBucket } from "./rate-limit.js";
 import { metrics } from "./metrics.js";
-import { trackSubmission, trackSearch, shutdownAnalytics } from "./analytics.js";
+import { trackSubmission, trackSearch, shutdownAnalytics, getUnmetSearches } from "./analytics.js";
 import { deriveReliability } from "./types.js";
 import { x402PaymentMiddleware, MongoReplayStore, setReplayStore } from "./middleware/x402.js";
 import { default as agentScraperRouter } from "./routes/agentScraper.js";
@@ -39,6 +39,7 @@ import { generateSitemapXml } from "./views/sitemap.js";
 import { generateLlmsTxt, generateLlmsFullTxt, generateToolMarkdown } from "./views/llmsTxt.js";
 import { getCapabilityIndex, renderCapabilitiesPage, generateCapabilitiesMarkdown } from "./views/capabilitiesPage.js";
 import { renderPlaygroundPage } from "./views/playgroundPage.js";
+import { renderBountiesPage } from "./views/bountiesPage.js";
 import { renderPrivacyPolicyPage, renderRefundPolicyPage, renderTermsPage, renderSubmitToolPage } from "./views/legalPages.js";
 import { generateMcpManifest, generateAiPluginManifest } from "./views/agentDiscovery.js";
 import { generateBadgeSvg } from "./views/badge.js";
@@ -123,6 +124,7 @@ export const DISCOVERY_MANIFEST = {
         submit: "POST /api/tools/submit (free)",
         toolDetail: "GET /api/tools/:namespace",
         toolPage: "GET /tool/:slug",
+        bounties: "GET /bounties (live agent unmet-demand bounty board)",
         capabilities: "GET /capabilities (functional capability index)",
         sitemap: "GET /sitemap.xml (XML sitemap)",
         llms: "GET /llms.txt (Standard Markdown manifest for LLM crawlers)",
@@ -265,6 +267,14 @@ app.get("/metrics", async (c) => {
     const body = metrics.formatPrometheus(total);
     c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
     return c.text(body);
+});
+// ── Public route: Unmet agent search demand telemetry ─────────
+app.get("/api/telemetry/unmet-searches", (c) => {
+    const unmet = getUnmetSearches();
+    return c.json({
+        total: unmet.length,
+        unmet,
+    });
 });
 app.get("/api/openapi.json", (c) => c.json(openapi));
 app.get("/openapi.json", (c) => c.json(openapi));
@@ -1072,6 +1082,10 @@ app.get("/playground", async (c) => {
     const publicTools = allTools.filter((t) => t.status !== "rejected" && t.status !== "pending");
     const selectedTool = c.req.query("tool");
     return c.html(renderPlaygroundPage(publicTools, selectedTool));
+});
+// ── Public route: Live Agent Unmet-Demand Bounty Board ──
+app.get("/bounties", (c) => {
+    return c.html(renderBountiesPage());
 });
 // ── Public routes: Authorized Governance, Policies, Submit Portal & Google Flow Assets ──
 app.get("/privacy", (c) => {

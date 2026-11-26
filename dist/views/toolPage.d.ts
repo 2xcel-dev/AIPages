@@ -15,11 +15,15 @@ export interface RequestExample {
     cursorConfig: string;
     claudeConfig: string;
     clineConfig: string;
+    claudeCodeCmd: string;
+    toolServerName: string;
     authDescription: string;
     isX402: boolean;
     costDisplay: string;
     recipientAddress?: string;
 }
+export declare const PRIMARY_TOP_4_NAMESPACES: string[];
+export declare function isPrimaryTool(tool: Tool): boolean;
 export declare function generateRequestExample(tool: Tool): RequestExample;
 /**
  * Generate Schema.org JSON-LD structured data for a tool detail page.
@@ -29,6 +33,8 @@ export declare function generateRequestExample(tool: Tool): RequestExample;
  * and never exposes private keys or credentials.
  */
 export declare function generateToolJsonLd(tool: Tool): Record<string, unknown>;
+export declare function renderQuickInstallWidget(tool: Tool, example: RequestExample, isTop4: boolean): string;
+export declare function renderStickyMcpDock(tool: Tool, example: RequestExample): string;
 export declare function renderToolPage(tool: Tool, relatedTools?: Tool[]): string;
 export declare function renderNotFoundPage(slug: string): string;
 //# sourceMappingURL=toolPage.d.ts.map

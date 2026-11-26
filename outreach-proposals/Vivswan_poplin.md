@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/Vivswan/poplin
 **Referral Code:** `ref_mcp_vivswan_poplin`
-**Generated At:** 2026-11-16T09:09:13.350Z
+**Generated At:** 2026-11-24T10:44:58.332Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_vivswan_poplin",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_vivswan_poplin&source=mcp_prospecting",
-    "generatedAt": "2026-11-16T09:09:13.350Z"
+    "generatedAt": "2026-11-24T10:44:58.332Z"
   }
 }
 ```

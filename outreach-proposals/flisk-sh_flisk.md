@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/flisk-sh/flisk
 **Referral Code:** `ref_mcp_flisk-sh_flisk`
-**Generated At:** 2026-11-16T21:42:15.716Z
+**Generated At:** 2026-11-24T20:29:02.996Z
 
 ---
 
@@ -96,7 +96,7 @@ Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent 
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_flisk-sh_flisk",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_flisk-sh_flisk&source=mcp_prospecting",
-    "generatedAt": "2026-11-16T21:42:15.715Z"
+    "generatedAt": "2026-11-24T20:29:02.996Z"
   }
 }
 ```

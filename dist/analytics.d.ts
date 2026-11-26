@@ -1,3 +1,11 @@
+export interface UnmetSearchRecord {
+    query: string;
+    count: number;
+    lastSearchedAt: string;
+    agentIds: string[];
+}
+export declare function recordUnmetSearch(query: string, agentId?: string): void;
+export declare function getUnmetSearches(): UnmetSearchRecord[];
 /** Track an event with optional properties and distinct ID. */
 export declare function trackEvent(distinctId: string, event: string, properties?: Record<string, unknown>): void;
 /** Track a tool invocation (free or paid). */

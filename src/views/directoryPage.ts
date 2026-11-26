@@ -567,20 +567,41 @@ export function renderDirectoryPage(
       border: 0;
     }
 
-    /* 21st.dev #8948 Spacious Centered SaaS Hero */
-    /* 21st.dev #8948 SaaS Hero Redesigned with Cyber-Terminal HUD */
+    /* Polisa Master Hero & Amalgamated Cyber-Terminal HUD */
     .hero-section {
       position: relative;
-      padding: 64px 0 72px;
+      padding: 68px 0 60px;
       overflow: hidden;
       border-bottom: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at 82% 20%, rgba(217, 119, 6, 0.12) 0%, transparent 45%);
     }
 
     .hero-grid-split {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 36px;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 40px;
       align-items: center;
+    }
+
+    .hero-protocol-breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #B48238;
+      margin-bottom: 22px;
+    }
+
+    .hero-protocol-breadcrumb .status-ping {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #D97706;
+      box-shadow: 0 0 10px #D97706;
     }
 
     .hero-protocol-badge {
@@ -612,27 +633,254 @@ export function renderDirectoryPage(
     }
 
     .hero-headline {
-      font-size: clamp(2.3rem, 4.2vw, 3.8rem);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: clamp(2.8rem, 5.2vw, 4.4rem);
       font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.035em;
-      color: #F8FAFC;
-      margin-bottom: 18px;
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+      color: #FFFFFF;
+      margin-bottom: 22px;
       text-align: left;
     }
 
-    .hero-headline span {
-      background: linear-gradient(95deg, #F59E0B 0%, #FFD000 55%, #FDE68A 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .hero-headline span.hero-amber-text {
+      color: #F59E0B;
+      background: none;
+      -webkit-text-fill-color: initial;
     }
 
     .hero-subtitle {
-      font-size: 1.25rem;
-      color: var(--text-muted);
-      margin-bottom: 26px;
-      line-height: 1.65;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 1.15rem;
+      color: #9CA3AF;
+      max-width: 540px;
+      margin-bottom: 28px;
+      line-height: 1.6;
       text-align: left;
+    }
+
+    .hero-primary-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .btn-amber {
+      background: #D97706;
+      color: #080705 !important;
+      border: 1px solid #F59E0B;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.25);
+      cursor: pointer;
+    }
+
+    .btn-amber:hover {
+      background: #F59E0B;
+      color: #080705 !important;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-dark-outline {
+      background: #14120C;
+      color: #E5E7EB !important;
+      border: 1px solid #3D3425;
+      border-radius: 8px;
+      padding: 12px 22px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      text-decoration: none;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .btn-dark-outline:hover {
+      border-color: #F59E0B;
+      color: #FFFFFF !important;
+      background: #1E1B13;
+    }
+
+    /* Polisa Telemetry Record HUD Card */
+    .telemetry-hud-card {
+      background: #0E0D0A;
+      border: 1px solid #262117;
+      border-radius: 14px;
+      padding: 24px 26px;
+      position: relative;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(217, 119, 6, 0.06);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .telemetry-hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #262117;
+      margin-bottom: 16px;
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+    }
+
+    .hud-label {
+      color: #A8906B;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-dot {
+      color: #D97706;
+      font-size: 0.9rem;
+    }
+
+    .hud-status {
+      color: #D97706;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .hud-identifier-row {
+      margin-bottom: 16px;
+    }
+
+    .hud-sublabel {
+      display: block;
+      font-size: 0.7rem;
+      color: #685536;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .hud-id-val {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #14120C;
+      border: 1px solid #262117;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .hud-id-val code {
+      color: #F8FAFC;
+      font-size: 0.95rem;
+    }
+
+    .hud-badge-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #F59E0B;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .hud-records-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+
+    .hud-record-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      background: #14120C;
+      border: 1px solid #262117;
+      border-radius: 6px;
+      font-size: 0.84rem;
+    }
+
+    .hud-num {
+      color: #685536;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .hud-title {
+      color: #E5E7EB;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 12px;
+    }
+
+    .hud-state-pill {
+      color: #10B981;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .hud-state-pill.unprovided {
+      color: #685536;
+    }
+
+    .hud-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.4fr;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid #262117;
+      margin-bottom: 12px;
+    }
+
+    .hud-meta-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .hud-meta-label {
+      font-size: 0.68rem;
+      color: #685536;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hud-meta-value {
+      font-size: 0.78rem;
+      color: #A8906B;
+      line-height: 1.3;
+    }
+
+    .hud-footer-note {
+      font-size: 0.7rem;
+      color: #685536;
+      margin-bottom: 14px;
+    }
+
+    .hud-floating-pill {
+      position: absolute;
+      bottom: -13px;
+      left: 24px;
+      background: #14120C;
+      border: 1px solid #3D3425;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      color: #A8906B;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
     }
 
     .hero-search-form {
@@ -2340,55 +2588,124 @@ export function renderDirectoryPage(
   ${renderSharedNavbar("directory", true)}
 
   <main>
-    <!-- 21st.dev #8948 Dual-Column Cyber-Terminal Hero + #29870 Stats Block -->
-    <section class="hero-section">
+    <!-- Polisa Master Hero Section + Amalgamated Cyber-Terminal HUD -->
+    <section class="hero-section" id="trust-model">
       <div class="container hero-inner">
         <div class="hero-grid-split">
-          <!-- Left Column: Core Value, Command Bar & CTA -->
-          <!-- Left Column: Core Value, Command Bar & CTA -->
+          <!-- Left Column: Polisa Brand Punchline, Breadcrumb & Primary Actions -->
           <div>
+            <div class="hero-protocol-breadcrumb">
+              <span class="status-ping"></span>
+              AGENT INFRASTRUCTURE / DIRECTORY 001
+            </div>
+
             <h1 class="hero-headline">
-              The API Marketplace <span>Built for AI Agents</span>
+              Find the<br>
+              <span class="hero-amber-text">right tool.</span><br>
+              Know it<br>
+              <span class="hero-amber-text">works.</span>
+              <span class="sr-only">The API Marketplace <span>Built for AI Agents</span></span>
             </h1>
+
             <p class="hero-subtitle">
-              AI agents and developers use AIPages to find verified APIs, inspect JSON schemas, and run tools with instant USDT micro-payments on Base Mainnet.
+              AIPages is a cross protocol directory for AI-agent tools - a clear signal layer for APIs, MCP servers, and microservices in motion with instant USDT micro-payments on Base Mainnet.
             </p>
 
-            <form method="GET" action="${baseUrl}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
-              ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" toolparamdescription="Functional capability tag filter" />` : ""}
-              ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" toolparamdescription="Endpoint reliability filter (all, high, degraded, failing, unchecked)" />` : ""}
-              <div class="search-input-wrapper" style="position: relative; flex: 1; display: flex; align-items: center;">
-                <!-- Solar Icons: minimalistic-magnifier (linear) -->
-                <svg class="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11.5" cy="11.5" r="9.5" stroke-linecap="round"/>
-                  <path d="M20 20L22 22" stroke-linecap="round"/>
-                </svg>
-                <label for="directory-search-input" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Search tools by name, description, namespace, or capability</label>
-                <input
-                  type="text"
-                  id="directory-search-input"
-                  name="q"
-                  class="search-input"
-                  aria-label="Search tools by name, description, namespace, or capability"
-                  toolparamdescription="Natural language search query, tool name, namespace, or capability keyword"
-                  placeholder="Search 50 agent tools by name, capability, or JSON schema..."
-                  value="${searchQuery}"
-                />
-              </div>
-              <button type="submit" class="btn">Search Tools</button>
-            </form>
-
-            <div class="hero-cta-row">
-              <button type="button" class="btn" onclick="openMcpModal()">
-                Connect to Claude Desktop or Cursor
-              </button>
-              <a href="#directory-section" class="btn btn-secondary">Browse All ${totalCount} Tools</a>
-              <a href="/capabilities" class="btn btn-secondary">Capabilities Index</a>
+            <div class="hero-primary-actions">
+              <a href="#directory-section" class="btn btn-amber">Explore the directory</a>
+              <a href="/submit" class="btn btn-dark-outline">List a tool <span style="font-size: 0.9em; margin-left: 2px;">↗</span></a>
             </div>
           </div>
 
-          <!-- Right Column: Institutional Feature Highlights -->
-          <div class="stats-block-grid">
+          <!-- Right Column: Polisa Live Telemetry Record HUD -->
+          <div class="telemetry-hud-card" aria-label="AIPages AUS Directory Record Telemetry">
+            <div class="telemetry-hud-header">
+              <span class="hud-label"><span class="hud-dot">⨀</span> AIPAGES / AUS DIRECTORY RECORDS</span>
+              <span class="hud-status">OWNER SUPPLIED</span>
+            </div>
+
+            <div class="hud-identifier-row">
+              <span class="hud-sublabel">TECHNICAL IDENTIFIER</span>
+              <div class="hud-id-val">
+                <code>aus.logistics.route</code>
+                <span class="hud-badge-tag">AUS</span>
+              </div>
+            </div>
+
+            <div class="hud-records-list">
+              <div class="hud-record-item">
+                <span class="hud-num">01</span>
+                <span class="hud-title">Route Optimizer &amp; Fleet Telemetry Agent</span>
+                <span class="hud-state-pill">⚡ Verified &amp; Active*</span>
+              </div>
+              <div class="hud-record-item">
+                <span class="hud-num">02</span>
+                <span class="hud-title">Cryptographic Document Notary Agent</span>
+                <span class="hud-state-pill">⚡ Verified &amp; Active*</span>
+              </div>
+              <div class="hud-record-item">
+                <span class="hud-num">03</span>
+                <span class="hud-title">aus.utility.meter</span>
+                <span class="hud-state-pill unprovided">⚡ status unprovided</span>
+              </div>
+            </div>
+
+            <div class="hud-meta-grid">
+              <div class="hud-meta-col">
+                <span class="hud-meta-label">AUTH</span>
+                <span class="hud-meta-value">Alternatives by endpoint tier</span>
+              </div>
+              <div class="hud-meta-col">
+                <span class="hud-meta-label">LATENCY</span>
+                <span class="hud-meta-value">Unprovided</span>
+              </div>
+              <div class="hud-meta-col">
+                <span class="hud-meta-label">PRICING</span>
+                <span class="hud-meta-value">0.015 USD per successful optimization request</span>
+              </div>
+            </div>
+
+            <div class="hud-footer-note">*Owner supplied, not independently verified.</div>
+            <div class="hud-floating-pill">TRUST IS A QUERYABLE PROPERTY.</div>
+          </div>
+        </div>
+
+        <!-- Amalgamated Search Bar, Connect Buttons & 3 Value Pillars -->
+        <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border-subtle);">
+          <form method="GET" action="${baseUrl}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
+            ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" toolparamdescription="Functional capability tag filter" />` : ""}
+            ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" toolparamdescription="Endpoint reliability filter (all, high, degraded, failing, unchecked)" />` : ""}
+            <div class="search-input-wrapper" style="position: relative; flex: 1; display: flex; align-items: center;">
+              <!-- Solar Icons: minimalistic-magnifier (linear) -->
+              <svg class="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11.5" cy="11.5" r="9.5" stroke-linecap="round"/>
+                <path d="M20 20L22 22" stroke-linecap="round"/>
+              </svg>
+              <label for="directory-search-input" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Search tools by name, description, namespace, or capability</label>
+              <input
+                type="text"
+                id="directory-search-input"
+                name="q"
+                class="search-input"
+                aria-label="Search tools by name, description, namespace, or capability"
+                toolparamdescription="Natural language search query, tool name, namespace, or capability keyword"
+                placeholder="Search 50 agent tools by name, capability, or JSON schema..."
+                value="${searchQuery}"
+              />
+            </div>
+            <button type="submit" class="btn">Search Tools</button>
+          </form>
+
+          <div class="hero-cta-row">
+            <button type="button" class="btn" onclick="openMcpModal()">
+              Connect to Claude Desktop or Cursor
+            </button>
+            <a href="#directory-section" class="btn btn-secondary">Browse All ${totalCount} Tools</a>
+            <a href="/capabilities" class="btn btn-secondary">Capabilities Index</a>
+          </div>
+
+          <!-- 3-Pillar Institutional Trust Block -->
+          <div class="stats-block-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 14px;">
             <div class="stats-block-card">
               <div class="stats-block-icon" aria-hidden="true">
                 <!-- Solar Icons: minimalistic-magnifier (linear) -->

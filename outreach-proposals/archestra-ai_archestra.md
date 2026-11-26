@@ -3,7 +3,7 @@
 **Labels:** mcp-integration, agent-discovery
 **Target Repository:** https://github.com/archestra-ai/archestra
 **Referral Code:** `ref_mcp_archestra-ai_archestra`
-**Generated At:** 2026-11-11T01:36:30.777Z
+**Generated At:** 2026-11-24T16:44:56.500Z
 
 ---
 
@@ -54,11 +54,23 @@ Building and operating standalone MCP servers often requires managing complex in
 
 ---
 
-### 3. Ready-to-Merge JSON Configuration (Claude Desktop, Cursor, Cline)
+### 3. Ready-to-Merge JSON Configurations
 
-Below is the ready-to-merge JSON configuration including embedded referral tracking (`ref_mcp_archestra-ai_archestra`).
+#### Option A: Unified MCP Gateway (Recommended — One Install for All Tools)
+Equip your agent with the AIPages Unified MCP Proxy. Once installed, your agent gets native meta-tools (`aipages_search` and `aipages_execute`) to dynamically discover and call any tool across AIPages without restarting:
 
-#### For Claude Desktop (`claude_desktop_config.json`) & Cursor (`.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "aipages": {
+      "command": "npx",
+      "args": ["-y", "@aipages/mcp-gateway", "--api-key=optional"]
+    }
+  }
+}
+```
+
+#### Option B: Dedicated Upstream Server for Claude Desktop (`claude_desktop_config.json`) & Cursor (`.cursor/mcp.json`):
 
 ```json
 {
@@ -84,12 +96,12 @@ Below is the ready-to-merge JSON configuration including embedded referral track
     "promotedBy": "aus-agent-alpha",
     "referralCode": "ref_mcp_archestra-ai_archestra",
     "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_archestra-ai_archestra&source=mcp_prospecting",
-    "generatedAt": "2026-11-11T01:36:30.777Z"
+    "generatedAt": "2026-11-24T16:44:56.500Z"
   }
 }
 ```
 
-#### For Cline (`cline_mcp_settings.json`):
+#### Option C: For Cline (`cline_mcp_settings.json`):
 
 ```json
 {
@@ -120,7 +132,17 @@ Below is the ready-to-merge JSON configuration including embedded referral track
 
 ---
 
-### 4. Live Interactive In-Browser Test Playground (Zero-Friction Testing)
+### 4. Viral GitHub Verification Shield for Your README
+
+Showcase that your repository is indexed and verified on the AIPages machine-native registry by embedding this interactive shield in your `README.md`:
+
+```markdown
+[![AIPages Verified](https://aipages.tech/badge/archestra-ai_archestra.svg)](https://aipages.tech/tools/archestra-ai_archestra?ref=ref_mcp_archestra-ai_archestra)
+```
+
+---
+
+### 5. Live Interactive In-Browser Test Playground (Zero-Friction Testing)
 
 Before adding to production, test live payloads directly in your browser. Every canonical microservice features an **in-browser interactive test console** with preset payloads:
 
@@ -133,7 +155,7 @@ Before adding to production, test live payloads directly in your browser. Every 
 
 ---
 
-### 5. Settlement & Ecosystem Standards
+### 6. Settlement & Ecosystem Standards
 
 - **Settlement Network**: Base Mainnet L2 (Chain ID: 8453)
 - **Settlement Currency**: USD Coin (USDC)

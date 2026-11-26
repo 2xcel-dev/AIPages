@@ -213,6 +213,45 @@ describe("/tools/:slug — Responsive Tool Detail & Reliability Page", () => {
       assert.ok(html.includes('id="playground-response"'), "Should render response console");
       assert.ok(html.includes("executePlaygroundTool"), "Should include playground execution function call");
     });
+
+    it("renders sticky Copy MCP Config integration widget above the fold with Claude Code and Cursor tabs", () => {
+      const html = renderToolPage(sampleHealthyTool);
+
+      // Above-the-fold Quick Install Widget presence
+      assert.ok(html.includes('id="mcp-quick-install"'), "Should render mcp-quick-install widget above the fold");
+      assert.ok(html.includes("1-Click MCP Connect"), "Should display 1-Click MCP Connect heading");
+      assert.ok(html.includes('id="pill-tab-claudecode"'), "Should have Claude Code tab pill");
+      assert.ok(html.includes('id="pill-tab-cursor"'), "Should have Cursor tab pill");
+      assert.ok(html.includes('id="btn-quick-mcp-copy"'), "Should have quick copy button");
+
+      // Verify Claude Code 1-click install command
+      assert.ok(html.includes("claude mcp add aus-healthy-tool -- npx -y @aipages/mcp-gateway net.2xcel.test.healthy-tool"), "Should include exact claude mcp add command");
+
+      // Verify Persistent Sticky MCP Dock
+      assert.ok(html.includes('id="mcp-sticky-dock"'), "Should include sticky MCP floating dock for scroll conversion");
+      assert.ok(html.includes('id="dock-btn-claudecode"'), "Should have Claude Code copy button in sticky dock");
+      assert.ok(html.includes('id="dock-btn-cursor"'), "Should have Cursor copy button in sticky dock");
+    });
+
+    it("applies primary spotlight styling to top 4 canonical AUS tools", () => {
+      const schemaSanitizerTool: Tool = {
+        namespace: "net.2xcel.aus.schema-sanitizer",
+        name: "schema_sanitizer",
+        description: "Schema Sanitizer",
+        connectionType: "http",
+        endpointUrl: "https://aipages.tech/tool/schema-sanitizer",
+        healthStatus: "active",
+        lastChecked: new Date(),
+        status: "active",
+        pricing: { model: "paid", costPerCall: 0.1 },
+        updatedAt: new Date(),
+      };
+
+      const html = renderToolPage(schemaSanitizerTool);
+      assert.ok(html.includes("primary-mcp-spotlight"), "Top 4 tool should receive primary-mcp-spotlight class");
+      assert.ok(html.includes("Core AUS &bull; 1-Click MCP Connect"), "Top 4 tool should have Core AUS badge text");
+      assert.ok(html.includes("claude mcp add aus-schema-sanitizer -- npx -y @aipages/mcp-gateway net.2xcel.aus.schema-sanitizer"), "Should format exact schema sanitizer command");
+    });
   });
 
   describe("HTTP Route Integration (/tools/:slug)", () => {

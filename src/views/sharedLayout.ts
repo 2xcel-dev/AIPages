@@ -62,39 +62,54 @@ export function getFlowArtworkForTool(nameOrNamespace: string): string | null {
  * Shared CSS variables, typography, 21st.dev Navbar (#8948), and 21st.dev Minimal Footer (#7264) styles.
  */
 export const SHARED_DESIGN_SYSTEM_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
   :root {
-    /* Canvas & Structural Surfaces (Terminal High-Contrast) */
-    --bg-canvas: #040507;
-    --surface-base: #0B0E14;
-    --surface-raised: #111520;
-    --surface-overlay: #181D2B;
-    --surface-terminal: #020305;
+    /* Polisa Master Design System Tokens: Warm Obsidian & Amber Spectrum */
+    --brand-black: #080705;
+    --brand-charcoal: #0E0D0A;
+    --brand-card: #14120C;
+    --brand-surface: #1C1912;
+    --brand-border: #262117;
+    --brand-border-light: #3D3425;
+    --brand-amber-500: #F59E0B;
+    --brand-amber-600: #D97706;
+    --brand-amber-400: #FBBF24;
+    --brand-amber-300: #FCD34D;
+    --brand-amber-200: #FDE68A;
+    --brand-muted: #A8906B;
+    --brand-subtle: #685536;
 
-    /* High-Contrast Razor Borders */
-    --border-subtle: #1E2433;
-    --border-strong: #2D374D;
-    --border-focus: #00F0FF;
+    /* Canvas & Structural Surfaces */
+    --bg-canvas: #080705;
+    --surface-base: #0E0D0A;
+    --surface-raised: #14120C;
+    --surface-overlay: #1C1912;
+    --surface-terminal: #0A0907;
+
+    /* Razor Borders */
+    --border-subtle: #262117;
+    --border-strong: #3D3425;
+    --border-focus: #F59E0B;
 
     /* Semantic Compatibility & Theme Mappings */
-    --bg: #040507;
-    --bg-elevated: #0B0E14;
-    --card-bg: #0B0E14;
-    --card-surface: #111520;
-    --border: #1E2433;
-    --border-light: rgba(245, 158, 11, 0.4);
+    --bg: #080705;
+    --bg-elevated: #0E0D0A;
+    --card-bg: #14120C;
+    --card-surface: #14120C;
+    --border: #262117;
+    --border-light: #3D3425;
 
-    /* Text Crispness (WCAG AAA 16:1 on canvas) */
+    /* Text Crispness */
     --text: #F8FAFC;
-    --text-muted: #CBD5E1;
-    --text-dim: #94A3B8;
+    --text-muted: #A8906B;
+    --text-dim: #685536;
 
     /* Brand & Status Accents */
     --primary: #F59E0B;
-    --primary-bright: #FFD000;
+    --primary-bright: #FCD34D;
     --primary-hover: #D97706;
-    --accent-cyan: #00F0FF;
+    --accent-cyan: #F59E0B;
     --healthy: #10B981;
     --healthy-bg: rgba(16, 185, 129, 0.12);
     --healthy-border: rgba(16, 185, 129, 0.35);
@@ -104,16 +119,16 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     --failing: #EF4444;
     --failing-bg: rgba(239, 68, 68, 0.14);
     --failing-border: rgba(239, 68, 68, 0.38);
-    --unchecked: #94A3B8;
-    --unchecked-bg: rgba(148, 163, 184, 0.1);
-    --unchecked-border: rgba(148, 163, 184, 0.25);
-    --code-bg: #020305;
+    --unchecked: #A8906B;
+    --unchecked-bg: rgba(168, 144, 107, 0.1);
+    --unchecked-border: rgba(168, 144, 107, 0.25);
+    --code-bg: #0A0907;
 
-    /* Sharpened Institutional Radii (6px - 8px) */
+    /* Sharpened Institutional Radii */
     --radius-xs: 4px;
     --radius-sm: 6px;
     --radius-md: 8px;
-    --radius-lg: 10px;
+    --radius-lg: 12px;
     --radius: 8px;
   }
 
@@ -128,8 +143,12 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg);
+    background-image: radial-gradient(circle at 82% 14%, rgba(217, 119, 6, 0.12) 0%, transparent 48%),
+                      linear-gradient(to right, rgba(217, 119, 6, 0.035) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(217, 119, 6, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
     color: var(--text);
     line-height: 1.65;
     min-height: 100vh;
@@ -160,8 +179,9 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
   }
 
   h1, h2, h3, h4, .font-display {
-    font-family: 'Space Grotesk', sans-serif;
-    letter-spacing: -0.025em;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 
   code, pre, .font-mono {
@@ -513,7 +533,7 @@ export function renderBrandLogoSvg(): string {
  * Render the 21st.dev #8948 Fixed SaaS Navigation Bar with Solar Icons.
  * Preserves exact `<a href="/capabilities">Capabilities</a>` for test suite compatibility.
  */
-export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "submit" | "legal" | "tool" | "playground" = "directory", showMcpButton: boolean = true): string {
+export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "submit" | "legal" | "tool" | "playground" | "bounties" = "directory", showMcpButton: boolean = true): string {
   return `
   <nav class="nav" aria-label="Primary Navigation">
     <div class="container nav-inner">
@@ -524,11 +544,12 @@ export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "
         <span class="brand-wordmark">AI<span>Pages</span></span>
       </a>
       <div class="nav-links">
-        <a href="/tool"${activeRoute === "directory" ? ' class="active"' : ""}>Tool Directory</a>
+        <a href="/tool"${activeRoute === "directory" ? ' class="active"' : ""}>Directory</a>
         <a href="/playground"${activeRoute === "playground" ? ' class="active"' : ""}>Playground</a>
+        <a href="/bounties"${activeRoute === "bounties" ? ' class="active"' : ""}>Bounties</a>
         <a href="/capabilities"${activeRoute === "capabilities" ? ' class="active"' : ""}>Capabilities</a>
-        <a href="/#flow-showcase">Core Utilities</a>
-        <a href="/#agent-human-section">Human &amp; Agent Access</a>
+        <a href="/#trust-model">Trust Model</a>
+        <a href="/submit"${activeRoute === "submit" ? ' class="active"' : ""}>For Builders</a>
         <a href="/privacy"${activeRoute === "legal" ? ' class="active"' : ""}>Privacy &amp; Refunds</a>
       </div>
       <div class="nav-actions">
@@ -538,7 +559,7 @@ export function renderSharedNavbar(activeRoute: "directory" | "capabilities" | "
             <circle cx="12" cy="12" r="10" stroke-linecap="round"/>
             <path d="M15 12L12 12M12 12L9 12M12 12L12 9M12 12L12 15" stroke-linecap="round"/>
           </svg>
-          <span>Submit Tool</span>
+          <span>List a tool ↗</span>
         </a>
         ${
           showMcpButton
@@ -594,6 +615,7 @@ export function renderSharedFooter(): string {
           <span class="minimal-footer-col-title">Directory</span>
           <div class="minimal-footer-links">
             <a href="/tool">All 50 Agent Tools</a>
+            <a href="/bounties">Agent Bounties</a>
             <a href="/capabilities">Capabilities Index</a>
             <a href="/#flow-showcase">8 Core AUS Utilities</a>
             <a href="/submit">Submit a Tool (Free)</a>

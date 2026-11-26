@@ -9,6 +9,8 @@ import {
   parseAbiItem,
   decodeEventLog,
   parseUnits,
+  recoverTypedDataAddress,
+  type TypedDataDomain,
 } from "viem";
 import { base } from "viem/chains";
 import { config } from "../config.js";
@@ -18,6 +20,42 @@ export const EXPECTED_RECIPIENT = "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C" a
 export const MIN_AMOUNT_USDC = "0.01";
 export const USDC_DECIMALS = 6;
 export const MIN_AMOUNT_UNITS = parseUnits(MIN_AMOUNT_USDC, USDC_DECIMALS);
+
+// ── EIP-712 Payment Voucher Domain & Types for Micro-Escrow Channels ──
+export const X402_PAYMENT_DOMAIN: TypedDataDomain = {
+  name: "AIPagesX402PaymentChannel",
+  version: "1",
+  chainId: BigInt(8453),
+};
+
+export const X402_VOUCHER_TYPES = {
+  PaymentVoucher: [
+    { name: "channelId", type: "bytes32" },
+    { name: "cumulativeAmountUnits", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "recipient", type: "address" },
+    { name: "expiry", type: "uint256" },
+  ],
+} as const;
+
+export interface PaymentVoucher {
+  channelId: string;
+  cumulativeAmountUnits: string;
+  nonce: number | string;
+  recipient: string;
+  expiry: number | string;
+  signature: string;
+}
+
+export function parseNonceToBigInt(nonce: string | number): bigint {
+  if (typeof nonce === "number") return BigInt(nonce);
+  const s = String(nonce).trim();
+  if (/^[0-9]+$/.test(s)) return BigInt(s);
+  if (/^0x[0-9a-fA-F]+$/i.test(s)) return BigInt(s);
+  const cleanHex = s.replace(/[^0-9a-fA-F]/g, "");
+  if (cleanHex.length > 0) return BigInt("0x" + cleanHex);
+  throw new Error("Invalid nonce format for uint256");
+}
 
 const transferEventAbi = parseAbiItem(
   "event Transfer(address indexed from, address indexed to, uint256 value)",
@@ -178,8 +216,20 @@ function returnPaymentChallenge(
   const configuredRecipient =
     config.x402WalletAddress || process.env.EVM_WALLET_ADDRESS || EXPECTED_RECIPIENT;
 
+  const challengeParam = [
+    `realm="AIPages x402 Settlement"`,
+    `network="eip155:8453"`,
+    `token="${USDC_CONTRACT_BASE}"`,
+    `recipient="${configuredRecipient}"`,
+    `amount="${MIN_AMOUNT_UNITS.toString()}"`,
+    `decimals="${USDC_DECIMALS}"`,
+    `price="${MIN_AMOUNT_USDC} USDC"`,
+  ].join(", ");
+
+  c.header("WWW-Authenticate", `X402 ${challengeParam}`);
   c.header("X-Payment-Required", "true");
   c.header("X-Payment-Price", `${MIN_AMOUNT_USDC} USDC`);
+  c.header("X-Payment-Amount-Units", MIN_AMOUNT_UNITS.toString());
   c.header("X-Payment-Address", configuredRecipient);
   c.header("X-Payment-Network", "base");
   c.header("X-Payment-Token", USDC_CONTRACT_BASE);
@@ -190,6 +240,7 @@ function returnPaymentChallenge(
       message,
       ...(details !== undefined ? { details } : {}),
       price: `${MIN_AMOUNT_USDC} USDC`,
+      amountMinorUnits: MIN_AMOUNT_UNITS.toString(),
       token: USDC_CONTRACT_BASE,
       address: configuredRecipient,
       network: "base",
@@ -204,15 +255,137 @@ async function handleX402(c: Context, next: Next) {
   }
 
   const paymentHeader = c.req.header("x-payment") || c.req.header("X-Payment");
+  const voucherHeader = c.req.header("x-payment-voucher") || c.req.header("X-Payment-Voucher");
 
-  if (!paymentHeader) {
+  if (!paymentHeader && !voucherHeader) {
     return returnPaymentChallenge(
       c,
-      "Please provide valid USDC payment proof on Base via X-Payment header.",
+      "Please provide valid USDC payment proof on Base via X-Payment header or X-Payment-Voucher.",
     );
   }
 
-  const txHash = paymentHeader.trim();
+  // ── Route A: EIP-712 Micro-Escrow Voucher Verification ──
+  if (voucherHeader) {
+    let voucher: PaymentVoucher;
+    try {
+      const raw = voucherHeader.trim();
+      voucher = raw.startsWith("{")
+        ? JSON.parse(raw)
+        : JSON.parse(Buffer.from(raw, "base64").toString("utf-8"));
+    } catch {
+      return returnPaymentChallenge(
+        c,
+        "Invalid voucher format. Expected JSON or base64-encoded JSON PaymentVoucher.",
+      );
+    }
+
+    if (
+      !voucher.channelId ||
+      !voucher.cumulativeAmountUnits ||
+      voucher.nonce === undefined ||
+      !voucher.recipient ||
+      !voucher.expiry ||
+      !voucher.signature
+    ) {
+      return returnPaymentChallenge(
+        c,
+        "Malformed PaymentVoucher. Required fields: channelId, cumulativeAmountUnits, nonce, recipient, expiry, signature.",
+      );
+    }
+
+    const configuredRecipient =
+      config.x402WalletAddress || process.env.EVM_WALLET_ADDRESS || EXPECTED_RECIPIENT;
+
+    if (
+      voucher.recipient.toLowerCase() !== configuredRecipient.toLowerCase() &&
+      voucher.recipient.toLowerCase() !== EXPECTED_RECIPIENT.toLowerCase()
+    ) {
+      return returnPaymentChallenge(
+        c,
+        `Voucher recipient does not match required address (${configuredRecipient}).`,
+      );
+    }
+
+    const amountUnits = BigInt(voucher.cumulativeAmountUnits);
+    if (amountUnits < MIN_AMOUNT_UNITS) {
+      return returnPaymentChallenge(
+        c,
+        `Voucher cumulative amount (${amountUnits.toString()}) is less than required minimum (${MIN_AMOUNT_UNITS.toString()}).`,
+      );
+    }
+
+    const nowSec = BigInt(Math.floor(Date.now() / 1000));
+    if (BigInt(voucher.expiry) <= nowSec) {
+      return returnPaymentChallenge(c, "Payment voucher has expired.");
+    }
+
+    const replayKey = `voucher:${voucher.channelId.toLowerCase()}:${voucher.nonce.toString()}`;
+    if (inFlightHashes.has(replayKey) || (await activeReplayStore.has(replayKey))) {
+      c.header("X-Payment-Required", "true");
+      return c.json(
+        {
+          error: "Payment Error",
+          message: "Payment voucher nonce has already been used (replay protection).",
+        },
+        402,
+      );
+    }
+
+    inFlightHashes.add(replayKey);
+    try {
+      let recoveredSigner: string;
+      const parsedNonce = parseNonceToBigInt(voucher.nonce);
+      try {
+        recoveredSigner = await recoverTypedDataAddress({
+          domain: X402_PAYMENT_DOMAIN,
+          types: X402_VOUCHER_TYPES,
+          primaryType: "PaymentVoucher",
+          message: {
+            channelId: voucher.channelId as `0x${string}`,
+            cumulativeAmountUnits: amountUnits,
+            nonce: parsedNonce,
+            recipient: voucher.recipient as `0x${string}`,
+            expiry: BigInt(voucher.expiry),
+          },
+          signature: voucher.signature as `0x${string}`,
+        });
+      } catch (err: any) {
+        return returnPaymentChallenge(
+          c,
+          "Cryptographic voucher signature verification failed.",
+          err?.message,
+        );
+      }
+
+      c.set("x402.verified", true);
+      c.set("x402.voucher", voucher);
+      c.set("x402.signer", recoveredSigner);
+
+      // Phase 2: Execute downstream handler
+      await next();
+
+      // Phase 3: Two-Phase Commit - Commit voucher consumption ONLY on successful 2xx response
+      if (c.res && c.res.status >= 200 && c.res.status < 300) {
+        await activeReplayStore.add(replayKey, {
+          channelId: voucher.channelId,
+          nonce: voucher.nonce.toString(),
+          signer: recoveredSigner,
+          amountUnits: amountUnits.toString(),
+          recipient: voucher.recipient,
+        });
+        c.header("X-Payment-Settled", "true");
+      } else {
+        c.header("X-Payment-Settled", "false");
+        c.header("X-Payment-Refunded", "true");
+      }
+      return;
+    } finally {
+      inFlightHashes.delete(replayKey);
+    }
+  }
+
+  // ── Route B: Direct On-Chain Transaction Verification ──
+  const txHash = paymentHeader!.trim();
 
   // Validate format of transaction hash: 0x-prefixed 64-hex-character string
   if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
@@ -312,14 +485,6 @@ async function handleX402(c: Context, next: Next) {
       );
     }
 
-    // Record transaction hash in replay protection store upon successful verification
-    await activeReplayStore.add(normalizedHash, {
-      from: transferDetails?.from,
-      to: transferDetails?.to,
-      value: transferDetails?.value,
-      blockNumber: receipt.blockNumber?.toString(),
-    });
-
     // Mark payment verified on context for downstream route handlers
     c.set("x402.verified", true);
     c.set("x402.txHash", txHash);
@@ -330,11 +495,27 @@ async function handleX402(c: Context, next: Next) {
     console.log(
       `[x402] Verified Base USDC transfer: ${txHash} from ${transferDetails?.from} to ${transferDetails?.to} (amount: ${transferDetails?.value}, block: ${receipt.blockNumber})`,
     );
+
+    // Phase 2: Execute downstream handler
+    await next();
+
+    // Phase 3: Two-Phase Commit - Commit transaction hash ONLY upon successful 2xx response
+    if (c.res && c.res.status >= 200 && c.res.status < 300) {
+      await activeReplayStore.add(normalizedHash, {
+        from: transferDetails?.from,
+        to: transferDetails?.to,
+        value: transferDetails?.value,
+        blockNumber: receipt.blockNumber?.toString(),
+      });
+      c.header("X-Payment-Settled", "true");
+    } else {
+      c.header("X-Payment-Settled", "false");
+      c.header("X-Payment-Refunded", "true");
+    }
+    return;
   } finally {
     inFlightHashes.delete(normalizedHash);
   }
-
-  await next();
 }
 
 // Export typed Hono middleware handler

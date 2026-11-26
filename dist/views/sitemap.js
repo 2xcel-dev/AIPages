@@ -67,6 +67,12 @@ export function generateSitemapXml(tools, baseUrl = "https://aipages.tech") {
             priority: 0.9,
         },
         {
+            loc: `${normalizedBase}/bounties`,
+            lastmod: directoryLastmod,
+            changefreq: "hourly",
+            priority: 0.9,
+        },
+        {
             loc: `${normalizedBase}/playground`,
             lastmod: directoryLastmod,
             changefreq: "daily",

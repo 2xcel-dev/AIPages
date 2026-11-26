@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/mcp.json",
+  "mcpServers": {
+    "aipages-upstream": {
+      "command": "node",
+      "args": [
+        "/opt/aus-bridge.js"
+      ],
+      "env": {
+        "AUS_BASE_URL": "https://aipages.tech/tool",
+        "AUS_PROMOTED_BY": "aus-agent-alpha",
+        "AUS_REFERRAL_CODE": "ref_mcp_imazeohq_imazeo-mcp",
+        "AUS_REFERRAL_TRACKING_URL": "https://aipages.tech/search?ref=ref_mcp_imazeohq_imazeo-mcp&source=mcp_prospecting",
+        "AUS_X402_WALLET": "0xE57cB8C73c4000EA04ba0eb607228CbAec7f8e9C"
+      }
+    }
+  },
+  "_attribution": {
+    "ecosystem": "AIPages Autonomous Agent Registry",
+    "targetRepo": "Imazeohq/imazeo-mcp",
+    "promotedBy": "aus-agent-alpha",
+    "referralCode": "ref_mcp_imazeohq_imazeo-mcp",
+    "trackingUrl": "https://aipages.tech/search?ref=ref_mcp_imazeohq_imazeo-mcp&source=mcp_prospecting",
+    "generatedAt": "2026-11-24T10:45:01.628Z"
+  }
+}

@@ -189,6 +189,22 @@ export function generateSamplePayload(schema) {
     }
     return { input: "sample_value" };
 }
+export const PRIMARY_TOP_4_NAMESPACES = [
+    "net.2xcel.aus.schema-sanitizer",
+    "net.2xcel.aus.financial-audit",
+    "net.2xcel.aus.verification-oracle",
+    "net.2xcel.aus.geospatial-verifier",
+];
+export function isPrimaryTool(tool) {
+    if (!tool)
+        return false;
+    if (PRIMARY_TOP_4_NAMESPACES.includes(tool.namespace))
+        return true;
+    const parts = (tool.namespace || "").split(".");
+    const suffix = parts[parts.length - 1]?.toLowerCase();
+    return (["schema-sanitizer", "financial-audit", "verification-oracle", "geospatial-verifier"].includes(suffix || "") ||
+        ["schema_sanitizer", "financial_audit", "verification_oracle", "geospatial_verifier"].includes((tool.name || "").toLowerCase()));
+}
 export function generateRequestExample(tool) {
     const method = "POST";
     const endpoint = tool.endpointUrl || `https://aipages.tech/tool/${tool.namespace}`;
@@ -261,7 +277,7 @@ if (!response.ok) {
 const data = await response.json();
 console.log("Tool execution result:", data);`;
     // Generate AI Agent Client Configurations (Cursor, Claude Desktop, Cline)
-    const toolServerName = (tool.name || "tool").replace(/[^a-zA-Z0-9_-]/g, "-").toLowerCase();
+    const toolServerName = (tool.name || "tool").replace(/_/g, "-").replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase();
     const mcpServerEntry = {
         command: "npx",
         args: ["-y", "@aipages/mcp-gateway", tool.namespace],
@@ -289,6 +305,7 @@ console.log("Tool execution result:", data);`;
             },
         },
     }, null, 2);
+    const claudeCodeCmd = `claude mcp add aus-${toolServerName} -- npx -y @aipages/mcp-gateway ${tool.namespace}`;
     return {
         endpoint,
         method,
@@ -301,6 +318,8 @@ console.log("Tool execution result:", data);`;
         cursorConfig,
         claudeConfig,
         clineConfig,
+        claudeCodeCmd,
+        toolServerName,
         authDescription,
         isX402,
         costDisplay,
@@ -319,6 +338,7 @@ export function generateToolJsonLd(tool) {
     const isFirstParty = Boolean(tool.isFirstParty ??
         tool.developer?.isFirstParty ??
         tool.namespace?.startsWith("net.2xcel.aus"));
+    const isTop4 = isPrimaryTool(tool);
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -428,6 +448,92 @@ export function generateToolJsonLd(tool) {
     }
     return jsonLd;
 }
+export function renderQuickInstallWidget(tool, example, isTop4) {
+    const escapedName = escapeHtml(tool.name);
+    const toolServerName = escapeHtml(example.toolServerName);
+    const claudeCodeCmd = escapeHtml(example.claudeCodeCmd);
+    return `
+    <!-- Above-The-Fold Sticky "Copy MCP Config" Quick Install Widget -->
+    <section class="mcp-quick-install-widget \${isTop4 ? "primary-mcp-spotlight" : ""}" id="mcp-quick-install" aria-label="1-Click MCP Integration">
+      <div class="mcp-widget-header">
+        <div class="mcp-widget-title-group">
+          <div class="mcp-widget-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span>\${isTop4 ? "Core AUS &bull; 1-Click MCP Connect" : "1-Click MCP Connect"}</span>
+          </div>
+          <span class="mcp-widget-subtitle">Integrate <strong>\${escapedName}</strong> into Claude Code or Cursor in seconds</span>
+        </div>
+        <div class="mcp-client-tabs" role="tablist" aria-label="Select Agent Client">
+          <button type="button" class="mcp-tab-pill active" id="pill-tab-claudecode" role="tab" aria-selected="true" onclick="switchQuickInstallTab('claudecode')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span>Claude Code (CLI)</span>
+          </button>
+          <button type="button" class="mcp-tab-pill" id="pill-tab-cursor" role="tab" aria-selected="false" onclick="switchQuickInstallTab('cursor')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span>Cursor (.cursor/mcp.json)</span>
+          </button>
+          <button type="button" class="mcp-tab-pill" id="pill-tab-claude" role="tab" aria-selected="false" onclick="switchQuickInstallTab('claude')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
+            <span>Claude Desktop</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mcp-snippet-display">
+        <div class="mcp-code-preview" id="mcp-code-preview-box">
+          <span class="mcp-prefix-icon" id="mcp-prefix-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          </span>
+          <pre class="mcp-code-text"><code id="mcp-active-snippet-text">\${claudeCodeCmd}</code></pre>
+        </div>
+        <button type="button" class="btn btn-mcp-copy" id="btn-quick-mcp-copy" onclick="copyQuickMcpSnippet(this)" aria-label="Copy MCP Configuration">
+          <svg class="copy-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span class="btn-text">Copy Command</span>
+        </button>
+      </div>
+
+      <div class="mcp-widget-footer">
+        <div class="mcp-instruction-hint" id="mcp-instruction-hint">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span id="mcp-hint-text">Run in terminal to register <code>aus-\${toolServerName}</code> into Claude Code CLI instantly.</span>
+        </div>
+        <div class="mcp-widget-links">
+          <button type="button" class="link-subtle" onclick="openAgentModal(activeQuickTab === 'cursor' ? 'cursor' : (activeQuickTab === 'claudecode' ? 'claudecode' : 'claude'))">Detailed Guide</button>
+          <span class="dot-sep">&bull;</span>
+          <a href="#test-console" class="link-subtle">Test in Playground</a>
+        </div>
+      </div>
+    </section>`;
+}
+export function renderStickyMcpDock(tool, example) {
+    const escapedName = escapeHtml(tool.name);
+    return `
+    <!-- Sticky MCP Floating Dock (Surfaces on Scroll) -->
+    <aside class="mcp-sticky-dock" id="mcp-sticky-dock" aria-label="Quick Copy MCP Config Dock">
+      <div class="mcp-dock-content">
+        <div class="mcp-dock-info">
+          <span class="mcp-dock-pulse"></span>
+          <div class="mcp-dock-text">
+            <span class="mcp-dock-title">\${escapedName}</span>
+            <span class="mcp-dock-tag">MCP Gateway</span>
+          </div>
+        </div>
+        <div class="mcp-dock-actions">
+          <button type="button" class="btn btn-sm btn-dock-client" id="dock-btn-claudecode" onclick="copyDockSnippet('claudecode', this)" title="Copy Claude Code CLI command">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span class="btn-text">Copy Claude Code</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-dock-client btn-dock-cursor" id="dock-btn-cursor" onclick="copyDockSnippet('cursor', this)" title="Copy Cursor .cursor/mcp.json config">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            <span class="btn-text">Copy Cursor</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-dock-close" onclick="dismissStickyDock()" aria-label="Dismiss sticky dock" title="Dismiss">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>`;
+}
 export function renderToolPage(tool, relatedTools = []) {
     const health = deriveReliability(tool);
     const jsonLd = generateToolJsonLd(tool);
@@ -446,6 +552,7 @@ export function renderToolPage(tool, relatedTools = []) {
     const isFirstParty = Boolean(tool.isFirstParty ??
         tool.developer?.isFirstParty ??
         tool.namespace?.startsWith("net.2xcel.aus"));
+    const isTop4 = isPrimaryTool(tool);
     // Health & Reliability classification
     const isHealthy = health.reliability === "high";
     const isDegraded = health.reliability === "degraded";
@@ -1373,6 +1480,17 @@ ${aeoGraphScript}
       transform: translateY(0);
     }
 
+    .btn-claudecode {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+    .btn-claudecode:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+    }
+
     .btn-claude {
       background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
       color: #ffffff;
@@ -1591,6 +1709,10 @@ ${aeoGraphScript}
     .agent-modal-tab-btn:hover {
       color: #fff;
     }
+    .agent-modal-tab-btn.tab-claudecode.active {
+      color: #38bdf8;
+      border-bottom-color: #38bdf8;
+    }
     .agent-modal-tab-btn.tab-claude.active {
       color: #f59e0b;
       border-bottom-color: #f59e0b;
@@ -1631,6 +1753,352 @@ ${aeoGraphScript}
       gap: 10px;
       z-index: 10000;
     }
+
+    /* Above-The-Fold Quick Install MCP Widget */
+    .mcp-quick-install-widget {
+      background: linear-gradient(180deg, rgba(17, 21, 32, 0.95) 0%, rgba(11, 14, 20, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin: 0 0 28px 0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+    .mcp-quick-install-widget.primary-mcp-spotlight {
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 12px 36px rgba(245, 158, 11, 0.08), 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .mcp-widget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .mcp-widget-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .mcp-widget-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+    }
+    .mcp-widget-subtitle {
+      font-size: 0.95rem;
+      color: #d1d5db;
+    }
+    .mcp-client-tabs {
+      display: inline-flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .mcp-tab-pill {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+    .mcp-tab-pill:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .mcp-tab-pill.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    }
+    .mcp-tab-pill:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+    .mcp-snippet-display {
+      display: flex;
+      align-items: center;
+      background: #05070c;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 6px 8px 6px 16px;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .mcp-code-preview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow-x: auto;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .mcp-prefix-icon {
+      color: #60a5fa;
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .mcp-code-text {
+      margin: 0;
+      padding: 6px 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.95rem;
+      color: #38bdf8;
+      overflow-x: auto;
+    }
+    .btn-mcp-copy {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      outline: none;
+    }
+    .btn-mcp-copy:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-mcp-copy.btn-copied {
+      background: #059669 !important;
+      border-color: #10b981 !important;
+      color: #ffffff !important;
+    }
+    .btn-mcp-copy:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+    .mcp-widget-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .mcp-instruction-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mcp-instruction-hint code {
+      font-family: ui-monospace, monospace;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .mcp-widget-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .link-subtle {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85rem;
+      color: #60a5fa;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    .link-subtle:hover {
+      color: #93c5fd;
+    }
+    .dot-sep {
+      color: #475569;
+    }
+
+    /* Sticky MCP Floating Dock */
+    .mcp-sticky-dock {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      z-index: 999;
+      width: calc(100% - 40px);
+      max-width: 780px;
+    }
+    .mcp-sticky-dock.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mcp-dock-content {
+      background: rgba(11, 14, 20, 0.94);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 999px;
+      padding: 8px 14px 8px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(245, 158, 11, 0.1);
+    }
+    .mcp-dock-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .mcp-dock-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fbbf24;
+      box-shadow: 0 0 8px #fbbf24;
+    }
+    .mcp-dock-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mcp-dock-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .mcp-dock-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+    .mcp-dock-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-dock-client {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      outline: none;
+    }
+    .btn-dock-client:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn-dock-client.btn-dock-cursor {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+    .btn-dock-client.btn-dock-cursor:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    .btn-dock-client.btn-copied {
+      background: #059669 !important;
+      border-color: #10b981 !important;
+      color: #ffffff !important;
+    }
+    .btn-dock-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .btn-dock-close:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    @media (max-width: 768px) {
+      .mcp-quick-install-widget {
+        padding: 16px;
+      }
+      .mcp-widget-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .mcp-client-tabs {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .mcp-tab-pill {
+        flex: 1;
+        justify-content: center;
+        padding: 6px 8px;
+        font-size: 0.8rem;
+      }
+      .mcp-snippet-display {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+      }
+      .btn-mcp-copy {
+        width: 100%;
+        justify-content: center;
+      }
+      .mcp-sticky-dock {
+        bottom: 12px;
+        width: calc(100% - 24px);
+      }
+      .mcp-dock-content {
+        padding: 8px 12px;
+      }
+      .mcp-dock-tag {
+        display: none;
+      }
+      .btn-dock-client span.btn-text {
+        font-size: 0.8rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1652,19 +2120,23 @@ ${aeoGraphScript}
         </div>
         <p class="tool-description">${escapedDescription}</p>
         <div class="hero-actions">
-          <button type="button" class="btn btn-agent btn-claude" onclick="copyClientConfig('claude', this)" title="1-Click copy Claude Desktop MCP config">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
-            <span class="btn-text">Add to Claude</span>
+          <button type="button" class="btn btn-agent btn-claudecode" onclick="copyClientConfig('claudecode', this)" title="1-Click copy Claude Code CLI command">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            <span class="btn-text">Add to Claude Code</span>
           </button>
           <button type="button" class="btn btn-agent btn-cursor" onclick="copyClientConfig('cursor', this)" title="1-Click copy Cursor .cursor/mcp.json config">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             <span class="btn-text">Add to Cursor</span>
           </button>
+          <button type="button" class="btn btn-agent btn-claude" onclick="copyClientConfig('claude', this)" title="1-Click copy Claude Desktop MCP config">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12a10 10 0 0 0 9.9 10V12z"/></svg>
+            <span class="btn-text">Add to Claude</span>
+          </button>
           <button type="button" class="btn btn-agent btn-cline" onclick="copyClientConfig('cline', this)" title="1-Click copy Cline cline_mcp_settings.json config">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 9 6 6m0-6-6 6"/></svg>
             <span class="btn-text">Add to Cline</span>
           </button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="openCursorModal()" title="View MCP Setup Instructions" style="font-size: 1.08rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="openAgentModal('claudecode')" title="View MCP Setup Instructions" style="font-size: 1.08rem; padding: 8px 12px; color: var(--text-muted); border: 1px dashed var(--border-light); cursor: pointer;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <span>Setup Guide</span>
           </button>
@@ -1680,6 +2152,8 @@ ${aeoGraphScript}
       </div>
       ${flowArtwork ? `<div class="tool-hero-art"><img src="${flowArtwork}" alt="${humanTitle} promotional visual" loading="eager" /></div>` : ""}
     </div>
+
+    ${renderQuickInstallWidget(tool, requestExample, isTop4)}
 
     <!-- Interactive Live Test Console (SURFACED FRONT-AND-CENTER) -->
     <section class="card full-width playground-card" id="test-console" aria-label="Interactive Test Console">
@@ -1830,6 +2304,7 @@ ${aeoGraphScript}
       <div class="code-tabs-wrapper">
         <div class="code-tabs-nav" role="tablist">
           <button type="button" class="code-tab-btn active" role="tab" aria-selected="true" data-tab="curl" onclick="switchExampleTab('curl')">cURL</button>
+          <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="claudecode" onclick="switchExampleTab('claudecode')">Claude Code (CLI)</button>
           <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="cursor" onclick="switchExampleTab('cursor')">Cursor (.cursor/mcp.json)</button>
           <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="claude" onclick="switchExampleTab('claude')">Claude Desktop</button>
           <button type="button" class="code-tab-btn" role="tab" aria-selected="false" data-tab="cline" onclick="switchExampleTab('cline')">Cline</button>
@@ -1838,6 +2313,9 @@ ${aeoGraphScript}
         </div>
         <div class="code-tab-panel active" id="panel-curl">
           <pre><code id="snippet-curl">${escapeHtml(requestExample.curl)}</code></pre>
+        </div>
+        <div class="code-tab-panel" id="panel-claudecode" style="display: none;">
+          <pre><code id="snippet-claudecode">${escapeHtml(requestExample.claudeCodeCmd || "")}</code></pre>
         </div>
         <div class="code-tab-panel" id="panel-cursor" style="display: none;">
           <pre><code id="snippet-cursor">${escapeHtml(requestExample.cursorConfig || "")}</code></pre>
@@ -2146,7 +2624,11 @@ Content-Type: application/json</code></pre>
       </div>
 
       <div class="agent-modal-tabs">
-        <button type="button" class="agent-modal-tab-btn tab-cursor active" id="agent-modal-tab-cursor" onclick="switchAgentModalTab('cursor')">
+        <button type="button" class="agent-modal-tab-btn tab-claudecode active" id="agent-modal-tab-claudecode" onclick="switchAgentModalTab('claudecode')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>Claude Code (CLI)</span>
+        </button>
+        <button type="button" class="agent-modal-tab-btn tab-cursor" id="agent-modal-tab-cursor" onclick="switchAgentModalTab('cursor')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           <span>Cursor (.cursor/mcp.json)</span>
         </button>
@@ -2161,8 +2643,27 @@ Content-Type: application/json</code></pre>
       </div>
 
       <div class="cursor-modal-body">
+        <!-- Claude Code Tab Panel -->
+        <div id="agent-modal-panel-claudecode">
+          <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 8px;">
+            Run this single command in your terminal to connect <strong>${escapedName}</strong> directly into Claude Code CLI:
+          </p>
+          <div style="position: relative;">
+            <pre style="margin: 0; background: #070a12; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; font-family: ui-monospace, monospace; font-size: 1.08rem; overflow-x: auto;"><code id="claudecode-modal-snippet">${escapeHtml(requestExample.claudeCodeCmd || "")}</code></pre>
+            <button type="button" class="btn btn-sm btn-copy" onclick="copyAgentModalSnippet('claudecode', this)" style="position: absolute; top: 10px; right: 10px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span class="copy-label">Copy Command</span>
+            </button>
+          </div>
+          <div style="margin-top: 14px; font-size: 1.08rem; color: var(--text-dim); display: flex; flex-direction: column; gap: 6px;">
+            <div><strong style="color: #e2e8f0;">Step 1:</strong> Open your terminal in any directory or project root.</div>
+            <div><strong style="color: #e2e8f0;">Step 2:</strong> Paste and run the <code>claude mcp add</code> command above.</div>
+            <div><strong style="color: #e2e8f0;">Step 3:</strong> Claude Code immediately discovers the MCP gateway for autonomous testing and execution.</div>
+          </div>
+        </div>
+
         <!-- Cursor Tab Panel -->
-        <div id="agent-modal-panel-cursor">
+        <div id="agent-modal-panel-cursor" style="display: none;">
           <p style="font-size: 1.08rem; color: var(--text-muted); margin-bottom: 8px;">
             Paste this configuration into your project root at <code>.cursor/mcp.json</code> to give your Cursor agent autonomous access to <strong>${escapedName}</strong> with on-chain settlement:
           </p>
@@ -2234,23 +2735,143 @@ Content-Type: application/json</code></pre>
 
   <script>
     var activeExampleTab = 'curl';
-    var activeAgentModalTab = 'cursor';
+    var activeAgentModalTab = 'claudecode';
 
     var clientConfigs = {
+      claudecode: ${JSON.stringify(requestExample.claudeCodeCmd || "")},
       cursor: ${JSON.stringify(requestExample.cursorConfig || "")},
       claude: ${JSON.stringify(requestExample.claudeConfig || "")},
       cline: ${JSON.stringify(requestExample.clineConfig || "")}
     };
     var clientDestinations = {
+      claudecode: 'Terminal (CLI)',
       cursor: '.cursor/mcp.json',
       claude: 'claude_desktop_config.json',
       cline: 'cline_mcp_settings.json'
     };
     var clientNames = {
+      claudecode: 'Claude Code (CLI)',
       cursor: 'Cursor',
       claude: 'Claude Desktop',
       cline: 'Cline'
     };
+
+    var quickInstallSnippets = {
+      claudecode: ${JSON.stringify(requestExample.claudeCodeCmd || "")},
+      cursor: ${JSON.stringify(requestExample.cursorConfig || "")},
+      claude: ${JSON.stringify(requestExample.claudeConfig || "")}
+    };
+    var quickInstallHints = {
+      claudecode: 'Run in terminal to register <code>aus-${escapeHtml(requestExample.toolServerName)}</code> into Claude Code CLI instantly.',
+      cursor: 'Paste into <code>.cursor/mcp.json</code> in your project root for Cursor agent auto-completion.',
+      claude: 'Paste into <code>claude_desktop_config.json</code> under <code>mcpServers</code> and restart Claude Desktop.'
+    };
+    var quickInstallBtnLabels = {
+      claudecode: 'Copy Command',
+      cursor: 'Copy Config',
+      claude: 'Copy Config'
+    };
+    var activeQuickTab = 'claudecode';
+
+    function switchQuickInstallTab(tab) {
+      activeQuickTab = tab;
+      ['claudecode', 'cursor', 'claude'].forEach(function(t) {
+        var pill = document.getElementById('pill-tab-' + t);
+        if (pill) {
+          var isCurrent = (t === tab);
+          pill.classList.toggle('active', isCurrent);
+          pill.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+        }
+      });
+      var snippetEl = document.getElementById('mcp-active-snippet-text');
+      if (snippetEl) {
+        snippetEl.textContent = quickInstallSnippets[tab] || '';
+      }
+      var hintEl = document.getElementById('mcp-hint-text');
+      if (hintEl) {
+        hintEl.innerHTML = quickInstallHints[tab] || '';
+      }
+      var copyBtn = document.getElementById('btn-quick-mcp-copy');
+      if (copyBtn) {
+        var span = copyBtn.querySelector('.btn-text');
+        if (span && !copyBtn.classList.contains('btn-copied')) {
+          span.textContent = quickInstallBtnLabels[tab] || 'Copy';
+        }
+      }
+    }
+
+    function copyQuickMcpSnippet(btn) {
+      var snippet = quickInstallSnippets[activeQuickTab];
+      if (!snippet) return;
+      var span = btn.querySelector('.btn-text') || btn;
+      var origText = quickInstallBtnLabels[activeQuickTab] || 'Copy';
+
+      var updateUi = function() {
+        span.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        var clientName = activeQuickTab === 'claudecode' ? 'Claude Code command' : (activeQuickTab === 'cursor' ? 'Cursor MCP config' : 'Claude Desktop config');
+        showAgentToast('Copied ' + clientName + ' to clipboard!');
+        setTimeout(function() {
+          span.textContent = origText;
+          btn.classList.remove('btn-copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(snippet).then(updateUi).catch(function() {
+          fallbackCopy(snippet, updateUi);
+        });
+      } else {
+        fallbackCopy(snippet, updateUi);
+      }
+    }
+
+    function copyDockSnippet(client, btn) {
+      var snippet = quickInstallSnippets[client];
+      if (!snippet) return;
+      var span = btn.querySelector('.btn-text') || btn;
+      var origText = span.textContent;
+
+      var updateUi = function() {
+        span.textContent = 'Copied!';
+        btn.classList.add('btn-copied');
+        var clientName = client === 'claudecode' ? 'Claude Code command' : 'Cursor config';
+        showAgentToast('Copied ' + clientName + ' to clipboard!');
+        setTimeout(function() {
+          span.textContent = origText;
+          btn.classList.remove('btn-copied');
+        }, 2200);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(snippet).then(updateUi).catch(function() {
+          fallbackCopy(snippet, updateUi);
+        });
+      } else {
+        fallbackCopy(snippet, updateUi);
+      }
+    }
+
+    var dockDismissed = false;
+    function dismissStickyDock() {
+      dockDismissed = true;
+      var dock = document.getElementById('mcp-sticky-dock');
+      if (dock) dock.classList.remove('visible');
+    }
+
+    function handleScrollDock() {
+      if (dockDismissed) return;
+      var dock = document.getElementById('mcp-sticky-dock');
+      var widget = document.getElementById('mcp-quick-install');
+      if (!dock || !widget) return;
+      var rect = widget.getBoundingClientRect();
+      if (rect.bottom < 50) {
+        dock.classList.add('visible');
+      } else {
+        dock.classList.remove('visible');
+      }
+    }
+    window.addEventListener('scroll', handleScrollDock, { passive: true });
 
     function switchExampleTab(tab) {
       activeExampleTab = tab;
@@ -2259,13 +2880,14 @@ Content-Type: application/json</code></pre>
         b.classList.toggle('active', isTarget);
         b.setAttribute('aria-selected', isTarget ? 'true' : 'false');
       });
-      ['curl', 'cursor', 'claude', 'cline', 'javascript', 'http'].forEach(function(t) {
+      ['curl', 'claudecode', 'cursor', 'claude', 'cline', 'javascript', 'http'].forEach(function(t) {
         var panel = document.getElementById('panel-' + t);
         if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
       });
       var copyLabel = document.querySelector('.btn-copy .copy-label');
       if (copyLabel) {
         if (tab === 'curl') copyLabel.textContent = 'Copy cURL';
+        else if (tab === 'claudecode') copyLabel.textContent = 'Copy Claude Code';
         else if (tab === 'cursor') copyLabel.textContent = 'Copy Cursor Config';
         else if (tab === 'claude') copyLabel.textContent = 'Copy Claude Config';
         else if (tab === 'cline') copyLabel.textContent = 'Copy Cline Config';
@@ -2437,7 +3059,7 @@ Content-Type: application/json</code></pre>
 
     function switchAgentModalTab(client) {
       activeAgentModalTab = client;
-      ['claude', 'cursor', 'cline'].forEach(function(c) {
+      ['claudecode', 'cursor', 'claude', 'cline'].forEach(function(c) {
         var tabBtn = document.getElementById('agent-modal-tab-' + c);
         var panel = document.getElementById('agent-modal-panel-' + c);
         var isActive = (c === client);
@@ -2698,6 +3320,7 @@ Content-Type: application/json</code></pre>
       }
     }
   </script>
+  ${renderStickyMcpDock(tool, requestExample)}
   ${renderWebMcpRuntimeScript({ pageType: "tool", tool })}
 </body>
 </html>`;

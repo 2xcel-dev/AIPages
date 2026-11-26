@@ -1,0 +1,58 @@
+{
+  "name": "aipages-sdk",
+  "version": "1.0.0",
+  "description": "Official TypeScript SDK for AIPages (https://aipages.tech) - Machine-native discovery registry and x402 Base settlement execution client for autonomous AI agents.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./agentkit": {
+      "types": "./dist/agentkit.d.ts",
+      "import": "./dist/agentkit.js",
+      "default": "./dist/agentkit.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://aipages.tech",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2xcel-dev/AIPages.git",
+    "directory": "packages/aipages-sdk"
+  },
+  "keywords": [
+    "ai-agents",
+    "mcp",
+    "x402",
+    "base",
+    "usdc",
+    "autonomous-agents",
+    "coinbase-agentkit",
+    "agentic-tools"
+  ],
+  "author": "2XceL / AIPages",
+  "license": "MIT",
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "viem": {
+      "optional": true
+    }
+  }
+}

@@ -23,6 +23,7 @@ export declare const DISCOVERY_MANIFEST: {
         submit: string;
         toolDetail: string;
         toolPage: string;
+        bounties: string;
         capabilities: string;
         sitemap: string;
         llms: string;
