@@ -68,12 +68,6 @@ export function generateSitemapXml(
       priority: 0.9,
     },
     {
-      loc: `${normalizedBase}/tools`,
-      lastmod: directoryLastmod,
-      changefreq: "daily",
-      priority: 0.9,
-    },
-    {
       loc: `${normalizedBase}/capabilities`,
       lastmod: directoryLastmod,
       changefreq: "daily",

@@ -386,7 +386,13 @@ app.get("/search", async (c) => {
   }
 
   const query = c.req.query("q");
-  if (!query) return c.json({ error: "Missing query parameter: q" }, 400);
+  if (!query) {
+    const accept = c.req.header("Accept") ?? "";
+    if (accept.includes("text/html")) {
+      return c.redirect("/tool", 301);
+    }
+    return c.json({ query: "", results: [], count: 0 });
+  }
   const limit = Math.min(Number(c.req.query("limit") ?? 10), 50);
 
   const activeStore = await getActiveStore();
@@ -799,8 +805,9 @@ app.get("/tool", async (c) => {
   return handleDirectoryRequest(c, "/tool");
 });
 
-app.get("/tools", async (c) => {
-  return handleDirectoryRequest(c, "/tool");
+app.get("/tools", (c) => {
+  const query = c.req.url.includes("?") ? c.req.url.slice(c.req.url.indexOf("?")) : "";
+  return c.redirect(`/tool${query}`, 301);
 });
 
 // ── Public route: human-facing tool page (responsive detail + reliability) ──
@@ -986,7 +993,20 @@ export const ROBOTS_TXT = [
   "# --- Default Rule ---",
   "User-agent: *",
   "Allow: /",
-  "Disallow: /api/",
+  "Allow: /api/openapi.json",
+  "Allow: /api/feed.json",
+  "Allow: /api/tools",
+  "Disallow: /api/invoke/",
+  "Disallow: /api/telemetry",
+  "Disallow: /ingest",
+  "Disallow: /scrape",
+  "Disallow: /*?*q=",
+  "Disallow: /*?*capability=",
+  "Disallow: /*?*reliability=",
+  "Disallow: /*?*connectionType=",
+  "Disallow: /*?*pricingModel=",
+  "Disallow: /*?*sort=",
+  "Disallow: /*?*page=",
   "",
   "Sitemap: https://aipages.tech/sitemap.xml",
   "# LLM Discovery: https://aipages.tech/llms.txt",

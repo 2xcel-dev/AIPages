@@ -387,7 +387,7 @@ export function renderDirectoryPage(
   totalCount: number,
   filters: DirectoryFilterParams = {},
 ): string {
-  const baseUrl = filters.baseUrl || "/";
+  const baseUrl = filters.baseUrl || "/tool";
   const searchQuery = escapeHtml(filters.search ?? "");
   const activeReliability = filters.reliability ?? "all";
   const activeCapability = filters.capability ?? "all";
@@ -546,7 +546,7 @@ export function renderDirectoryPage(
   <title>AIPages Tool Directory - Autonomous Agent Tool Registry</title>
   <meta name="description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
-  <link rel="canonical" href="https://aipages.tech/tool">
+  <link rel="canonical" href="${baseUrl === '/' ? 'https://aipages.tech/' : 'https://aipages.tech/tool'}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <link rel="alternate" type="text/markdown" title="LLM Discovery Summary" href="/llms.txt">
   <link rel="alternate" type="text/markdown" title="Full Agent Schema Reference" href="/llms-full.txt">

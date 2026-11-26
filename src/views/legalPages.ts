@@ -263,6 +263,7 @@ export function renderPrivacyPolicyPage(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - AIPages Agent Tool Registry</title>
   <meta name="description" content="Authorized Privacy Policy for AIPages.tech covering zero disk retention for autonomous agent tool invocations, pseudonymous Base wallet settlement, and GDPR and CCPA compliance.">
+  <link rel="canonical" href="https://aipages.tech/privacy">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>${LEGAL_PAGE_STYLES}</style>
@@ -357,6 +358,7 @@ export function renderRefundPolicyPage(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>24-Hour USDT Refund Policy - AIPages Agent Tool Registry</title>
   <meta name="description" content="Authorized HTTP 402 USDT Refund Policy for AIPages.tech. Discovery is 100% free, micro-payments settle on Base Mainnet only on 2xx success, and verified faults are refunded in USDT within 24 hours.">
+  <link rel="canonical" href="https://aipages.tech/refund-policy">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>${LEGAL_PAGE_STYLES}</style>
@@ -448,6 +450,7 @@ export function renderTermsPage(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms of Service - AIPages Agent Tool Registry</title>
   <meta name="description" content="Terms of Service governing autonomous AI agent tool discovery, developer tool listings, and HTTP 402 USDT micro-payment invocations on AIPages.tech.">
+  <link rel="canonical" href="https://aipages.tech/terms">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <style>${LEGAL_PAGE_STYLES}</style>
@@ -524,6 +527,7 @@ export function renderSubmitToolPage(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register Your AI Agent Tool - AIPages Agent Tool Registry</title>
   <meta name="description" content="Register your MCP server or HTTP API in the AIPages 3072-dimension vector registry for free and earn USDT micro-payments on Base Mainnet.">
+  <link rel="canonical" href="https://aipages.tech/submit">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">${JSON.stringify(submitJsonLd)}</script>
   <style>${LEGAL_PAGE_STYLES}</style>

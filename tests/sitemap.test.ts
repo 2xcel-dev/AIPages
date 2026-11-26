@@ -111,7 +111,7 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
       assert.ok(xml.includes("<changefreq>daily</changefreq>"));
       assert.ok(xml.includes("<priority>1.0</priority>"));
 
-      assert.ok(xml.includes("<loc>https://aipages.tech/tools</loc>"));
+      assert.ok(xml.includes("<loc>https://aipages.tech/tool</loc>"));
       assert.ok(xml.includes("<priority>0.9</priority>"));
     });
 
@@ -153,7 +153,7 @@ describe("Task 9: XML Sitemap & Discovery (/sitemap.xml & /robots.txt)", () => {
       const body = await res.text();
       assert.ok(body.includes('<?xml version="1.0" encoding="UTF-8"?>'));
       assert.ok(body.includes("<loc>https://aipages.tech/</loc>"));
-      assert.ok(body.includes("<loc>https://aipages.tech/tools</loc>"));
+      assert.ok(body.includes("<loc>https://aipages.tech/tool</loc>"));
 
       // All 8 canonical AUS tools must be present
       for (const aus of CANONICAL_AUS_TOOLS) {
