@@ -158,6 +158,13 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     position: relative;
   }
 
+  /* High-Visibility Focus Indicators (WCAG AA & UI/UX Pro Max) */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+
   /* Full-site Glass Tiles WebGL Canvas */
   #site-glass-tiles-canvas {
     position: fixed;
@@ -499,6 +506,27 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     }
     .nav-links::-webkit-scrollbar {
       display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .nav-inner {
+      height: 62px;
+      padding: 0 14px;
+      gap: 8px;
+    }
+    .brand-wordmark {
+      font-size: 1.15rem;
+    }
+    .nav-submit-link span {
+      display: none;
+    }
+    .nav-submit-link {
+      padding: 8px 10px;
+    }
+    .nav-mcp-btn {
+      padding: 7px 12px;
+      font-size: 0.92rem;
     }
   }
 

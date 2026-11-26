@@ -824,13 +824,13 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-search-form:focus-within {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.25), 0 12px 30px rgba(0, 0, 0, 0.6);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35), 0 12px 30px rgba(0, 0, 0, 0.6);
     }
 
     .hero-search-icon {
       margin-left: 12px;
-      color: var(--accent-cyan);
+      color: var(--primary);
       flex-shrink: 0;
     }
 
@@ -883,9 +883,9 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .btn-secondary:hover {
-      border-color: var(--accent-cyan);
+      border-color: var(--primary);
       color: #FFFFFF;
-      background: rgba(0, 240, 255, 0.08);
+      background: rgba(245, 158, 11, 0.1);
     }
 
     .hero-cta-row {
@@ -936,7 +936,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       position: absolute;
       inset: -1px;
       border-radius: inherit;
-      background: radial-gradient(350px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(0, 240, 255, 0.28), rgba(245, 158, 11, 0.12), transparent 60%);
+      background: radial-gradient(350px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.15), transparent 60%);
       opacity: 0;
       transition: opacity 0.35s ease;
       pointer-events: none;
@@ -954,8 +954,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hero-grid-split .stats-block-card:hover {
-      border-color: rgba(0, 240, 255, 0.45);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 24px rgba(0, 240, 255, 0.12);
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 24px rgba(245, 158, 11, 0.18);
     }
 
     .hero-grid-split .stats-block-icon {
@@ -1190,8 +1190,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .flow-nav-circle:hover {
-      border-color: var(--accent-cyan);
-      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--primary);
+      background: rgba(245, 158, 11, 0.15);
       color: #FFFFFF;
     }
 
@@ -1217,7 +1217,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       object-fit: contain;
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(0, 240, 255, 0.08);
+      box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7), 0 0 30px rgba(245, 158, 11, 0.15);
       transition: opacity 0.35s ease, transform 0.4s ease;
     }
 
@@ -1276,25 +1276,25 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       overflow: hidden;
       cursor: pointer;
       pointer-events: auto;
-      background: rgba(14, 18, 28, 0.88);
+      background: rgba(14, 13, 10, 0.94);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 240, 255, 0.22);
-      box-shadow: 0 28px 60px -15px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 240, 255, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      box-shadow: 0 28px 60px -15px rgba(0, 0, 0, 0.85), 0 0 24px rgba(245, 158, 11, 0.1);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .td-card:hover {
-      border-color: rgba(0, 240, 255, 0.65);
-      box-shadow: 0 32px 70px -12px rgba(0, 0, 0, 0.95), 0 0 36px rgba(0, 240, 255, 0.25);
+      border-color: rgba(245, 158, 11, 0.65);
+      box-shadow: 0 32px 70px -12px rgba(0, 0, 0, 0.95), 0 0 36px rgba(245, 158, 11, 0.25);
     }
 
     .td-card-backdrop {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 18% 18%, rgba(0, 240, 255, 0.12), transparent 48%),
-                  radial-gradient(circle at 85% 82%, rgba(245, 158, 11, 0.08), transparent 45%),
-                  linear-gradient(175deg, rgba(16, 22, 34, 0.94) 0%, rgba(9, 12, 18, 0.97) 100%);
+      background: radial-gradient(circle at 18% 18%, rgba(245, 158, 11, 0.14), transparent 48%),
+                  radial-gradient(circle at 85% 82%, rgba(217, 119, 6, 0.12), transparent 45%),
+                  linear-gradient(175deg, rgba(20, 18, 12, 0.96) 0%, rgba(10, 9, 7, 0.98) 100%);
       pointer-events: none;
     }
 
@@ -1314,7 +1314,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.8), rgba(245, 158, 11, 0.8), transparent);
+      background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.8), rgba(252, 211, 77, 0.8), transparent);
       pointer-events: none;
     }
 
@@ -1352,9 +1352,9 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       text-transform: uppercase;
       padding: 6px 14px;
       border-radius: var(--radius-sm);
-      background: rgba(0, 240, 255, 0.12);
-      color: var(--accent-cyan);
-      border: 1px solid rgba(0, 240, 255, 0.35);
+      background: rgba(245, 158, 11, 0.14);
+      color: var(--primary-bright);
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
 
     .td-card-badge.first-party {
@@ -1405,14 +1405,14 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       width: 56px;
       height: 56px;
       border-radius: var(--radius-sm);
-      background: rgba(0, 240, 255, 0.08);
-      border: 1px solid rgba(0, 240, 255, 0.25);
-      color: var(--accent-cyan);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--primary-bright);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 0 16px rgba(0, 240, 255, 0.12);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.15);
     }
 
     .td-card:hover .td-card-icon-frame {
@@ -1731,6 +1731,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
       animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
       min-height: 388px;
+      cursor: pointer;
     }
 
     .tool-card::before {
@@ -1738,7 +1739,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       position: absolute;
       inset: -1px;
       border-radius: inherit;
-      background: radial-gradient(400px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(0, 240, 255, 0.28), rgba(245, 158, 11, 0.12), transparent 60%);
+      background: radial-gradient(400px circle at var(--mouse-x, -500px) var(--mouse-y, -500px), rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.12), transparent 60%);
       opacity: 0;
       transition: opacity 0.35s ease;
       pointer-events: none;
@@ -1756,7 +1757,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       left: 0;
       right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.6), rgba(245, 158, 11, 0.6), transparent);
+      background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.7), rgba(252, 211, 77, 0.7), transparent);
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
@@ -1773,8 +1774,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .tool-card:hover {
-      border-color: rgba(0, 240, 255, 0.45);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 240, 255, 0.14);
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(245, 158, 11, 0.16);
     }
 
     .tool-card-glass-header {
@@ -1791,8 +1792,8 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .tool-card:hover .tool-card-glass-header {
-      border-color: rgba(0, 240, 255, 0.35);
-      background: #141926;
+      border-color: rgba(245, 158, 11, 0.35);
+      background: #1C1912;
     }
 
     .tool-card-header {
@@ -2110,9 +2111,9 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .card-cap-pill:hover,
     .card-cap-selected {
-      border-color: var(--accent-cyan);
+      border-color: var(--primary);
       color: #FFFFFF;
-      background: rgba(0, 240, 255, 0.1);
+      background: rgba(245, 158, 11, 0.15);
       text-decoration: none;
     }
 
@@ -2164,14 +2165,15 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       background: var(--surface-raised);
       transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
       white-space: nowrap;
+      cursor: pointer;
     }
 
     .card-action-link:hover {
-      border-color: var(--accent-cyan);
+      border-color: var(--primary);
       color: #020305;
-      background: var(--accent-cyan);
+      background: var(--primary);
       transform: translateX(3px);
-      box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
       text-decoration: none;
     }
 
