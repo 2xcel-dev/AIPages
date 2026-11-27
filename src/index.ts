@@ -659,6 +659,40 @@ app.post("/api/tools/submit", async (c) => {
   },
 );
 
+// ── Lead Capture / Newsletter Subscription ──────────────────
+app.post("/api/newsletter/subscribe", async (c) => {
+  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+  const limitRes = tokenBucket(`newsletter:${ip}`, 10, 60_000);
+  if (!limitRes.allowed) {
+    return c.json({ error: "Rate limit exceeded. Please try again later." }, 429);
+  }
+
+  const contentType = (c.req.header("content-type") ?? "").toLowerCase();
+  let email = "";
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const formData = await c.req.parseBody().catch(() => null);
+    email = String(formData?.email || "").trim();
+  } else {
+    const json = (await c.req.json().catch(() => ({}))) as { email?: string };
+    email = String(json?.email || "").trim();
+  }
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return c.json({ error: "Please provide a valid email address." }, 400);
+  }
+
+  return c.json(
+    {
+      success: true,
+      message: "Subscribed to Agent Radar. You will receive dispatches on new MCP tools and bounties.",
+    },
+    200,
+  );
+});
+
 // ── Public route: list tools (with source, search, active, pagination, and health) ──
 
 app.get("/api/tools", async (c) => {

@@ -596,7 +596,14 @@ ${renderGoogleAnalyticsHead()}
           </div>
 
           <div class="form-group full-width">
-            <label class="form-label" for="tool-schema">Input JSON Schema</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+              <label class="form-label" for="tool-schema" style="margin-bottom: 0;">Input JSON Schema</label>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn-schema-preset" onclick="loadSchemaPreset('rest')" style="background: #14120C; border: 1px solid #3D3425; color: #A8906B; border-radius: 4px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer;">REST Template</button>
+                <button type="button" class="btn-schema-preset" onclick="loadSchemaPreset('mcp')" style="background: #14120C; border: 1px solid #3D3425; color: #A8906B; border-radius: 4px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer;">FastMCP Template</button>
+                <button type="button" class="btn-schema-preset" onclick="loadSchemaPreset('oracle')" style="background: #14120C; border: 1px solid #3D3425; color: #A8906B; border-radius: 4px; padding: 4px 8px; font-size: 0.85rem; cursor: pointer;">Oracle Template</button>
+              </div>
+            </div>
             <textarea id="tool-schema" name="schema" class="form-textarea" toolparamdescription="JSON Schema object describing the expected request body parameters">{
   "type": "object",
   "properties": {
@@ -620,6 +627,51 @@ ${renderGoogleAnalyticsHead()}
   ${renderSharedFooter()}
 
   <script>
+    function loadSchemaPreset(type) {
+      var nameEl = document.getElementById('tool-name');
+      var descEl = document.getElementById('tool-desc');
+      var connEl = document.getElementById('tool-conn');
+      var schemaEl = document.getElementById('tool-schema');
+      if (type === 'rest') {
+        if (!nameEl.value) nameEl.value = 'market_data_scraper';
+        if (!descEl.value) descEl.value = 'Fetches sanitized orderbook depth and volume metrics from financial exchanges.';
+        connEl.value = 'http';
+        schemaEl.value = JSON.stringify({
+          type: "object",
+          properties: {
+            pair: { type: "string", description: "Trading pair ticker (e.g. BTC/USDT)" },
+            depth: { type: "number", description: "Orderbook depth levels to inspect", default: 10 }
+          },
+          required: ["pair"]
+        }, null, 2);
+      } else if (type === 'mcp') {
+        if (!nameEl.value) nameEl.value = 'code_security_auditor';
+        if (!descEl.value) descEl.value = 'MCP server that scans source files for hardcoded secrets, SQL injection, and OWASP vulnerabilities.';
+        connEl.value = 'sse';
+        schemaEl.value = JSON.stringify({
+          type: "object",
+          properties: {
+            repoUrl: { type: "string", description: "Git repository URL" },
+            branch: { type: "string", description: "Branch to audit", default: "main" },
+            strictMode: { type: "boolean", description: "Fail on warning-level findings", default: false }
+          },
+          required: ["repoUrl"]
+        }, null, 2);
+      } else if (type === 'oracle') {
+        if (!nameEl.value) nameEl.value = 'sha256_state_attestation';
+        if (!descEl.value) descEl.value = 'Cryptographic SHA-256 state oracle verifying agent execution traces against deterministic hashes.';
+        connEl.value = 'http';
+        schemaEl.value = JSON.stringify({
+          type: "object",
+          properties: {
+            expectedHash: { type: "string", description: "64-character hex SHA-256 digest" },
+            rawTrace: { type: "string", description: "Execution log string or base64 binary proof" }
+          },
+          required: ["expectedHash", "rawTrace"]
+        }, null, 2);
+      }
+    }
+
     async function handleToolSubmit(e) {
       e.preventDefault();
       var btn = document.getElementById('submit-btn');

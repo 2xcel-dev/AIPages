@@ -341,7 +341,13 @@ export function renderToolCard(
               ? "Free open-source endpoint"
               : "Success-only HTTP 402 USDT settlement"
           }</span>
-          <a href="/tool/${escapedNamespace}" class="card-action-link">Inspect Schema &rarr;</a>
+          <div class="card-footer-actions">
+            <button type="button" class="btn-card-copy-mcp" onclick="copyCardMcpConfig('${escapedNamespace}', this, event)" title="Copy MCP server configuration snippet">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy MCP</span>
+            </button>
+            <a href="/tool/${escapedNamespace}" class="card-action-link">Inspect Schema &rarr;</a>
+          </div>
         </div>
       </div>
     </article>
@@ -2228,6 +2234,40 @@ ${renderGoogleAnalyticsHead()}
       text-overflow: ellipsis;
     }
 
+    .card-footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-card-copy-mcp {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 11px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xs);
+      color: #D4D4D8;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .btn-card-copy-mcp:hover {
+      border-color: var(--primary);
+      color: var(--primary-bright);
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .btn-card-copy-mcp svg {
+      color: var(--primary);
+      flex-shrink: 0;
+    }
+
     .card-action-link {
       font-weight: 700;
       font-size: 1.08rem;
@@ -2524,6 +2564,96 @@ ${renderGoogleAnalyticsHead()}
       padding: 6px 14px;
     }
 
+    /* Developer Launchpad & Monetization Conversion Section */
+    .developer-launchpad-section {
+      padding: 64px 0;
+      background: radial-gradient(circle at 50% 25%, rgba(217, 119, 6, 0.1) 0%, transparent 60%);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .launchpad-card {
+      background: #0E0D0A;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 18px;
+      padding: 38px 36px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.65), 0 0 30px rgba(217, 119, 6, 0.08);
+      position: relative;
+    }
+
+    .launchpad-grid {
+      display: grid;
+      grid-template-columns: 1.18fr 0.82fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .launchpad-benefits {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 24px 0 28px 0;
+    }
+
+    .launchpad-benefit-item {
+      background: #14120C;
+      border: 1px solid #262117;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+
+    .launchpad-benefit-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #F8FAFC;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .launchpad-benefit-title svg {
+      color: #F59E0B;
+      flex-shrink: 0;
+    }
+
+    .launchpad-benefit-desc {
+      font-size: 0.9rem;
+      color: #A8906B;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .radar-subscribe-card {
+      background: #14120C;
+      border: 1px solid #3D3425;
+      border-radius: 14px;
+      padding: 26px 24px;
+    }
+
+    .radar-input-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .radar-input {
+      flex: 1;
+      background: #080705;
+      border: 1px solid #3D3425;
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: #F8FAFC;
+      font-size: 0.98rem;
+      outline: none;
+      transition: border-color 0.18s ease;
+    }
+
+    .radar-input:focus {
+      border-color: #F59E0B;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+    }
+
     @media (max-width: 960px) {
       .hero-cta-row {
         grid-template-columns: 1fr;
@@ -2618,6 +2748,10 @@ ${renderGoogleAnalyticsHead()}
             <div class="hero-primary-actions">
               <a href="#directory-section" class="btn btn-amber">Explore the directory</a>
               <a href="/submit" class="btn btn-dark-outline">List a tool <span style="font-size: 0.9em; margin-left: 2px;">↗</span></a>
+              <a href="/bounties" class="btn btn-dark-outline" style="border-color: rgba(245, 158, 11, 0.45); color: #FCD34D !important;" title="Build agent tools and earn USDT bounties">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v12M15 9.5H9.5a2.5 2.5 0 0 0 0 5H14a2.5 2.5 0 0 1 0 5H8"></path></svg>
+                Developer Bounties (Earn USDT)
+              </a>
             </div>
           </div>
 
@@ -3018,6 +3152,95 @@ Accept: application/json
       </div>
     </section>
 
+    <!-- Developer Monetization & Tool Submission Launchpad + Agent Radar Lead Capture -->
+    <section id="developer-launchpad" class="developer-launchpad-section">
+      <div class="container">
+        <div class="launchpad-card">
+          <div class="launchpad-grid">
+            <div>
+              <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #F59E0B; box-shadow: 0 0 8px #F59E0B;"></span>
+                DEVELOPER LAUNCHPAD &middot; MONETIZE YOUR TOOLS
+              </div>
+              <h2 style="font-size: clamp(1.8rem, 2.8vw, 2.4rem); font-weight: 800; color: #FFFFFF; line-height: 1.15; margin-bottom: 12px;">
+                Turn Your API or MCP Server into an <span style="color: #F59E0B;">Autonomous Revenue Stream</span>
+              </h2>
+              <p style="font-size: 1.1rem; color: #A8906B; line-height: 1.6; max-width: 620px; margin-bottom: 20px;">
+                Listing your tool in AIPages is 100% free. Autonomous AI agents discover your schema via 3072-dimension Gemini vector search and settle USDT micro-payments directly to your Base Mainnet wallet.
+              </p>
+
+              <div class="launchpad-benefits">
+                <div class="launchpad-benefit-item">
+                  <div class="launchpad-benefit-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11.5" cy="11.5" r="9.5"></circle><path d="M20 20L22 22"></path></svg>
+                    Vector Discovery
+                  </div>
+                  <p class="launchpad-benefit-desc">Indexed in Gemini vector embeddings, /llms.txt, and OpenAPI specs for immediate agent discovery.</p>
+                </div>
+                <div class="launchpad-benefit-item">
+                  <div class="launchpad-benefit-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    USDT Micro-Payouts
+                  </div>
+                  <p class="launchpad-benefit-desc">Earn per-call fees automatically via HTTP 402 on Base Mainnet. Settled strictly on success.</p>
+                </div>
+                <div class="launchpad-benefit-item">
+                  <div class="launchpad-benefit-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18M3 9h18"></path></svg>
+                    Any Protocol
+                  </div>
+                  <p class="launchpad-benefit-desc">Works seamlessly with REST JSON, FastMCP, SSE, stdio, and WebSockets without backend refactoring.</p>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+                <a href="/submit" class="btn btn-amber">List Your Tool in 60 Seconds (Free)</a>
+                <a href="/bounties" class="btn btn-dark-outline" style="border-color: rgba(245, 158, 11, 0.4); color: #FCD34D !important;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v12M15 9.5H9.5a2.5 2.5 0 0 0 0 5H14a2.5 2.5 0 0 1 0 5H8"></path></svg>
+                  Browse Open Developer Bounties
+                </a>
+              </div>
+            </div>
+
+            <!-- Right Column: Agent Radar Dispatch Lead Capture -->
+            <div class="radar-subscribe-card">
+              <div style="display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; color: #F59E0B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 3v18M3 12h18"></path></svg>
+                AGENT RADAR DISPATCH
+              </div>
+              <h3 style="font-size: 1.35rem; font-weight: 700; color: #FFFFFF; line-height: 1.3; margin-bottom: 8px;">
+                Get Notified on New Agent Tools &amp; Bounties
+              </h3>
+              <p style="font-size: 0.95rem; color: #A8906B; line-height: 1.55; margin-bottom: 14px;">
+                Subscribe to receive weekly dispatches when new MCP servers, utility schemas, or paid developer bounties are published.
+              </p>
+
+              <form onsubmit="handleNewsletterSubmit(event)" id="radar-form">
+                <div class="radar-input-group">
+                  <input
+                    type="email"
+                    id="radar-email-input"
+                    class="radar-input"
+                    placeholder="developer@company.com"
+                    aria-label="Developer email address"
+                    required
+                  />
+                  <button type="submit" id="radar-submit-btn" class="btn" style="height: auto; padding: 10px 18px; font-size: 0.98rem;">
+                    Subscribe
+                  </button>
+                </div>
+                <div id="radar-status-msg" style="display: none; font-size: 0.9rem; margin-top: 10px; font-family: 'JetBrains Mono', monospace;"></div>
+                <div style="font-size: 0.78rem; color: #78716C; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  Zero spam. Unsubscribe at any time with one click.
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 21st.dev #31986 Centered FAQ & Legal Policy Accordion by hexui-sh -->
     <section id="faq-policies" class="faq-section">
       <div class="container faq-container">
@@ -3362,7 +3585,7 @@ Accept: application/json
         }
       });
 
-      ['claude', 'cursor', 'curl'].forEach(function(id) {
+      ['gateway', 'claude', 'cursor', 'curl'].forEach(function(id) {
         var el = document.getElementById('tab-content-' + id);
         if (el) {
           el.style.display = (id === tabId) ? 'block' : 'none';
@@ -3375,12 +3598,97 @@ Accept: application/json
       if (!el) return;
       var text = el.innerText || el.textContent;
       navigator.clipboard.writeText(text).then(function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', {
+            client: elementId,
+            client_name: 'Directory Modal Gateway',
+            tool: 'unified-mcp-gateway'
+          });
+        }
         var original = btn.innerText;
         btn.innerText = 'Copied!';
         setTimeout(function() {
           btn.innerText = original;
         }, 2000);
       });
+    }
+
+    function copyCardMcpConfig(namespace, btn, evt) {
+      if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
+      var slug = namespace.replace(/^listing\./, '').replace(/^net\.2xcel\.aus\./, '');
+      var config = {
+        mcpServers: {}
+      };
+      config.mcpServers[slug] = {
+        command: "npx",
+        args: ["-y", "@aipages/mcp-gateway", "--tool=" + namespace]
+      };
+      var snippet = JSON.stringify(config, null, 2);
+
+      navigator.clipboard.writeText(snippet).then(function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', {
+            client: 'directory_card_quick_copy',
+            client_name: 'Card Quick Copy',
+            tool: namespace
+          });
+        }
+        var originalHtml = btn.innerHTML;
+        btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Copied</span>';
+        btn.style.borderColor = '#10B981';
+        btn.style.color = '#10B981';
+        setTimeout(function() {
+          btn.innerHTML = originalHtml;
+          btn.style.borderColor = '';
+          btn.style.color = '';
+        }, 2200);
+      });
+    }
+
+    async function handleNewsletterSubmit(e) {
+      e.preventDefault();
+      var input = document.getElementById('radar-email-input');
+      var btn = document.getElementById('radar-submit-btn');
+      var msgBox = document.getElementById('radar-status-msg');
+      if (!input || !input.value) return;
+
+      var email = input.value.trim();
+      btn.disabled = true;
+      btn.textContent = 'Subscribing...';
+
+      try {
+        var res = await fetch('/api/newsletter/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+        msgBox.style.display = 'block';
+        if (res.ok) {
+          if (window.trackAipagesEvent) {
+            window.trackAipagesEvent('lead_captured', {
+              lead_type: 'agent_radar_newsletter',
+              source: 'directory_launchpad'
+            });
+          }
+          msgBox.style.color = '#6EE7B7';
+          msgBox.textContent = data.message || 'Subscribed! We will dispatch tool updates and bounties.';
+          input.value = '';
+        } else {
+          msgBox.style.color = '#FCA5A5';
+          msgBox.textContent = data.error || 'Subscription failed. Please check your email.';
+        }
+      } catch (err) {
+        msgBox.style.display = 'block';
+        msgBox.style.color = '#FCA5A5';
+        msgBox.textContent = 'Network error. Please try again later.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+      }
     }
 
     window.ROLODEX_ALL_DATA = ${rolodexToolsJson};
