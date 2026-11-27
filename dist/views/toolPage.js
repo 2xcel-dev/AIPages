@@ -1181,9 +1181,9 @@ ${aeoGraphScript}
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .badge-paid {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
     }
     .badge-free {
       background: var(--healthy-bg);
@@ -1362,8 +1362,8 @@ ${aeoGraphScript}
       flex-wrap: wrap;
     }
     .btn-execute {
-      background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
-      color: #030712;
+      background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+      color: #080705;
       font-weight: 700;
       font-size: 1.08rem;
       border: none;
@@ -1424,9 +1424,9 @@ ${aeoGraphScript}
       border: 1px solid rgba(239, 68, 68, 0.4);
     }
     .playground-status-pill.status-loading {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
     }
     .playground-timing {
       font-size: 1.08rem;
@@ -1525,9 +1525,9 @@ ${aeoGraphScript}
     }
 
     .btn-test-now {
-      background: rgba(56, 189, 248, 0.12);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.4);
       font-weight: 600;
       font-size: 1.08rem;
       border-radius: var(--radius-sm);
@@ -1540,8 +1540,8 @@ ${aeoGraphScript}
       text-decoration: none;
     }
     .btn-test-now:hover {
-      background: rgba(56, 189, 248, 0.22);
-      border-color: #38bdf8;
+      background: rgba(245, 158, 11, 0.22);
+      border-color: #f59e0b;
       color: #ffffff;
       transform: translateY(-1px);
     }
@@ -1570,9 +1570,9 @@ ${aeoGraphScript}
       transition: all 0.15s ease;
     }
     .mode-toggle-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.35);
     }
     .mode-dot {
       width: 7px;
@@ -1710,8 +1710,8 @@ ${aeoGraphScript}
       color: #fff;
     }
     .agent-modal-tab-btn.tab-claudecode.active {
-      color: #38bdf8;
-      border-bottom-color: #38bdf8;
+      color: #f59e0b;
+      border-bottom-color: #f59e0b;
     }
     .agent-modal-tab-btn.tab-claude.active {
       color: #f59e0b;
@@ -1741,7 +1741,7 @@ ${aeoGraphScript}
       bottom: 24px;
       right: 24px;
       background: #0f172a;
-      border: 1px solid #38bdf8;
+      border: 1px solid #f59e0b;
       box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       color: #fff;
       font-size: 1.08rem;
@@ -1855,7 +1855,7 @@ ${aeoGraphScript}
       min-width: 0;
     }
     .mcp-prefix-icon {
-      color: #60a5fa;
+      color: var(--primary);
       display: inline-flex;
       align-items: center;
       flex-shrink: 0;
@@ -1865,13 +1865,13 @@ ${aeoGraphScript}
       padding: 6px 0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 0.95rem;
-      color: #38bdf8;
+      color: #FCD34D;
       overflow-x: auto;
     }
     .btn-mcp-copy {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      color: #ffffff;
-      border: 1px solid rgba(59, 130, 246, 0.5);
+      background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+      color: #080705;
+      border: 1px solid rgba(245, 158, 11, 0.5);
       border-radius: 8px;
       padding: 8px 16px;
       font-size: 0.9rem;
@@ -1930,13 +1930,13 @@ ${aeoGraphScript}
       border: none;
       padding: 0;
       font-size: 0.85rem;
-      color: #60a5fa;
+      color: var(--primary);
       text-decoration: underline;
       cursor: pointer;
       transition: color 0.15s ease;
     }
     .link-subtle:hover {
-      color: #93c5fd;
+      color: var(--primary-bright);
     }
     .dot-sep {
       color: #475569;
@@ -2919,7 +2919,7 @@ Content-Type: application/json</code></pre>
       var toast = document.createElement('div');
       toast.id = 'agent-live-toast';
       toast.className = 'agent-toast';
-      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>' + msg + '</span>';
+      toast.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>' + msg + '</span>';
       document.body.appendChild(toast);
 
       setTimeout(function() {

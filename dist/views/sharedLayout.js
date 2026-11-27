@@ -77,7 +77,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     --brand-amber-300: #FCD34D;
     --brand-amber-200: #FDE68A;
     --brand-muted: #A8906B;
-    --brand-subtle: #685536;
+    --brand-subtle: #A8906B;
 
     /* Canvas & Structural Surfaces */
     --bg-canvas: #080705;
@@ -102,7 +102,7 @@ export const SHARED_DESIGN_SYSTEM_CSS = `
     /* Text Crispness */
     --text: #F8FAFC;
     --text-muted: #A8906B;
-    --text-dim: #685536;
+    --text-dim: #A8906B;
 
     /* Brand & Status Accents */
     --primary: #F59E0B;

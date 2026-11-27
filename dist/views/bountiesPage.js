@@ -171,7 +171,7 @@ export function renderBountiesPage() {
     }
     .bounties-stat-label {
       font-size: 0.85rem;
-      color: #64748B;
+      color: #94A3B8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -291,7 +291,7 @@ export function renderBountiesPage() {
       align-items: center;
       gap: 6px;
       font-size: 0.85rem;
-      color: #64748B;
+      color: #94A3B8;
     }
     .bounty-action-btn {
       display: inline-flex;
@@ -390,7 +390,7 @@ export function renderBountiesPage() {
         <span class="bounties-live-indicator"></span>
         Top Unfulfilled Agent Demands
       </div>
-      <a href="/api/telemetry/unmet-searches" target="_blank" style="color: #64748B; font-size: 0.85rem; text-decoration: none;">
+      <a href="/api/telemetry/unmet-searches" target="_blank" style="color: #94A3B8; font-size: 0.85rem; text-decoration: none;">
         Raw Telemetry JSON &rarr;
       </a>
     </div>

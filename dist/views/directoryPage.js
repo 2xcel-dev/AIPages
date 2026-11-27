@@ -685,7 +685,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     .hud-sublabel {
       display: block;
       font-size: 0.7rem;
-      color: #685536;
+      color: #A8906B;
       letter-spacing: 0.1em;
       margin-bottom: 6px;
       text-transform: uppercase;
@@ -735,7 +735,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hud-num {
-      color: #685536;
+      color: #A8906B;
       font-weight: 600;
       margin-right: 10px;
     }
@@ -757,7 +757,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
     }
 
     .hud-state-pill.unprovided {
-      color: #685536;
+      color: #A8906B;
     }
 
     .hud-meta-grid {
@@ -777,7 +777,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .hud-meta-label {
       font-size: 0.68rem;
-      color: #685536;
+      color: #A8906B;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
@@ -790,7 +790,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
 
     .hud-footer-note {
       font-size: 0.7rem;
-      color: #685536;
+      color: #A8906B;
       margin-bottom: 14px;
     }
 
@@ -1036,7 +1036,7 @@ export function renderDirectoryPage(tools, totalCount, filters = {}) {
       gap: 6px;
       font-size: 1.08rem;
       font-weight: 600;
-      color: #38BDF8;
+      color: var(--primary-bright);
       font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
       overflow: hidden;
