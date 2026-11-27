@@ -532,6 +532,16 @@ export function renderSubmitToolPage(): string {
 ${renderGoogleAnalyticsHead()}
   <title>Register Your AI Agent Tool - AIPages Agent Tool Registry</title>
   <meta name="description" content="Register your MCP server or HTTP API in the AIPages 3072-dimension vector registry for free and earn USDT micro-payments on Base Mainnet.">
+  <meta property="og:site_name" content="AIPages">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Register Your AI Agent Tool - AIPages Agent Tool Registry">
+  <meta property="og:description" content="Register your MCP server or HTTP API in the AIPages 3072-dimension vector registry for free and earn USDT micro-payments on Base Mainnet.">
+  <meta property="og:url" content="https://aipages.tech/submit">
+  <meta property="og:image" content="https://aipages.tech/assets/flow/flow-01-hero-marketplace.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Register Your AI Agent Tool - AIPages">
+  <meta name="twitter:description" content="Register your MCP server or HTTP API in the AIPages 3072-dimension vector registry for free and earn USDT micro-payments on Base Mainnet.">
+  <meta name="twitter:image" content="https://aipages.tech/assets/flow/flow-01-hero-marketplace.jpg">
   <link rel="canonical" href="https://aipages.tech/submit">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <script type="application/ld+json">${JSON.stringify(submitJsonLd)}</script>

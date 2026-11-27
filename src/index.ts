@@ -117,7 +117,7 @@ async function getActiveStore(): Promise<ToolStore> {
 
 export function isAiOrSearchCrawler(userAgent?: string | null): boolean {
   if (!userAgent) return false;
-  return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Googlebot|Google-Site-Verification|Google-InspectionTool|Google-Search-Console|Feedfetcher-Google|Google|Bingbot|DuckDuckBot|YandexBot|bot|crawler|spider)/i.test(
+  return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|DeepSeekBot|DeepSeek|Meta-ExternalAgent|cohere-ai|CCBot|Googlebot|Google-Site-Verification|Google-InspectionTool|Google-Search-Console|Feedfetcher-Google|Google|Bingbot|DuckDuckBot|YandexBot|bot|crawler|spider)/i.test(
     userAgent,
   );
 }
@@ -1015,6 +1015,15 @@ export const ROBOTS_TXT = [
   "Allow: /",
   "",
   "User-agent: Applebot-Extended",
+  "Allow: /",
+  "",
+  "User-agent: DeepSeekBot",
+  "Allow: /",
+  "",
+  "User-agent: Meta-ExternalAgent",
+  "Allow: /",
+  "",
+  "User-agent: cohere-ai",
   "Allow: /",
   "",
   "User-agent: CCBot",

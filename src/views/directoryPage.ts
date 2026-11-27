@@ -516,6 +516,16 @@ export function renderDirectoryPage(
           },
         ],
       },
+      {
+        "@type": "Organization",
+        "@id": "https://aipages.tech/#organization",
+        name: "AIPages",
+        url: "https://aipages.tech",
+        logo: "https://aipages.tech/assets/brand/aipages-favicon.png",
+        sameAs: [
+          "https://github.com/2xcel-dev/AIPages"
+        ]
+      },
     ],
   };
 
@@ -554,6 +564,16 @@ ${renderGoogleAnalyticsHead()}
   <title>AIPages Tool Directory - Autonomous Agent Tool Registry</title>
   <meta name="description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
+  <meta property="og:site_name" content="AIPages">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AIPages Tool Directory - Autonomous Agent Tool Registry">
+  <meta property="og:description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
+  <meta property="og:url" content="https://aipages.tech${baseUrl === '/' ? '/' : '/tool'}">
+  <meta property="og:image" content="https://aipages.tech/assets/flow/flow-01-hero-marketplace.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AIPages Tool Directory - Autonomous Agent Tool Registry">
+  <meta name="twitter:description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
+  <meta name="twitter:image" content="https://aipages.tech/assets/flow/flow-01-hero-marketplace.jpg">
   <link rel="canonical" href="${baseUrl === '/' ? 'https://aipages.tech/' : 'https://aipages.tech/tool'}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <link rel="alternate" type="text/markdown" title="LLM Discovery Summary" href="/llms.txt">

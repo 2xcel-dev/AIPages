@@ -103,16 +103,50 @@ export function renderBountiesPage(): string {
     })
     .join("");
 
+  const bountiesJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        name: "Agent Demand Bounties & Unmet Queries | AIPages",
+        description: "Real-time unfulfilled capabilities queried by autonomous AI agents on AIPages. Build an MCP server or API for these requests and earn USDC on Base Mainnet.",
+        url: "https://aipages.tech/bounties",
+      },
+      {
+        "@type": "ItemList",
+        name: "Open Autonomous Agent Tool Bounties",
+        numberOfItems: allBounties.length,
+        itemListElement: allBounties.map((b, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: b.query,
+          description: `Unmet capability demand with ${b.count} agent queries on AIPages.`,
+        })),
+      },
+    ],
+  };
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ${renderGoogleAnalyticsHead()}
-  <title>Agent Demand Bounties & Unmet Queries | AIPages</title>
+  <title>Agent Demand Bounties &amp; Unmet Queries | AIPages</title>
   <meta name="description" content="Real-time unfulfilled capabilities queried by autonomous AI agents on AIPages. Build an MCP server or API for these requests and earn USDC on Base Mainnet.">
+  <meta property="og:site_name" content="AIPages">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Agent Demand Bounties &amp; Unmet Queries | AIPages">
+  <meta property="og:description" content="Real-time unfulfilled capabilities queried by autonomous AI agents on AIPages. Build an MCP server or API for these requests and earn USDC on Base Mainnet.">
+  <meta property="og:url" content="https://aipages.tech/bounties">
+  <meta property="og:image" content="https://aipages.tech/assets/flow/flow-07-scale-workflows.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agent Demand Bounties &amp; Unmet Queries | AIPages">
+  <meta name="twitter:description" content="Real-time unfulfilled capabilities queried by autonomous AI agents on AIPages. Build an MCP server or API for these requests and earn USDC on Base Mainnet.">
+  <meta name="twitter:image" content="https://aipages.tech/assets/flow/flow-07-scale-workflows.jpg">
   <link rel="canonical" href="https://aipages.tech/bounties">
   <link rel="icon" type="image/png" href="/assets/brand/aipages-favicon.png">
+  <script type="application/ld+json">${JSON.stringify(bountiesJsonLd)}</script>
   <style>
     ${SHARED_DESIGN_SYSTEM_CSS}
 

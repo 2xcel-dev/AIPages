@@ -722,6 +722,29 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
           },
         ],
       },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: "https://aipages.tech",
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Tools",
+            item: "https://aipages.tech/tool",
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: tool.name,
+            item: canonicalToolUrl,
+          },
+        ],
+      },
     ],
   };
   const aeoGraphScript = JSON.stringify(aeoGraphSchema, null, 2).replace(/</g, "\\u003c");
@@ -737,6 +760,16 @@ ${renderGoogleAnalyticsHead()}
   <title>${escapedName} - AIPages Agent Tool Registry</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
+  <meta property="og:site_name" content="AIPages">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="${escapedName} - Autonomous Agent Tool &amp; MCP Specification">
+  <meta property="og:description" content="${escapedDescription}">
+  <meta property="og:url" content="${canonicalToolUrl}">
+  <meta property="og:image" content="https://aipages.tech${flowArtwork || '/assets/flow/flow-01-hero-marketplace.jpg'}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapedName} - Autonomous Agent Tool">
+  <meta name="twitter:description" content="${escapedDescription}">
+  <meta name="twitter:image" content="https://aipages.tech${flowArtwork || '/assets/flow/flow-01-hero-marketplace.jpg'}">
   <link rel="canonical" href="${canonicalToolUrl}">
   <link rel="alternate" type="text/markdown" title="${escapedName} Markdown Specification" href="${markdownToolUrl}">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">

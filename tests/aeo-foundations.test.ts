@@ -174,8 +174,11 @@ describe("AEO Foundations Audit & Infrastructure Verification Suite", () => {
 
       assert.ok(html.includes('<link rel="canonical" href="https://aipages.tech/tool">'));
       assert.ok(html.includes('<meta name="description"'));
+      assert.ok(html.includes('property="og:image"'));
+      assert.ok(html.includes('name="twitter:card"'));
       assert.ok(html.includes('"@type":"WebSite"') || html.includes('"@type": "WebSite"'));
       assert.ok(html.includes('"@type":"SearchAction"') || html.includes('"@type": "SearchAction"'));
+      assert.ok(html.includes('"@type":"Organization"') || html.includes('"@type": "Organization"'));
       assert.ok(html.includes('<h2 class="sr-only">Registered Autonomous Agent Tools</h2>'));
       assert.ok(html.includes("+16 more &rarr;"));
     });
@@ -192,6 +195,9 @@ describe("AEO Foundations Audit & Infrastructure Verification Suite", () => {
       assert.ok(html.includes('id="aeo-howto-faq-schema"'));
       assert.ok(html.includes('"@type": "HowTo"'));
       assert.ok(html.includes('"@type": "FAQPage"'));
+      assert.ok(html.includes('"@type": "BreadcrumbList"'));
+      assert.ok(html.includes('property="og:title"'));
+      assert.ok(html.includes('name="twitter:card"'));
     });
 
     it("contains zero raw emoji icons in capabilitiesPage HTML", () => {
