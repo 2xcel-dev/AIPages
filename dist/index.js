@@ -112,7 +112,7 @@ async function getActiveStore() {
 export function isAiOrSearchCrawler(userAgent) {
     if (!userAgent)
         return false;
-    return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|CCBot|Googlebot|Google-Site-Verification|Google-InspectionTool|Google-Search-Console|Feedfetcher-Google|Google|Bingbot|DuckDuckBot|YandexBot|bot|crawler|spider)/i.test(userAgent);
+    return /(OAI-SearchBot|ChatGPT-User|GPTBot|ClaudeBot|Claude-Web|PerplexityBot|Google-Extended|Applebot-Extended|DeepSeekBot|DeepSeek|Meta-ExternalAgent|cohere-ai|CCBot|Googlebot|Google-Site-Verification|Google-InspectionTool|Google-Search-Console|Feedfetcher-Google|Google|Bingbot|DuckDuckBot|YandexBot|bot|crawler|spider)/i.test(userAgent);
 }
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
@@ -579,6 +579,32 @@ app.post("/api/tools/submit", async (c) => {
         listingFee: 0,
     }, 201);
 });
+// ── Lead Capture / Newsletter Subscription ──────────────────
+app.post("/api/newsletter/subscribe", async (c) => {
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const limitRes = tokenBucket(`newsletter:${ip}`, 10, 60_000);
+    if (!limitRes.allowed) {
+        return c.json({ error: "Rate limit exceeded. Please try again later." }, 429);
+    }
+    const contentType = (c.req.header("content-type") ?? "").toLowerCase();
+    let email = "";
+    if (contentType.includes("application/x-www-form-urlencoded") ||
+        contentType.includes("multipart/form-data")) {
+        const formData = await c.req.parseBody().catch(() => null);
+        email = String(formData?.email || "").trim();
+    }
+    else {
+        const json = (await c.req.json().catch(() => ({})));
+        email = String(json?.email || "").trim();
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return c.json({ error: "Please provide a valid email address." }, 400);
+    }
+    return c.json({
+        success: true,
+        message: "Subscribed to Agent Radar. You will receive dispatches on new MCP tools and bounties.",
+    }, 200);
+});
 // ── Public route: list tools (with source, search, active, pagination, and health) ──
 app.get("/api/tools", async (c) => {
     const activeStore = await getActiveStore();
@@ -847,6 +873,15 @@ export const ROBOTS_TXT = [
     "Allow: /",
     "",
     "User-agent: Applebot-Extended",
+    "Allow: /",
+    "",
+    "User-agent: DeepSeekBot",
+    "Allow: /",
+    "",
+    "User-agent: Meta-ExternalAgent",
+    "Allow: /",
+    "",
+    "User-agent: cohere-ai",
     "Allow: /",
     "",
     "User-agent: CCBot",
@@ -1174,22 +1209,49 @@ app.get("/terms", (c) => {
 app.get("/submit", (c) => {
     return c.html(renderSubmitToolPage());
 });
-app.get("/assets/flow/:file", (c) => {
-    const rawFile = c.req.param("file") || "";
-    const safeFile = path.basename(rawFile);
-    if (!safeFile.endsWith(".jpg") && !safeFile.endsWith(".jpeg") && !safeFile.endsWith(".png")) {
-        return c.text("Not found", 404);
+// ── Static Assets (Flow artwork, Brand icons, Favicons, SVGs) with Edge Caching ──
+app.get("/favicon.ico", (c) => {
+    const icoCandidate1 = path.resolve(process.cwd(), "assets", "brand", "aipages-favicon.png");
+    const icoCandidate2 = path.resolve(process.cwd(), "dist", "assets", "brand", "aipages-favicon.png");
+    const filePath = fs.existsSync(icoCandidate1) ? icoCandidate1 : icoCandidate2;
+    if (fs.existsSync(filePath)) {
+        c.header("Content-Type", "image/png");
+        c.header("Cache-Control", "public, max-age=604800, immutable");
+        return c.body(fs.readFileSync(filePath));
     }
-    const candidate1 = path.resolve(process.cwd(), "assets", "flow", safeFile);
-    const candidate2 = path.resolve(process.cwd(), "dist", "assets", "flow", safeFile);
+    return c.text("Not found", 404);
+});
+app.get("/assets/*", (c) => {
+    const rawPath = c.req.path.replace(/^\/assets\//, "");
+    const normalized = path.normalize(rawPath).replace(/^(\.\.[\/\\])+/, "");
+    const candidate1 = path.resolve(process.cwd(), "assets", normalized);
+    const candidate2 = path.resolve(process.cwd(), "dist", "assets", normalized);
     const filePath = fs.existsSync(candidate1) ? candidate1 : candidate2;
+    const rootAssets = path.resolve(process.cwd(), "assets");
+    const distAssets = path.resolve(process.cwd(), "dist", "assets");
+    if (!filePath.startsWith(rootAssets) && !filePath.startsWith(distAssets)) {
+        return c.text("Forbidden", 403);
+    }
     try {
-        if (!fs.existsSync(filePath)) {
+        if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
             return c.text("Asset not found", 404);
         }
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeTypes = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
+            ".webp": "image/webp",
+            ".json": "application/json",
+            ".md": "text/markdown",
+            ".css": "text/css",
+            ".js": "application/javascript",
+        };
+        c.header("Content-Type", mimeTypes[ext] || "application/octet-stream");
+        c.header("Cache-Control", "public, max-age=604800, immutable");
         const buf = fs.readFileSync(filePath);
-        c.header("Content-Type", safeFile.endsWith(".png") ? "image/png" : "image/jpeg");
-        c.header("Cache-Control", "public, max-age=86400");
         return c.body(buf);
     }
     catch {

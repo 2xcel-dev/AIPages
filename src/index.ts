@@ -1386,22 +1386,53 @@ app.get("/submit", (c) => {
   return c.html(renderSubmitToolPage());
 });
 
-app.get("/assets/flow/:file", (c) => {
-  const rawFile = c.req.param("file") || "";
-  const safeFile = path.basename(rawFile);
-  if (!safeFile.endsWith(".jpg") && !safeFile.endsWith(".jpeg") && !safeFile.endsWith(".png")) {
-    return c.text("Not found", 404);
+// ── Static Assets (Flow artwork, Brand icons, Favicons, SVGs) with Edge Caching ──
+
+app.get("/favicon.ico", (c) => {
+  const icoCandidate1 = path.resolve(process.cwd(), "assets", "brand", "aipages-favicon.png");
+  const icoCandidate2 = path.resolve(process.cwd(), "dist", "assets", "brand", "aipages-favicon.png");
+  const filePath = fs.existsSync(icoCandidate1) ? icoCandidate1 : icoCandidate2;
+  if (fs.existsSync(filePath)) {
+    c.header("Content-Type", "image/png");
+    c.header("Cache-Control", "public, max-age=604800, immutable");
+    return c.body(fs.readFileSync(filePath));
   }
-  const candidate1 = path.resolve(process.cwd(), "assets", "flow", safeFile);
-  const candidate2 = path.resolve(process.cwd(), "dist", "assets", "flow", safeFile);
+  return c.text("Not found", 404);
+});
+
+app.get("/assets/*", (c) => {
+  const rawPath = c.req.path.replace(/^\/assets\//, "");
+  const normalized = path.normalize(rawPath).replace(/^(\.\.[\/\\])+/, "");
+  const candidate1 = path.resolve(process.cwd(), "assets", normalized);
+  const candidate2 = path.resolve(process.cwd(), "dist", "assets", normalized);
   const filePath = fs.existsSync(candidate1) ? candidate1 : candidate2;
+
+  const rootAssets = path.resolve(process.cwd(), "assets");
+  const distAssets = path.resolve(process.cwd(), "dist", "assets");
+  if (!filePath.startsWith(rootAssets) && !filePath.startsWith(distAssets)) {
+    return c.text("Forbidden", 403);
+  }
+
   try {
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
       return c.text("Asset not found", 404);
     }
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".svg": "image/svg+xml",
+      ".ico": "image/x-icon",
+      ".webp": "image/webp",
+      ".json": "application/json",
+      ".md": "text/markdown",
+      ".css": "text/css",
+      ".js": "application/javascript",
+    };
+    c.header("Content-Type", mimeTypes[ext] || "application/octet-stream");
+    c.header("Cache-Control", "public, max-age=604800, immutable");
     const buf = fs.readFileSync(filePath);
-    c.header("Content-Type", safeFile.endsWith(".png") ? "image/png" : "image/jpeg");
-    c.header("Cache-Control", "public, max-age=86400");
     return c.body(buf);
   } catch {
     return c.text("Failed to read asset", 500);

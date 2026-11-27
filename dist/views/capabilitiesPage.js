@@ -371,6 +371,16 @@ ${renderGoogleAnalyticsHead()}
   <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
+  <meta property="og:site_name" content="AIPages">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tool Capabilities Index - AIPages Agent Tool Registry">
+  <meta property="og:description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
+  <meta property="og:url" content="https://aipages.tech/capabilities">
+  <meta property="og:image" content="https://aipages.tech/assets/flow/flow-02-core-utilities.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Tool Capabilities Index - AIPages Agent Tool Registry">
+  <meta name="twitter:description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
+  <meta name="twitter:image" content="https://aipages.tech/assets/flow/flow-02-core-utilities.jpg">
   <link rel="canonical" href="https://aipages.tech/capabilities">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml">
   <link rel="alternate" type="text/markdown" title="Capabilities Index (Markdown)" href="/capabilities?format=md">
