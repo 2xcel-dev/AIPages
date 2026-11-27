@@ -2676,7 +2676,7 @@ ${renderGoogleAnalyticsHead()}
 
         <!-- Amalgamated Search Bar, Connect Buttons & 3 Value Pillars -->
         <div style="margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border-subtle);">
-          <form method="GET" action="${baseUrl}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
+          <form method="GET" action="${baseUrl}" onsubmit="if(window.trackAipagesEvent){var q=this.querySelector('input[name=\\'q\\']');if(q&&q.value){window.trackAipagesEvent('directory_search',{search_term:q.value});}}" class="hero-search-form" toolname="search_agent_tools" tooldescription="Search and filter verified AI agent tools and MCP servers in the AIPages directory by keyword, capability, or reliability." data-mcp-action="search-tools">
             ${activeCapability && activeCapability !== "all" ? `<input type="hidden" name="capability" value="${escapeHtml(activeCapability)}" toolparamdescription="Functional capability tag filter" />` : ""}
             ${activeReliability && activeReliability !== "all" ? `<input type="hidden" name="reliability" value="${escapeHtml(activeReliability)}" toolparamdescription="Endpoint reliability filter (all, high, degraded, failing, unchecked)" />` : ""}
             <div class="search-input-wrapper" style="position: relative; flex: 1; display: flex; align-items: center;">

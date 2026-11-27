@@ -633,6 +633,10 @@ ${renderGoogleAnalyticsHead()}
         schema: schemaObj
       };
 
+      if (window.trackAipagesEvent) {
+        window.trackAipagesEvent('tool_submission_started', { tool_name: payload.name });
+      }
+
       try {
         var response = await fetch('/api/tools/submit', {
           method: 'POST',
@@ -642,6 +646,9 @@ ${renderGoogleAnalyticsHead()}
         var data = await response.json();
         resBox.style.display = 'block';
         if (response.ok) {
+          if (window.trackAipagesEvent) {
+            window.trackAipagesEvent('tool_submitted', { tool_name: payload.name });
+          }
           resBox.style.background = 'rgba(16, 185, 129, 0.12)';
           resBox.style.border = '1px solid rgba(16, 185, 129, 0.35)';
           resBox.style.color = '#6EE7B7';

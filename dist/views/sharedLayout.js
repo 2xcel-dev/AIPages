@@ -75,6 +75,11 @@ export function renderGoogleAnalyticsHead() {
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', '${escapeHtml(primaryId)}');${gtmId && gtmId !== primaryId ? `\n    gtag('config', '${escapeHtml(gtmId)}');` : ""}
+    window.trackAipagesEvent = function(name, params) {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', name, params || {});
+      }
+    };
   </script>`;
 }
 /**

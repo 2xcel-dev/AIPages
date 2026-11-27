@@ -615,6 +615,11 @@ ${renderGoogleAnalyticsHead()}
 
       if (btn) btn.disabled = true;
       if (btnText) btnText.textContent = 'Executing...';
+      var toolSelect = document.getElementById('pg-tool-select');
+      var selTool = toolSelect ? toolSelect.value : 'unknown';
+      if (window.trackAipagesEvent) {
+        window.trackAipagesEvent('sandbox_test_run', { tool: selTool, mode: currentMode });
+      }
       if (statusPill) {
         statusPill.className = 'pg-status-pill pg-status-idle';
         statusPill.textContent = 'Dispatching...';

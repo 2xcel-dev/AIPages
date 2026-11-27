@@ -2903,11 +2903,14 @@ Content-Type: application/json</code></pre>
       if (!snippet) return;
       var span = btn.querySelector('.btn-text') || btn;
       var origText = quickInstallBtnLabels[activeQuickTab] || 'Copy';
+      var clientName = activeQuickTab === 'claudecode' ? 'Claude Code command' : (activeQuickTab === 'cursor' ? 'Cursor MCP config' : 'Claude Desktop config');
 
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', { client: activeQuickTab, client_name: clientName, tool: '${escapeHtml(tool.namespace)}' });
+        }
         span.textContent = 'Copied!';
         btn.classList.add('btn-copied');
-        var clientName = activeQuickTab === 'claudecode' ? 'Claude Code command' : (activeQuickTab === 'cursor' ? 'Cursor MCP config' : 'Claude Desktop config');
         showAgentToast('Copied ' + clientName + ' to clipboard!');
         setTimeout(function() {
           span.textContent = origText;
@@ -2929,11 +2932,14 @@ Content-Type: application/json</code></pre>
       if (!snippet) return;
       var span = btn.querySelector('.btn-text') || btn;
       var origText = span.textContent;
+      var clientName = client === 'claudecode' ? 'Claude Code command' : 'Cursor config';
 
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', { client: client, client_name: clientName, tool: '${escapeHtml(tool.namespace)}' });
+        }
         span.textContent = 'Copied!';
         btn.classList.add('btn-copied');
-        var clientName = client === 'claudecode' ? 'Claude Code command' : 'Cursor config';
         showAgentToast('Copied ' + clientName + ' to clipboard!');
         setTimeout(function() {
           span.textContent = origText;
@@ -3038,6 +3044,9 @@ Content-Type: application/json</code></pre>
       var dest = clientDestinations[client] || 'config';
 
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', { client: client, client_name: clientName, tool: '${escapeHtml(tool.namespace)}' });
+        }
         span.textContent = 'Copied!';
         btn.classList.add('btn-copied');
         showAgentToast('Copied ' + clientName + ' config! Paste into ' + dest);
@@ -3061,6 +3070,9 @@ Content-Type: application/json</code></pre>
       var span = btn.querySelector('.btn-text') || btn.querySelector('span:last-child') || btn;
       var origText = span.textContent;
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('badge_copied', { slug: slug, tool: '${escapeHtml(tool.namespace)}' });
+        }
         span.textContent = 'Copied!';
         btn.classList.add('btn-copied');
         showAgentToast('README badge copied to clipboard!');
@@ -3173,6 +3185,9 @@ Content-Type: application/json</code></pre>
       var orig = label.textContent;
 
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('agent_config_copied', { client: client, client_name: (clientNames[client] || client), tool: '${escapeHtml(tool.namespace)}' });
+        }
         label.textContent = 'Copied to Clipboard!';
         btn.classList.add('btn-copied');
         showAgentToast('Copied ' + (clientNames[client] || client) + ' MCP config!');
@@ -3196,6 +3211,9 @@ Content-Type: application/json</code></pre>
       var span = btn.querySelector('.btn-text') || btn.querySelector('span:last-child') || btn;
       var origText = span.textContent;
       var updateUi = function() {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('badge_copied', { slug: slug, tool: '${escapeHtml(tool.namespace)}' });
+        }
         span.textContent = 'Copied!';
         btn.classList.add('btn-copied');
         showAgentToast('README badge copied to clipboard!');
@@ -3313,6 +3331,9 @@ Content-Type: application/json</code></pre>
       }
 
       if (btn) {
+        if (window.trackAipagesEvent) {
+          window.trackAipagesEvent('sandbox_test_run', { tool: namespace, mode: currentPlaygroundMode });
+        }
         btn.disabled = true;
         var label = btn.querySelector('.btn-label');
         if (label) {
