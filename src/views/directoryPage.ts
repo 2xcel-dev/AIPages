@@ -7,6 +7,7 @@ import {
   getFlowArtworkForTool,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 
 function formatTimestamp(date: Date | null | undefined): string {
@@ -543,6 +544,7 @@ export function renderDirectoryPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>AIPages Tool Directory - Autonomous Agent Tool Registry</title>
   <meta name="description" content="The API marketplace and cross-protocol discovery registry built for AI agents and developers. Search verified JSON Schemas for free and settle micro-payments in USDT on Base Mainnet.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">

@@ -6,6 +6,7 @@ import {
   formatHumanToolTitle,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 
 export interface CapabilitySummary {
@@ -436,6 +437,7 @@ export function renderCapabilitiesPage(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">

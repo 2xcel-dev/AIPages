@@ -57,6 +57,26 @@ export function getFlowArtworkForTool(nameOrNamespace) {
     }
     return null;
 }
+export const GA_MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID || "G-8PFNRPF585";
+export const GTM_CONTAINER_ID = process.env.GTM_CONTAINER_ID || "GTM-K4WQVH76";
+/**
+ * Render Google Analytics 4 (GA4) and Google Tag Manager tracking snippets.
+ */
+export function renderGoogleAnalyticsHead() {
+    const gaId = GA_MEASUREMENT_ID;
+    const gtmId = GTM_CONTAINER_ID;
+    if (!gaId && !gtmId)
+        return "";
+    const primaryId = gaId || gtmId;
+    return `  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=${escapeHtml(primaryId)}"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${escapeHtml(primaryId)}');${gtmId && gtmId !== primaryId ? `\n    gtag('config', '${escapeHtml(gtmId)}');` : ""}
+  </script>`;
+}
 /**
  * Shared CSS variables, typography, 21st.dev Navbar (#8948), and 21st.dev Minimal Footer (#7264) styles.
  */

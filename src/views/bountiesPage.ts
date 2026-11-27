@@ -4,6 +4,7 @@ import {
   SHARED_DESIGN_SYSTEM_CSS,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 
 /**
@@ -107,6 +108,7 @@ export function renderBountiesPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Agent Demand Bounties & Unmet Queries | AIPages</title>
   <meta name="description" content="Real-time unfulfilled capabilities queried by autonomous AI agents on AIPages. Build an MCP server or API for these requests and earn USDC on Base Mainnet.">
   <link rel="canonical" href="https://aipages.tech/bounties">

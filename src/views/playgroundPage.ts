@@ -10,6 +10,7 @@ import {
   SHARED_DESIGN_SYSTEM_CSS,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 import { generateSamplePayload } from "./toolPage.js";
 import { escapeHtml } from "./utils.js";
@@ -44,6 +45,7 @@ export function renderPlaygroundPage(tools: Tool[], selectedNamespace?: string):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Interactive Agent Tool Playground | AIPages</title>
   <meta name="description" content="Test and execute 51+ vector-indexed AI agent tools live in your browser. Zero-friction test sandbox and Base Mainnet x402 micropayments.">
   <link rel="canonical" href="https://aipages.tech/playground">

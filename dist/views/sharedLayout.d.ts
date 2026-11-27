@@ -7,6 +7,12 @@ export declare function formatHumanToolTitle(rawName: string): string;
  * Map canonical tools to their dedicated Google Flow promotional artwork.
  */
 export declare function getFlowArtworkForTool(nameOrNamespace: string): string | null;
+export declare const GA_MEASUREMENT_ID: string;
+export declare const GTM_CONTAINER_ID: string;
+/**
+ * Render Google Analytics 4 (GA4) and Google Tag Manager tracking snippets.
+ */
+export declare function renderGoogleAnalyticsHead(): string;
 /**
  * Shared CSS variables, typography, 21st.dev Navbar (#8948), and 21st.dev Minimal Footer (#7264) styles.
  */

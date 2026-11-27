@@ -1,7 +1,7 @@
 import { deriveReliability } from "../types.js";
 import { escapeHtml } from "./utils.js";
 import { renderWebMcpRuntimeScript } from "./agentDiscovery.js";
-import { SHARED_DESIGN_SYSTEM_CSS, renderSharedNavbar, renderSharedFooter, } from "./sharedLayout.js";
+import { SHARED_DESIGN_SYSTEM_CSS, renderSharedNavbar, renderSharedFooter, renderGoogleAnalyticsHead, } from "./sharedLayout.js";
 export const CAPABILITY_DESCRIPTIONS = {
     "schema-sanitization": "Input sanitization, HTML/XSS stripping, and structured JSON schema normalization for autonomous workflows.",
     "data-cleaning": "Automated data normalization, whitespace stripping, and structured payload sanitization.",
@@ -367,6 +367,7 @@ export function renderCapabilitiesPage(capabilities, totalToolsCount, baseUrl = 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Tool Capabilities Index - AIPages Agent Tool Registry</title>
   <meta name="description" content="Explore autonomous agent tools by functional capability. Browse sanitized JSON schemas, auditing engines, oracles, sandboxes, and verification tools.">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">

@@ -2,6 +2,7 @@ import {
   SHARED_DESIGN_SYSTEM_CSS,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 import { renderWebMcpRuntimeScript } from "./agentDiscovery.js";
 
@@ -261,6 +262,7 @@ export function renderPrivacyPolicyPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Privacy Policy - AIPages Agent Tool Registry</title>
   <meta name="description" content="Authorized Privacy Policy for AIPages.tech covering zero disk retention for autonomous agent tool invocations, pseudonymous Base wallet settlement, and GDPR and CCPA compliance.">
   <link rel="canonical" href="https://aipages.tech/privacy">
@@ -356,6 +358,7 @@ export function renderRefundPolicyPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>24-Hour USDT Refund Policy - AIPages Agent Tool Registry</title>
   <meta name="description" content="Authorized HTTP 402 USDT Refund Policy for AIPages.tech. Discovery is 100% free, micro-payments settle on Base Mainnet only on 2xx success, and verified faults are refunded in USDT within 24 hours.">
   <link rel="canonical" href="https://aipages.tech/refund-policy">
@@ -448,6 +451,7 @@ export function renderTermsPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Terms of Service - AIPages Agent Tool Registry</title>
   <meta name="description" content="Terms of Service governing autonomous AI agent tool discovery, developer tool listings, and HTTP 402 USDT micro-payment invocations on AIPages.tech.">
   <link rel="canonical" href="https://aipages.tech/terms">
@@ -525,6 +529,7 @@ export function renderSubmitToolPage(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>Register Your AI Agent Tool - AIPages Agent Tool Registry</title>
   <meta name="description" content="Register your MCP server or HTTP API in the AIPages 3072-dimension vector registry for free and earn USDT micro-payments on Base Mainnet.">
   <link rel="canonical" href="https://aipages.tech/submit">

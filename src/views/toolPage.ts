@@ -8,6 +8,7 @@ import {
   getFlowArtworkForTool,
   renderSharedNavbar,
   renderSharedFooter,
+  renderGoogleAnalyticsHead,
 } from "./sharedLayout.js";
 
 function formatTimestamp(date: Date | null | undefined): string {
@@ -732,6 +733,7 @@ export function renderToolPage(tool: Tool, relatedTools: Tool[] = []): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+${renderGoogleAnalyticsHead()}
   <title>${escapedName} - AIPages Agent Tool Registry</title>
   <meta name="description" content="${escapedDescription}">
   <meta name="google-site-verification" content="${escapeHtml(process.env.GOOGLE_SITE_VERIFICATION || "Wp4Wcnw85cBle8X-D5QpKSa1-NvJB44t1bdeXNMDA3E")}">
