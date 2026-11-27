@@ -20,6 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { compress } from "hono/compress";
 import { serve } from "@hono/node-server";
 import { config } from "./config.js";
 import { createStore } from "./db.js";
@@ -116,6 +117,7 @@ export function isAiOrSearchCrawler(userAgent) {
 }
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
+app.use("*", compress());
 app.use("*", async (c, next) => {
     await next();
     metrics.recordHttpRequest(c.req.method, c.req.path, c.res.status, c.req.header("user-agent"));

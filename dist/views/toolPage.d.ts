@@ -33,8 +33,8 @@ export declare function generateRequestExample(tool: Tool): RequestExample;
  * and never exposes private keys or credentials.
  */
 export declare function generateToolJsonLd(tool: Tool): Record<string, unknown>;
-export declare function renderQuickInstallWidget(tool: Tool, example: RequestExample, isTop4: boolean): string;
-export declare function renderStickyMcpDock(tool: Tool, example: RequestExample): string;
+import { renderQuickInstallWidget, renderStickyMcpDock } from "./components/installDock.js";
+export { renderQuickInstallWidget, renderStickyMcpDock, };
 export declare function renderToolPage(tool: Tool, relatedTools?: Tool[]): string;
 export declare function renderNotFoundPage(slug: string): string;
 //# sourceMappingURL=toolPage.d.ts.map

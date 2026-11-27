@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { compress } from "hono/compress";
 import { serve } from "@hono/node-server";
 import { config } from "./config.js";
 import { createStore, type ToolStore, type RawToolManifest } from "./db.js";
@@ -124,6 +125,7 @@ export function isAiOrSearchCrawler(userAgent?: string | null): boolean {
 
 // ── Middleware ──────────────────────────────────────────────
 app.use("*", cors());
+app.use("*", compress());
 app.use("*", async (c, next) => {
   await next();
   metrics.recordHttpRequest(c.req.method, c.req.path, c.res.status, c.req.header("user-agent"));
